@@ -109,7 +109,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 39	categories	search_indexed	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 40	categories	icon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 41	categories	color	\N	select-color	\N	color	\N	f	f	\N	full	\N	\N	\N	f	\N
-42	categories	tourism_style_class	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+42	categories	tourism_style_class	\N	input-code	\N	labels	\N	f	f	\N	full	\N	\N	\N	f	\N
 43	categories	tourism_style_merge	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 44	categories	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 45	categories	zoom	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -117,14 +117,14 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 47	category_filters	category_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 48	category_filters	type	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 49	category_filters	property	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
-50	category_filters	values	\N	input-code	\N	\N	\N	t	f	\N	full	\N	\N	\N	f	\N
+50	category_filters	values	\N	input-code	\N	labels	\N	t	f	\N	full	\N	\N	\N	f	\N
 51	categories	filters	o2m	list-o2m	{"template":"{{property}} ({{type}}) {{values}}"}	related-values	{"template":"{{property}} ({{type}})"}	f	f	\N	full	\N	\N	\N	f	\N
 52	sources_tourinsoft	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 53	sources_tourinsoft	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 54	sources_tourinsoft	label	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 55	sources_tourinsoft	label_popup	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 56	sources_tourinsoft	label_details	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
-57	sources_tourinsoft	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+57	sources_tourinsoft	popup_properties	\N	input-code	\N	labels	\N	f	f	\N	full	\N	\N	\N	f	\N
 58	sources_tourinsoft	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 59	sources_tourinsoft	url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 60	sources_tourinsoft	photos_base_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -133,7 +133,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 63	sources_osm	label	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 64	sources_osm	label_popup	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 65	sources_osm	label_details	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
-66	sources_osm	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+66	sources_osm	popup_properties	\N	input-code	\N	labels	\N	f	f	\N	full	\N	\N	\N	f	\N
 67	sources_osm	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 68	sources_osm	overpass_query	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 69	sources_osm	map_contrib_theme_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -143,7 +143,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 73	sources_cms	label	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 74	sources_cms	label_popup	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 75	sources_cms	label_details	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
-76	sources_cms	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+76	sources_cms	popup_properties	\N	input-code	\N	labels	\N	f	f	\N	full	\N	\N	\N	f	\N
 77	sources_cms	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 78	sources_cms	extra_tags	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 79	categories	sources_osm	m2m	list-m2m	{"template":"{{source_osm_id.slug}}"}	related-values	{"template":"{{source_osm_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
