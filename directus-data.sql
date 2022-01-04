@@ -111,6 +111,12 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 43	categories	tourism_style_merge	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 44	categories	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 45	categories	zoom	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+46	category_filters	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+47	category_filters	category_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+48	category_filters	type	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+49	category_filters	property	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+50	category_filters	values	\N	input-code	\N	\N	\N	t	f	\N	full	\N	\N	\N	f	\N
+51	categories	filters	o2m	list-o2m	{"template":"{{property}} ({{type}}) {{values}}"}	related-values	{"template":"{{property}} ({{type}})"}	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -159,6 +165,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 --
 
 COPY public.directus_presets (id, bookmark, "user", role, collection, search, layout, layout_query, layout_options, refresh_interval, filter) FROM stdin;
+1	\N	a7f2a5a2-22e0-46df-9153-606d29ec15b7	\N	categories	toi	\N	{"tabular":{"page":1}}	\N	\N	\N
 \.
 
 
@@ -169,6 +176,7 @@ COPY public.directus_presets (id, bookmark, "user", role, collection, search, la
 COPY public.directus_relations (id, many_collection, many_field, one_collection, one_field, one_collection_field, one_allowed_collections, junction_field, sort_field, one_deselect_action) FROM stdin;
 1	themes	project_id	projects	themes	\N	\N	\N	\N	nullify
 2	menu_items	parent_id	menu_items	sub_items	\N	\N	\N	\N	nullify
+3	category_filters	category_id	categories	filters	\N	\N	\N	\N	nullify
 \.
 
 
@@ -200,14 +208,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 77, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 88, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 45, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 51, true);
 
 
 --
@@ -228,21 +236,21 @@ SELECT pg_catalog.setval('public.directus_permissions_id_seq', 1, false);
 -- Name: directus_presets_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, false);
+SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 
 
 --
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 2, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 3, true);
 
 
 --
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 75, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 86, true);
 
 
 --
