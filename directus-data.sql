@@ -91,6 +91,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 21	menu_items	index_order	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 22	menu_items	hidden	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 23	menu_items	selected_by_default	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+26	menu_items	menu_group_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
+25	menu_items	category_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
+24	menu_items	sub_items	o2m	list-o2m-tree-view	{"displayTemplate":"{{category_id}}{{menu_group_id}}"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -148,6 +151,7 @@ COPY public.directus_presets (id, bookmark, "user", role, collection, search, la
 
 COPY public.directus_relations (id, many_collection, many_field, one_collection, one_field, one_collection_field, one_allowed_collections, junction_field, sort_field, one_deselect_action) FROM stdin;
 1	themes	project_id	projects	themes	\N	\N	\N	\N	nullify
+2	menu_items	parent_id	menu_items	sub_items	\N	\N	\N	\N	nullify
 \.
 
 
@@ -179,14 +183,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 43, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 51, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 23, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 26, true);
 
 
 --
@@ -214,14 +218,14 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, false);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 1, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 2, true);
 
 
 --
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 42, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 50, true);
 
 
 --
