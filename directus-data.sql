@@ -85,6 +85,12 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 15	themes	logo_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 16	themes	favicon_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 17	projects	themes	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
+18	menu_items	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+19	menu_items	theme_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+20	menu_items	parent_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+21	menu_items	index_order	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+22	menu_items	hidden	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+23	menu_items	selected_by_default	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -173,14 +179,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 35, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 43, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 17, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 23, true);
 
 
 --
@@ -215,7 +221,7 @@ SELECT pg_catalog.setval('public.directus_relations_id_seq', 1, true);
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 34, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 42, true);
 
 
 --
