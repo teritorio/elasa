@@ -21,19 +21,21 @@ SET row_security = off;
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse) FROM stdin;
-categorie_sources_cms	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-categorie_sources_osm	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-categorie_sources_tourinsoft	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-categories	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-category_filters	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-menu_groups	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-menu_items	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-projects	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-property_labels	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-sources_cms	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-sources_osm	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-sources_tourinsoft	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-themes	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
+Menu	folder	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open
+Sources	folder	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open
+categorie_sources_cms	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	categories	open
+categorie_sources_osm	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	categories	open
+categorie_sources_tourinsoft	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	categories	open
+categories	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	Menu	open
+category_filters	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	categories	open
+menu_groups	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	Menu	open
+menu_items	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	Menu	open
+projects	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open
+property_labels	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open
+sources_cms	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	Sources	open
+sources_osm	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	Sources	open
+sources_tourinsoft	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	Sources	open
+themes	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open
 \.
 
 
