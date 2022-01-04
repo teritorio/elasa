@@ -75,6 +75,16 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 5	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 6	projects	polygon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 7	projects	bbox_line	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+8	themes	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+9	themes	project_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+10	themes	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+12	themes	description	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+11	themes	name	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+13	themes	site_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+14	themes	main_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+15	themes	logo_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+16	themes	favicon_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+17	projects	themes	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -131,6 +141,7 @@ COPY public.directus_presets (id, bookmark, "user", role, collection, search, la
 --
 
 COPY public.directus_relations (id, many_collection, many_field, one_collection, one_field, one_collection_field, one_allowed_collections, junction_field, sort_field, one_deselect_action) FROM stdin;
+1	themes	project_id	projects	themes	\N	\N	\N	\N	nullify
 \.
 
 
@@ -162,14 +173,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 21, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 35, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 7, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 17, true);
 
 
 --
@@ -197,14 +208,14 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, false);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 1, false);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 1, true);
 
 
 --
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 20, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 34, true);
 
 
 --
