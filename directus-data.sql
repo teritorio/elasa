@@ -94,6 +94,13 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 26	menu_items	menu_group_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
 25	menu_items	category_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
 24	menu_items	sub_items	o2m	list-o2m-tree-view	{"displayTemplate":"{{category_id}}{{menu_group_id}}"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+29	menu_groups	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+30	menu_groups	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+31	menu_groups	name	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+32	menu_groups	icon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+33	menu_groups	color	\N	select-color	\N	color	\N	f	f	\N	full	\N	\N	\N	f	\N
+34	menu_groups	tourism_style_class	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+35	menu_groups	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -183,14 +190,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 51, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 61, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 26, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 35, true);
 
 
 --
@@ -225,7 +232,7 @@ SELECT pg_catalog.setval('public.directus_relations_id_seq', 2, true);
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 50, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 59, true);
 
 
 --
