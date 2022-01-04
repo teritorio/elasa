@@ -78,8 +78,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 8	themes	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 9	themes	project_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 10	themes	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
-12	themes	description	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 11	themes	name	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+12	themes	description	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 13	themes	site_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 14	themes	main_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 15	themes	logo_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -91,9 +91,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 21	menu_items	index_order	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 22	menu_items	hidden	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 23	menu_items	selected_by_default	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
-26	menu_items	menu_group_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
-25	menu_items	category_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
 24	menu_items	sub_items	o2m	list-o2m-tree-view	{"displayTemplate":"{{category_id}}{{menu_group_id}}"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+25	menu_items	category_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
+26	menu_items	menu_group_id	\N	select-dropdown-m2o	{"template":"{{name}}"}	related-values	{"template":"{{name}}"}	f	f	\N	full	\N	\N	\N	f	\N
 29	menu_groups	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 30	menu_groups	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 31	menu_groups	name	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
