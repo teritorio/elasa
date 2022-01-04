@@ -126,6 +126,16 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 58	sources_tourinsoft	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 59	sources_tourinsoft	url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 60	sources_tourinsoft	photos_base_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+61	sources_osm	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+62	sources_osm	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+63	sources_osm	label	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+64	sources_osm	label_popup	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+65	sources_osm	label_details	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+66	sources_osm	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+67	sources_osm	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+68	sources_osm	overpass_query	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+69	sources_osm	map_contrib_theme_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+70	sources_osm	extra_tags	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -224,7 +234,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 60, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 70, true);
 
 
 --
