@@ -136,6 +136,14 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 68	sources_osm	overpass_query	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 69	sources_osm	map_contrib_theme_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 70	sources_osm	extra_tags	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+71	sources_cms	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+72	sources_cms	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+73	sources_cms	label	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+74	sources_cms	label_popup	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+75	sources_cms	label_details	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+76	sources_cms	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+77	sources_cms	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+78	sources_cms	extra_tags	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -234,7 +242,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 70, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 78, true);
 
 
 --
