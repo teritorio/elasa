@@ -147,6 +147,14 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 79	categories	sources_osm	m2m	list-m2m	{"template":"{{source_osm_id.slug}}"}	related-values	{"template":"{{source_osm_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
 80	categories	sources_tourinsoft	m2m	list-m2m	{"template":"{{source_tourinsoft_id.slug}}"}	related-values	{"template":"{{source_tourinsoft_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
 81	categories	sources_cms	m2m	list-m2m	{"template":"{{source_cms_id.slug}}"}	related-values	{"template":"{{source_cms_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
+82	property_labels	property	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+83	property_labels	property_label	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+84	property_labels	property_label_details	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+85	property_labels	property_label_popup	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+86	property_labels	property_label_filter	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+87	property_labels	value_labels	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+88	property_labels	value_labels_list	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+89	property_labels	value_labels_popup	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -251,7 +259,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 81, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 89, true);
 
 
 --
