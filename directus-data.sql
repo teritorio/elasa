@@ -21,9 +21,6 @@ SET row_security = off;
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse) FROM stdin;
-categorie_sources_cms	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-categorie_sources_osm	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
-categorie_sources_tourinsoft	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 categories	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 category_filters	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 menu_groups	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
@@ -34,6 +31,9 @@ sources_cms	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 sources_osm	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 sources_tourinsoft	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 themes	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
+categorie_sources_osm	import_export	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
+categorie_sources_tourinsoft	import_export	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
+categorie_sources_cms	import_export	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open
 \.
 
 
@@ -144,6 +144,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 76	sources_cms	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 77	sources_cms	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
 78	sources_cms	extra_tags	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+79	categories	sources_osm	m2m	list-m2m	{"template":"{{source_osm_id.slug}}"}	related-values	{"template":"{{source_osm_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
+80	categories	sources_tourinsoft	m2m	list-m2m	{"template":"{{source_tourinsoft_id.slug}}"}	related-values	{"template":"{{source_tourinsoft_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
+81	categories	sources_cms	m2m	list-m2m	{"template":"{{source_cms_id.slug}}"}	related-values	{"template":"{{source_cms_id.slug}}"}	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -204,6 +207,12 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 1	themes	project_id	projects	themes	\N	\N	\N	\N	nullify
 2	menu_items	parent_id	menu_items	sub_items	\N	\N	\N	\N	nullify
 3	category_filters	category_id	categories	filters	\N	\N	\N	\N	nullify
+4	categorie_sources_osm	source_osm_id	sources_osm	\N	\N	\N	category_id	\N	nullify
+5	categorie_sources_osm	category_id	categories	sources_osm	\N	\N	source_osm_id	\N	nullify
+6	categorie_sources_tourinsoft	source_tourinsoft_id	sources_tourinsoft	\N	\N	\N	category_id	\N	nullify
+7	categorie_sources_tourinsoft	category_id	categories	sources_tourinsoft	\N	\N	source_tourinsoft_id	\N	nullify
+8	categorie_sources_cms	source_cms_id	sources_cms	\N	\N	\N	category_id	\N	nullify
+9	categorie_sources_cms	category_id	categories	sources_cms	\N	\N	source_cms_id	\N	nullify
 \.
 
 
@@ -242,7 +251,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 78, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 81, true);
 
 
 --
@@ -270,7 +279,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 3, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 9, true);
 
 
 --
