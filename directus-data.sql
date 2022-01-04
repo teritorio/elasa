@@ -101,6 +101,16 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 33	menu_groups	color	\N	select-color	\N	color	\N	f	f	\N	full	\N	\N	\N	f	\N
 34	menu_groups	tourism_style_class	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 35	menu_groups	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+36	categories	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+37	categories	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+38	categories	name	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+39	categories	search_indexed	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+40	categories	icon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+41	categories	color	\N	select-color	\N	color	\N	f	f	\N	full	\N	\N	\N	f	\N
+42	categories	tourism_style_class	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+43	categories	tourism_style_merge	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+44	categories	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+45	categories	zoom	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -190,14 +200,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 61, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 77, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 35, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 45, true);
 
 
 --
@@ -232,7 +242,7 @@ SELECT pg_catalog.setval('public.directus_relations_id_seq', 2, true);
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 59, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 75, true);
 
 
 --
