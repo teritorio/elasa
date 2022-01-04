@@ -68,6 +68,13 @@ COPY public.directus_dashboards (id, name, icon, note, date_created, user_create
 --
 
 COPY public.directus_fields (id, collection, field, special, interface, options, display, display_options, readonly, hidden, sort, width, translations, note, conditions, required, "group") FROM stdin;
+1	projects	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+2	projects	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+3	projects	name	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+4	projects	attributions	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+5	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+6	projects	polygon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+7	projects	bbox_line	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -155,14 +162,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 14, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 21, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 1, false);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 7, true);
 
 
 --
@@ -197,7 +204,7 @@ SELECT pg_catalog.setval('public.directus_relations_id_seq', 1, false);
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 13, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 20, true);
 
 
 --
