@@ -199,15 +199,6 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 
 
 --
--- Data for Name: directus_presets; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.directus_presets (id, bookmark, "user", role, collection, search, layout, layout_query, layout_options, refresh_interval, filter) FROM stdin;
-1	\N	a7f2a5a2-22e0-46df-9153-606d29ec15b7	\N	categories	toi	\N	{"tabular":{"page":1}}	\N	\N	\N
-\.
-
-
---
 -- Data for Name: directus_relations; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
