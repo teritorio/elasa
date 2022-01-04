@@ -117,6 +117,15 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 49	category_filters	property	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 50	category_filters	values	\N	input-code	\N	\N	\N	t	f	\N	full	\N	\N	\N	f	\N
 51	categories	filters	o2m	list-o2m	{"template":"{{property}} ({{type}}) {{values}}"}	related-values	{"template":"{{property}} ({{type}})"}	f	f	\N	full	\N	\N	\N	f	\N
+52	sources_tourinsoft	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+53	sources_tourinsoft	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+54	sources_tourinsoft	label	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+55	sources_tourinsoft	label_popup	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+56	sources_tourinsoft	label_details	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+57	sources_tourinsoft	popup_properties	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+58	sources_tourinsoft	details_enable	\N	boolean	\N	boolean	\N	f	f	\N	full	\N	\N	\N	f	\N
+59	sources_tourinsoft	url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+60	sources_tourinsoft	photos_base_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 \.
 
 
@@ -208,14 +217,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_activity_id_seq', 88, true);
+SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 51, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 60, true);
 
 
 --
@@ -250,7 +259,7 @@ SELECT pg_catalog.setval('public.directus_relations_id_seq', 3, true);
 -- Name: directus_revisions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_revisions_id_seq', 86, true);
+SELECT pg_catalog.setval('public.directus_revisions_id_seq', 1, true);
 
 
 --
