@@ -215,7 +215,7 @@ sub sort_block {
         my ($a, $b) = @_;
         my ($as, $bs) = ([split(/\t/, $a)], [split(/\t/, $b)]);
         my $i = 0;
-        my $ret = $as->[$i] == int($as->[$i]) ? int($as->[$i]) <=> int($bs->[$i]) : -1; ###################### Force numeric
+        my $ret = $as->[$i] =~ /[0-9]/ ? int($as->[$i]) <=> int($bs->[$i]) : $as->[$i] cmp $bs->[$i];
         return $ret if $ret != 0;
     };
 
