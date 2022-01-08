@@ -93,7 +93,7 @@ def insert_tourinsoft(conn, project_id, source_tourinsoft_id, pois)
 end
 
 
-conn = PG::Connection.open(host: 'localhost', port: 5432, dbname: 'directus', user: 'directus', password: 'directus')
+conn = PG::Connection.open(host: 'localhost', port: 5432, dbname: 'postgres', user: 'postgres', password: 'postgres')
 res = conn.exec_params('SELECT id, url, photos_base_url FROM sources_tourinsoft ORDER BY id')
 
 project_id = 1
