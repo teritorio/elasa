@@ -638,7 +638,7 @@ SELECT
     ifnull(tmp_wp_posts_wp_postmeta.icon, '') AS icon, -- CSS icon.
     ifnull(tmp_wp_posts_wp_postmeta.color, '#FF0000') AS color, -- CSS color.
     CASE WHEN tmp_wp_posts_wp_postmeta.tourism_style_class IS NOT NULL AND tmp_wp_posts_wp_postmeta.tourism_style_class != 'null' THEN
-        concat('{', replace(tmp_wp_posts_wp_postmeta.tourism_style_class, ';', ','), '}')
+        concat('["', replace(tmp_wp_posts_wp_postmeta.tourism_style_class, ';', '","'), '"]')
     END AS tourism_style_class, -- One up to three lenght array of class from data ontology.
     -- tourism_style_class, Duplicate menu.
     display_mode

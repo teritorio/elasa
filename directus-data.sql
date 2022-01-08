@@ -73,7 +73,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 1	projects	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 2	projects	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 3	projects	name	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
-4	projects	attributions	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+4	projects	attributions	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 5	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 6	projects	polygon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 7	projects	bbox_line	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -81,7 +81,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 9	themes	project_id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 10	themes	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 11	themes	name	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
-12	themes	description	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+12	themes	description	\N	input-code	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 13	themes	site_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 14	themes	main_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 15	themes	logo_url	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
@@ -101,7 +101,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 31	menu_groups	name	\N	\N	\N	formatted-json-value	{"format":"{{fr}}"}	f	f	\N	full	\N	\N	\N	f	\N
 32	menu_groups	icon	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 33	menu_groups	color	\N	select-color	\N	color	\N	f	f	\N	full	\N	\N	\N	f	\N
-34	menu_groups	tourism_style_class	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
+34	menu_groups	tourism_style_class	\N	input-code	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 35	menu_groups	display_mode	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 36	categories	id	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
 37	categories	slug	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N
