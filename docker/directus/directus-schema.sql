@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 13.5 (Debian 13.5-1.pgdg110+1)
--- Dumped by pg_dump version 13.5 (Debian 13.5-1.pgdg110+1)
+-- Dumped from database version 15.4 (Debian 15.4-1.pgdg110+1)
+-- Dumped by pg_dump version 15.4 (Debian 15.4-1.pgdg110+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -17,6 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_role_foreign;
+ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_project_id_foreign;
 ALTER TABLE ONLY public.directus_shares DROP CONSTRAINT directus_shares_user_created_foreign;
 ALTER TABLE ONLY public.directus_shares DROP CONSTRAINT directus_shares_role_foreign;
 ALTER TABLE ONLY public.directus_shares DROP CONSTRAINT directus_shares_collection_foreign;
@@ -33,9 +34,14 @@ ALTER TABLE ONLY public.directus_presets DROP CONSTRAINT directus_presets_role_f
 ALTER TABLE ONLY public.directus_permissions DROP CONSTRAINT directus_permissions_role_foreign;
 ALTER TABLE ONLY public.directus_panels DROP CONSTRAINT directus_panels_user_created_foreign;
 ALTER TABLE ONLY public.directus_panels DROP CONSTRAINT directus_panels_dashboard_foreign;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_user_created_foreign;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_resolve_foreign;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_reject_foreign;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_flow_foreign;
 ALTER TABLE ONLY public.directus_notifications DROP CONSTRAINT directus_notifications_sender_foreign;
 ALTER TABLE ONLY public.directus_notifications DROP CONSTRAINT directus_notifications_recipient_foreign;
 ALTER TABLE ONLY public.directus_folders DROP CONSTRAINT directus_folders_parent_foreign;
+ALTER TABLE ONLY public.directus_flows DROP CONSTRAINT directus_flows_user_created_foreign;
 ALTER TABLE ONLY public.directus_files DROP CONSTRAINT directus_files_uploaded_by_foreign;
 ALTER TABLE ONLY public.directus_files DROP CONSTRAINT directus_files_modified_by_foreign;
 ALTER TABLE ONLY public.directus_files DROP CONSTRAINT directus_files_folder_foreign;
@@ -46,6 +52,7 @@ ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_token_uniq
 ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_pkey;
 ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_external_identifier_unique;
 ALTER TABLE ONLY public.directus_users DROP CONSTRAINT directus_users_email_unique;
+ALTER TABLE ONLY public.directus_translations DROP CONSTRAINT directus_translations_pkey;
 ALTER TABLE ONLY public.directus_shares DROP CONSTRAINT directus_shares_pkey;
 ALTER TABLE ONLY public.directus_settings DROP CONSTRAINT directus_settings_pkey;
 ALTER TABLE ONLY public.directus_sessions DROP CONSTRAINT directus_sessions_pkey;
@@ -55,9 +62,14 @@ ALTER TABLE ONLY public.directus_relations DROP CONSTRAINT directus_relations_pk
 ALTER TABLE ONLY public.directus_presets DROP CONSTRAINT directus_presets_pkey;
 ALTER TABLE ONLY public.directus_permissions DROP CONSTRAINT directus_permissions_pkey;
 ALTER TABLE ONLY public.directus_panels DROP CONSTRAINT directus_panels_pkey;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_resolve_unique;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_reject_unique;
+ALTER TABLE ONLY public.directus_operations DROP CONSTRAINT directus_operations_pkey;
 ALTER TABLE ONLY public.directus_notifications DROP CONSTRAINT directus_notifications_pkey;
 ALTER TABLE ONLY public.directus_migrations DROP CONSTRAINT directus_migrations_pkey;
 ALTER TABLE ONLY public.directus_folders DROP CONSTRAINT directus_folders_pkey;
+ALTER TABLE ONLY public.directus_flows DROP CONSTRAINT directus_flows_pkey;
+ALTER TABLE ONLY public.directus_flows DROP CONSTRAINT directus_flows_operation_unique;
 ALTER TABLE ONLY public.directus_files DROP CONSTRAINT directus_files_pkey;
 ALTER TABLE ONLY public.directus_fields DROP CONSTRAINT directus_fields_pkey;
 ALTER TABLE ONLY public.directus_dashboards DROP CONSTRAINT directus_dashboards_pkey;
@@ -75,6 +87,7 @@ ALTER TABLE public.directus_activity ALTER COLUMN id DROP DEFAULT;
 DROP SEQUENCE public.directus_webhooks_id_seq;
 DROP TABLE public.directus_webhooks;
 DROP TABLE public.directus_users;
+DROP TABLE public.directus_translations;
 DROP TABLE public.directus_shares;
 DROP SEQUENCE public.directus_settings_id_seq;
 DROP TABLE public.directus_settings;
@@ -89,10 +102,12 @@ DROP TABLE public.directus_presets;
 DROP SEQUENCE public.directus_permissions_id_seq;
 DROP TABLE public.directus_permissions;
 DROP TABLE public.directus_panels;
+DROP TABLE public.directus_operations;
 DROP SEQUENCE public.directus_notifications_id_seq;
 DROP TABLE public.directus_notifications;
 DROP TABLE public.directus_migrations;
 DROP TABLE public.directus_folders;
+DROP TABLE public.directus_flows;
 DROP TABLE public.directus_files;
 DROP SEQUENCE public.directus_fields_id_seq;
 DROP TABLE public.directus_fields;
@@ -113,11 +128,12 @@ CREATE TABLE public.directus_activity (
     action character varying(45) NOT NULL,
     "user" uuid,
     "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    ip character varying(50) NOT NULL,
+    ip character varying(50),
     user_agent character varying(255),
     collection character varying(64) NOT NULL,
     item character varying(255) NOT NULL,
-    comment text
+    comment text,
+    origin character varying(255)
 );
 
 
@@ -167,7 +183,8 @@ CREATE TABLE public.directus_collections (
     item_duplication_fields json,
     sort integer,
     "group" character varying(64),
-    collapse character varying(255) DEFAULT 'open'::character varying NOT NULL
+    collapse character varying(255) DEFAULT 'open'::character varying NOT NULL,
+    preview_url character varying(255)
 );
 
 
@@ -183,7 +200,8 @@ CREATE TABLE public.directus_dashboards (
     icon character varying(30) DEFAULT 'dashboard'::character varying NOT NULL,
     note text,
     date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    user_created uuid
+    user_created uuid,
+    color character varying(255)
 );
 
 
@@ -210,7 +228,9 @@ CREATE TABLE public.directus_fields (
     note text,
     conditions json,
     required boolean DEFAULT false,
-    "group" character varying(64)
+    "group" character varying(64),
+    validation json,
+    validation_message text
 );
 
 
@@ -270,6 +290,28 @@ CREATE TABLE public.directus_files (
 ALTER TABLE public.directus_files OWNER TO postgres;
 
 --
+-- Name: directus_flows; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_flows (
+    id uuid NOT NULL,
+    name character varying(255) NOT NULL,
+    icon character varying(30),
+    color character varying(255),
+    description text,
+    status character varying(255) DEFAULT 'active'::character varying NOT NULL,
+    trigger character varying(255),
+    accountability character varying(255) DEFAULT 'all'::character varying,
+    options json,
+    operation uuid,
+    date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    user_created uuid
+);
+
+
+ALTER TABLE public.directus_flows OWNER TO postgres;
+
+--
 -- Name: directus_folders; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -301,10 +343,10 @@ ALTER TABLE public.directus_migrations OWNER TO postgres;
 
 CREATE TABLE public.directus_notifications (
     id integer NOT NULL,
-    "timestamp" timestamp with time zone NOT NULL,
+    "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     status character varying(255) DEFAULT 'inbox'::character varying,
     recipient uuid NOT NULL,
-    sender uuid NOT NULL,
+    sender uuid,
     subject character varying(255) NOT NULL,
     message text,
     collection character varying(64),
@@ -337,6 +379,28 @@ ALTER SEQUENCE public.directus_notifications_id_seq OWNED BY public.directus_not
 
 
 --
+-- Name: directus_operations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_operations (
+    id uuid NOT NULL,
+    name character varying(255),
+    key character varying(255) NOT NULL,
+    type character varying(255) NOT NULL,
+    position_x integer NOT NULL,
+    position_y integer NOT NULL,
+    options json,
+    resolve uuid,
+    reject uuid,
+    flow uuid NOT NULL,
+    date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    user_created uuid
+);
+
+
+ALTER TABLE public.directus_operations OWNER TO postgres;
+
+--
 -- Name: directus_panels; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -344,7 +408,7 @@ CREATE TABLE public.directus_panels (
     id uuid NOT NULL,
     dashboard uuid NOT NULL,
     name character varying(255),
-    icon character varying(30) DEFAULT 'insert_chart'::character varying,
+    icon character varying(30) DEFAULT NULL::character varying,
     color character varying(10),
     show_header boolean DEFAULT false NOT NULL,
     note text,
@@ -416,7 +480,9 @@ CREATE TABLE public.directus_presets (
     layout_query json,
     layout_options json,
     refresh_interval integer,
-    filter json
+    filter json,
+    icon character varying(30) DEFAULT 'bookmark'::character varying,
+    color character varying(255)
 );
 
 
@@ -553,7 +619,8 @@ CREATE TABLE public.directus_sessions (
     expires timestamp with time zone NOT NULL,
     ip character varying(255),
     user_agent character varying(255),
-    share uuid
+    share uuid,
+    origin character varying(255)
 );
 
 
@@ -567,7 +634,7 @@ CREATE TABLE public.directus_settings (
     id integer NOT NULL,
     project_name character varying(100) DEFAULT 'Directus'::character varying NOT NULL,
     project_url character varying(255),
-    project_color character varying(10) DEFAULT '#00C897'::character varying,
+    project_color character varying(50) DEFAULT NULL::character varying,
     project_logo uuid,
     public_foreground uuid,
     public_background uuid,
@@ -580,7 +647,10 @@ CREATE TABLE public.directus_settings (
     storage_default_folder uuid,
     basemaps json,
     mapbox_key character varying(255),
-    module_bar json
+    module_bar json,
+    project_descriptor character varying(100),
+    default_language character varying(255) DEFAULT 'en-US'::character varying NOT NULL,
+    custom_aspect_ratios json
 );
 
 
@@ -615,8 +685,8 @@ ALTER SEQUENCE public.directus_settings_id_seq OWNED BY public.directus_settings
 CREATE TABLE public.directus_shares (
     id uuid NOT NULL,
     name character varying(255),
-    collection character varying(64),
-    item character varying(255),
+    collection character varying(64) NOT NULL,
+    item character varying(255) NOT NULL,
     role uuid,
     password character varying(255),
     user_created uuid,
@@ -629,6 +699,20 @@ CREATE TABLE public.directus_shares (
 
 
 ALTER TABLE public.directus_shares OWNER TO postgres;
+
+--
+-- Name: directus_translations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_translations (
+    id uuid NOT NULL,
+    language character varying(255) NOT NULL,
+    key character varying(255) NOT NULL,
+    value text NOT NULL
+);
+
+
+ALTER TABLE public.directus_translations OWNER TO postgres;
 
 --
 -- Name: directus_users; Type: TABLE; Schema: public; Owner: postgres
@@ -645,7 +729,7 @@ CREATE TABLE public.directus_users (
     description text,
     tags json,
     avatar uuid,
-    language character varying(8) DEFAULT 'en-US'::character varying,
+    language character varying(255) DEFAULT NULL::character varying,
     theme character varying(20) DEFAULT 'auto'::character varying,
     tfa_secret character varying(255),
     status character varying(16) DEFAULT 'active'::character varying NOT NULL,
@@ -656,7 +740,8 @@ CREATE TABLE public.directus_users (
     provider character varying(128) DEFAULT 'default'::character varying NOT NULL,
     external_identifier character varying(255),
     auth_data json,
-    email_notifications boolean DEFAULT true
+    email_notifications boolean DEFAULT true,
+    project_id integer NOT NULL
 );
 
 
@@ -670,11 +755,11 @@ CREATE TABLE public.directus_webhooks (
     id integer NOT NULL,
     name character varying(255) NOT NULL,
     method character varying(10) DEFAULT 'POST'::character varying NOT NULL,
-    url text NOT NULL,
+    url character varying(255) NOT NULL,
     status character varying(10) DEFAULT 'active'::character varying NOT NULL,
     data boolean DEFAULT true NOT NULL,
     actions character varying(100) NOT NULL,
-    collections text NOT NULL,
+    collections character varying(255) NOT NULL,
     headers json
 );
 
@@ -807,6 +892,22 @@ ALTER TABLE ONLY public.directus_files
 
 
 --
+-- Name: directus_flows directus_flows_operation_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_flows
+    ADD CONSTRAINT directus_flows_operation_unique UNIQUE (operation);
+
+
+--
+-- Name: directus_flows directus_flows_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_flows
+    ADD CONSTRAINT directus_flows_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: directus_folders directus_folders_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -828,6 +929,30 @@ ALTER TABLE ONLY public.directus_migrations
 
 ALTER TABLE ONLY public.directus_notifications
     ADD CONSTRAINT directus_notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directus_operations directus_operations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directus_operations directus_operations_reject_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_reject_unique UNIQUE (reject);
+
+
+--
+-- Name: directus_operations directus_operations_resolve_unique; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_resolve_unique UNIQUE (resolve);
 
 
 --
@@ -900,6 +1025,14 @@ ALTER TABLE ONLY public.directus_settings
 
 ALTER TABLE ONLY public.directus_shares
     ADD CONSTRAINT directus_shares_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directus_translations directus_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_translations
+    ADD CONSTRAINT directus_translations_pkey PRIMARY KEY (id);
 
 
 --
@@ -983,6 +1116,14 @@ ALTER TABLE ONLY public.directus_files
 
 
 --
+-- Name: directus_flows directus_flows_user_created_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_flows
+    ADD CONSTRAINT directus_flows_user_created_foreign FOREIGN KEY (user_created) REFERENCES public.directus_users(id) ON DELETE SET NULL;
+
+
+--
 -- Name: directus_folders directus_folders_parent_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1004,6 +1145,38 @@ ALTER TABLE ONLY public.directus_notifications
 
 ALTER TABLE ONLY public.directus_notifications
     ADD CONSTRAINT directus_notifications_sender_foreign FOREIGN KEY (sender) REFERENCES public.directus_users(id);
+
+
+--
+-- Name: directus_operations directus_operations_flow_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_flow_foreign FOREIGN KEY (flow) REFERENCES public.directus_flows(id) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_operations directus_operations_reject_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_reject_foreign FOREIGN KEY (reject) REFERENCES public.directus_operations(id);
+
+
+--
+-- Name: directus_operations directus_operations_resolve_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_resolve_foreign FOREIGN KEY (resolve) REFERENCES public.directus_operations(id);
+
+
+--
+-- Name: directus_operations directus_operations_user_created_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_operations
+    ADD CONSTRAINT directus_operations_user_created_foreign FOREIGN KEY (user_created) REFERENCES public.directus_users(id) ON DELETE SET NULL;
 
 
 --
@@ -1132,6 +1305,14 @@ ALTER TABLE ONLY public.directus_shares
 
 ALTER TABLE ONLY public.directus_shares
     ADD CONSTRAINT directus_shares_user_created_foreign FOREIGN KEY (user_created) REFERENCES public.directus_users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: directus_users directus_users_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_users
+    ADD CONSTRAINT directus_users_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --

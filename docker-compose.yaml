@@ -15,28 +15,14 @@ services:
       - pg_data:/var/lib/postgresql/data
     ports:
       - 5432:5432
-    networks:
-      - directus
     environment:
       <<: *common-environment
-
-  pg_featureserv:
-    image: pramsey/pg_featureserv:20200408
-    # volumes:
-    #   - ./pg_featureserv.toml:/etc/pg_featureserv.toml
-    depends_on:
-      - postgres
-    networks:
-      - directus
-    environment:
-      <<: *common-environment
-    ports:
-      - 9000:9000
+    # command: postgres -c log_statement=all -c log_destination=stderr
+    restart: unless-stopped
 
   cache:
-    image: redis:6
-    networks:
-      - directus
+    image: redis:7
+    restart: unless-stopped
 
   directus:
     image: directus/directus:latest
@@ -49,8 +35,6 @@ services:
       - ./uploads:/directus/uploads
       # If you want to load extensions from the host
       # - ./extensions:/directus/extensions
-    networks:
-      - directus
     depends_on:
       - cache
       - postgres
@@ -65,9 +49,9 @@ services:
       DB_USER: $POSTGRES_USER
       DB_PASSWORD: $POSTGRES_PASSWORD
 
-      CACHE_ENABLED: true
-      CACHE_STORE: redis
-      CACHE_REDIS: redis://cache:6379
+      CACHE_ENABLED: false
+      # CACHE_STORE: redis
+      # CACHE_REDIS: redis://cache:6379
 
       ADMIN_EMAIL: admin@example.com
       ADMIN_PASSWORD: d1r3ctu5
@@ -75,9 +59,23 @@ services:
       # Make sure to set this in production
       # (see https://docs.directus.io/reference/environment-variables/#general)
       # PUBLIC_URL: 'https://directus.example.com'
+    restart: unless-stopped
 
-networks:
-  directus:
+  api:
+    build:
+      context: .
+    environment:
+      <<: *common-environment
+      # RAILS_ENV: ${RAILS_ENV:-production}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-Toe8eihai5ieShai}
+    ports:
+      - 12000:12000
+    volumes:
+      - ./:/srv/app/
+    depends_on:
+      - postgres
+    command: bundle exec rails server --binding=0.0.0.0 --port 12000
+    restart: unless-stopped
 
 volumes:
   pg_data:

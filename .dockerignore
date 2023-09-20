@@ -1,0 +1,6 @@
+.git
+.vscode
+docker/
+log/
+sorbet/
+tmp/

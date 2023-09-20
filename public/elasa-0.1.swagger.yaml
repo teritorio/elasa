@@ -1,0 +1,894 @@
+openapi: '3.0.0'
+info:
+  title: Teritorio Data API
+  description: Exposes POIs content as Rest API.
+  version: "v0.1.0"
+  contact:
+    email: contact@teritorio.fr
+
+servers:
+  - url: ../../../api.teritorio/geodata/v0.1
+
+paths:
+  /{project}/{theme}/settings.json:
+    get:
+      tags:
+        - settings
+      summary: Metadata site and map settings.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  id:
+                    type: integer
+                  slug:
+                    type: string
+                  name:
+                    $ref: '#/components/schemas/multilingual_string'
+                  attributions:
+                    type: array
+                    items:
+                      type: string
+                  icon_font_css_url:
+                    type: string
+                  default_country:
+                    type: string
+                    description: ISO 3166 country codes.
+                    example: fr
+                  default_country_state_opening_hours:
+                    type: string
+                    description: State code according to opening_hours. See https://github.com/opening-hours/opening_hours.js/tree/master/src/holidays
+                    example: Nouvelle-Aquitaine
+                  polygon:
+                    $ref: '#/components/schemas/tile_source'
+                    description: Main bounding GeoJSON Polygon of the territory.
+                  polygons_extra:
+                    type: object
+                    additionalProperties:
+                      $ref: '#/components/schemas/tile_source'
+                    description: Extra bounding GeoJSON Polygon of the (sub)territory.
+                  bbox_line:
+                    type: object
+                    description: GeoJSON LineString of the bbox of the polygon territory.
+                  themes:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: integer
+                        slug:
+                          type: string
+                        title:
+                          $ref: '#/components/schemas/multilingual_string'
+                        description:
+                          $ref: '#/components/schemas/multilingual_string'
+                        keywords:
+                          $ref: '#/components/schemas/multilingual_string'
+                        site_url:
+                          $ref: '#/components/schemas/multilingual_string'
+                          description: URL of the this map application.
+                        main_url:
+                          $ref: '#/components/schemas/multilingual_string'
+                          description: URL of the main website using the map application.
+                        logo_url:
+                          type: string
+                          description: Logo URL.
+                        favicon_url:
+                          type: string
+                          description: Favicon URL.
+                        favorites_mode:
+                          type: boolean
+                          description: Enable or not the favorites.
+                          default: true
+                        explorer_mode:
+                          type: boolean
+                          description: Enable or not the explorer mode switch.
+                          default: true
+
+  /{project}/{theme}/menu.json:
+    get:
+      tags:
+        - menu
+      summary: Main menu.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    id:
+                      type: integer
+                    parent_id:
+                      type: integer
+                      description: This menu item a sub menu item this parent menu item. NULL for main menu items.
+                    index_order:
+                      type: integer
+                      description: Item index order on menu show.
+                    hidden:
+                      type: boolean
+                      description: This menu item is hidden on menu, or not.
+                    selected_by_default:
+                      type: boolean
+                      description: This menu item is selected by default on display, or not.
+                    menu_group:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: integer
+                        slug:
+                          type: string
+                        name:
+                          $ref: '#/components/schemas/multilingual_string'
+                        icon:
+                          type: string
+                          description: CSS icon.
+                        color_fill:
+                          type: string
+                          description: CSS color.
+                        color_line:
+                          type: string
+                          description: CSS color.
+                        style_class:
+                          type: array
+                          items:
+                            type: string
+                          description: One up to three lenght array of class from data ontology.
+                    link:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: integer
+                        href:
+                          type: string
+                          description: The external web link.
+                        slug:
+                          type: string
+                        name:
+                          $ref: '#/components/schemas/multilingual_string'
+                        icon:
+                          type: string
+                          description: CSS icon.
+                        color_fill:
+                          type: string
+                          description: CSS color.
+                        color_line:
+                          type: string
+                          description: CSS color.
+                    category:
+                      type: object
+                      additionalProperties: false
+                      properties:
+                        id:
+                          type: integer
+                        slug:
+                          type: string
+                        name:
+                          $ref: '#/components/schemas/multilingual_string'
+                        search_indexed:
+                          type: boolean
+                          description: This menu content is indexed by the search engine, or not.
+                        icon:
+                          type: string
+                          description: CSS icon.
+                        color_fill:
+                          type: string
+                          description: CSS color.
+                        color_line:
+                          type: string
+                          description: CSS color.
+                        style_class:
+                          type: array
+                          items:
+                            type: string
+                          description: One up to three lenght array of class from data ontology.
+                        style_merge:
+                          type: boolean
+                          description: Is this category used in the vector tiles background map.
+                        display_mode:
+                          type: string
+                          enum: [compact, large]
+                          description: How display the menu item.
+                        zoom:
+                          type: integer
+                          description: Zoom level to show this category POI.
+                        filters:
+                          type: array
+                          items:
+                            oneOf:
+                            - type: object
+                              additionalProperties: false
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ['multiselection', 'checkboxes_list']
+                                property:
+                                  type: string
+                                name:
+                                  $ref: '#/components/schemas/multilingual_string'
+                                values:
+                                  type: object
+                                  additionalProperties: false
+                                  properties:
+                                    value:
+                                      type: string
+                                    name:
+                                      $ref: '#/components/schemas/multilingual_string'
+                            - type: object
+                              additionalProperties: false
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ['boolean']
+                                property:
+                                  type: string
+                                name:
+                                  $ref: '#/components/schemas/multilingual_string'
+                            - type: object
+                              additionalProperties: false
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ['date_range']
+                                property_begin:
+                                  type: string
+                                property_end:
+                                  type: string
+                                name:
+                                  $ref: '#/components/schemas/multilingual_string'
+                            - type: object
+                              additionalProperties: false
+                              properties:
+                                type:
+                                  type: string
+                                  enum: ['number_range']
+                                property:
+                                  type: string
+                                name:
+                                  $ref: '#/components/schemas/multilingual_string'
+                                min:
+                                  type: number
+                                max:
+                                  type: number
+
+  /{project}/{theme}/poi/{id}.geojson:
+    get:
+      tags:
+        - poi
+      summary: Fetch one POI.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - $ref: '#/components/parameters/param_path_id'
+        - $ref: '#/components/parameters/param_query_geometry_as'
+        - $ref: '#/components/parameters/param_query_short_description'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/featurePoi'
+
+
+  /{project}/{theme}/poi/{id}/deps.geojson:
+    get:
+      tags:
+        - poi
+      summary: Fetch one POI and dependency POIs.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - $ref: '#/components/parameters/param_path_id'
+        - $ref: '#/components/parameters/param_query_geometry_as'
+        - $ref: '#/components/parameters/param_query_short_description'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/featureCollectionPoiDeps'
+
+  /{project}/{theme}/pois.{format}:
+    get:
+      tags:
+        - poi
+      summary: Fetch POIs.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - in: path
+          name: format
+          schema:
+            type: string
+            enum: [geojson, csv, pdf]
+          required: true
+          description: Output format
+        - in: query
+          name: idmenu
+          schema:
+            type: integer
+          description: Deprecated. Category id. Use `/{project}/{theme}/pois/category/{id}.{format}`.
+          deprecated: true
+        - in: query
+          name: ids
+          schema:
+            type: string
+            description: POIs ids, comma separated.
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+            description: Filter event by date.
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+            description: Filter event by date.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/featureCollectionPois'
+
+  /{project}/{theme}/pois/category/{id}.{format}:
+    get:
+      tags:
+        - poi
+      summary: Fetch POIs by category.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: Category id.
+        - in: path
+          name: format
+          schema:
+            type: string
+            enum: [geojson, csv]
+          required: true
+          description: Output format
+        - in: query
+          name: ids
+          schema:
+            type: string
+            description: POIs ids, comma separated.
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+            description: Filter event by date.
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+            description: Filter event by date.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/featureCollectionPois'
+
+  /{project}/{theme}/attribute_translations/{lang}.json:
+    get:
+      tags:
+        - i18n
+      summary: Attribute translations in context.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - in: path
+          name: lang
+          schema:
+            type: string
+          required: true
+          description: ISO Lang code.
+          example: FR
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    label:
+                      $ref: '#/components/schemas/multilingual_string'
+                    label_popup:
+                      $ref: '#/components/schemas/multilingual_string'
+                    label_details:
+                      $ref: '#/components/schemas/multilingual_string'
+                    label_list:
+                      $ref: '#/components/schemas/multilingual_string'
+                    values:
+                      type: object
+                      additionalProperties:
+                        type: object
+                        additionalProperties: false
+                        properties:
+                          label:
+                            $ref: '#/components/schemas/multilingual_string'
+                          label_popup:
+                            $ref: '#/components/schemas/multilingual_string'
+                          label_details:
+                            $ref: '#/components/schemas/multilingual_string'
+                          label_list:
+                            $ref: '#/components/schemas/multilingual_string'
+              example:
+                access:
+                  label:
+                    fr: Accès
+                  label_popup:
+                    fr: A.
+                  values:
+                    'yes':
+                      label:
+                        fr: Accès public
+
+  /{project}/{theme}/articles.json:
+    get:
+      tags:
+        - site
+      summary: Metadata of articles for a category.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - in: query
+          name: slug
+          schema:
+            type: string
+          required: true
+          description: Slug of the category.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: false
+                  properties:
+                    post_id:
+                      type: integer
+                    title:
+                      type: string
+                    url:
+                      type: string
+
+  /search:
+    get:
+      tags:
+        - search
+      summary: Search on POIs and addresses.
+      parameters:
+        - in: query
+          name: project_theme
+          schema:
+            type: string
+          required: true
+          description: Slug of the project and the theme.
+          example: cdt99-tourism
+        - in: query
+          name: type
+          schema:
+            type: string
+            enum: ['menu_item', 'poi']
+          required: true
+          description: Data set to be searched on.
+          example: pois
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: Free form query string.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/featureCollectionSearch'
+
+components:
+  schemas:
+    tile_source_geojson:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: [geojson]
+        data:
+          oneOf:
+            - type: object
+            - type: string
+
+    tile_source:
+      oneOf:
+        - $ref: '#/components/schemas/tile_source_geojson'
+
+    multilingual_string:
+      additionalProperties:
+        type: string
+      description: Language as keys, translation as values.
+      example:
+        en: Cat
+        fr: Chat
+
+    fields_list_item:
+      type: object
+      additionalProperties: false
+      properties:
+        label:
+          type: boolean
+          description: Display the field label or not.
+          default: false
+        field:
+          type: string
+
+    fields_list_group:
+      type: object
+      additionalProperties: false
+      properties:
+        group:
+          type: string
+        display_mode:
+          type: string
+          enum: [standard, card]
+          description: How display the group.
+        icon:
+          type: string
+          description: CSS identifier of the icons.
+        fields:
+          type: array
+          items:
+            $ref: '#/components/schemas/fields_list_item'
+
+    fields_list:
+      type: array
+      items:
+        oneOf:
+        - $ref: '#/components/schemas/fields_list_item'
+        - $ref: '#/components/schemas/fields_list_group'
+      description: Group fields or fields to display in context.
+      example:
+        - field: name
+        - group: contact
+          fields:
+            - field: phone
+            - field: email
+
+    featurePoi:
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ['Feature']
+        geometry:
+          type: object
+        properties:
+          type: object
+          additionalProperties:
+            oneOf:
+              - type: string
+              - type: number
+            description: An open of first level properties can provided.
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+              description: Content description in HTML or beginning only full text. Look at `short_description` parameter.
+            image:
+              type: array
+              items:
+                type: string
+              description: Image URLs.
+            image:thumbnail:
+              type: string
+              description: Image thumbnail URL.
+            phone:
+              type: array
+              items:
+                type: string
+            email:
+              type: array
+              items:
+                type: string
+            website:
+              type: array
+              items:
+                type: string
+                description: External mains URL.
+            route:gpx_trace:
+              type: string
+              description: URL of the route trace in GPX.
+            route:pdf:
+              type: string
+              description: PDF Route topo URL.
+            route:hiking:difficulty:
+              type: string
+              description: Difficulty level of the route by hiking.
+              enum: [easy, normal, hard]
+            route:hiking:duration:
+              type: integer
+              description: In minutes.
+            route:hiking:length:
+              type: integer
+              description: In kilometers.
+            route:bicycle:difficulty:
+              type: string
+              description: Difficulty level of the route by bicycle.
+              enum: [easy, normal, hard]
+            route:bicycle:duration:
+              type: integer
+              description: In minutes.
+            route:bicycle:length:
+              type: integer
+              description: In kilometers.
+            route:road:difficulty:
+              type: string
+              description: Difficulty level of the route by car on road.
+              enum: [easy, normal, hard]
+            route:road:duration:
+              type: integer
+              description: In minutes.
+            route:road:length:
+              type: integer
+              description: In kilometers.
+            start_date:
+              type: string
+              format: date
+            end_date:
+              type: string
+              format: date
+            download:
+              type: array
+              items:
+                type: string
+                description: Documents URL to download.
+            metadata:
+              type: object
+              additionalProperties: false
+              properties:
+                id:
+                  type: integer
+                cartocode:
+                  type: string
+                  description: Short alphanumeric identifier code.
+                category_ids:
+                  type: array
+                  items:
+                    type: integer
+                updated_at:
+                  type: string
+                  # format: date-time ########## FIXME to be normalized in data source
+                source:
+                  type: string
+                  description: Identifier of the data source of the POI
+                osm_id:
+                  type: integer
+                  description: OpenStreetMap object id.
+                osm_type:
+                  type: string
+                  enum: ['node', 'way', 'relation']
+                  description: OpenStreetMap object type.
+            display:
+              type: object
+              description: Properties to help how to display.
+              additionalProperties: false
+              properties:
+                icon:
+                  type: string
+                  description: CSS identifier of the icons.
+                color_fill:
+                  type: string
+                  description: Web color identifier.
+                color_line:
+                  type: string
+                  description: Web color identifier.
+                style_class:
+                  type: array
+                  items:
+                    type: string
+                  description: Three level path into the ontology classification.
+            editorial:
+              type: object
+              additionalProperties: false
+              properties:
+                popup_fields:
+                  $ref: '#/components/schemas/fields_list'
+                  description: List of properties to display in popups.
+                details_fields:
+                  $ref: '#/components/schemas/fields_list'
+                  description: List of properties to display on details.
+                list_fields:
+                  $ref: '#/components/schemas/fields_list'
+                  description: List of properties to display on list view.
+                class_label:
+                  $ref: '#/components/schemas/multilingual_string'
+                  description: POI name type.
+                class_label_popup:
+                  $ref: '#/components/schemas/multilingual_string'
+                  description: Popup POI name type.
+                class_label_details:
+                  $ref: '#/components/schemas/multilingual_string'
+                  description: Details POI name type.
+                website:details:
+                  type: string
+                  description: Internal details URL. Alternative to external URL from `website`.
+                unavoidable:
+                  type: boolean
+                  description: Is the POI a main POI of the area.
+            ref:
+              type: string
+              description: Reference identifier.
+
+    featureCollectionPois:
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ['FeatureCollection']
+        features:
+          type: array
+          items:
+            $ref: '#/components/schemas/featurePoi'
+
+    featureCollectionPoiDeps:
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ['FeatureCollection']
+        features:
+          type: array
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/featurePoi' # Main POI and POI deps
+              - properties: # Route waypoints
+                  type:
+                    type: string
+                    enum: ['Feature']
+                  additionalProperties: false
+                  properties:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      id:
+                        type: integer
+                      route:point:type:
+                        type: string
+                        enum: ['parking', 'start', 'end', 'way_point']
+                      name:
+                        $ref: '#/components/schemas/multilingual_string'
+                      description:
+                        $ref: '#/components/schemas/multilingual_string'
+
+    featureSearch:
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ['Feature']
+        additionalProperties: false
+        properties:
+          type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+            type:
+              type: string
+              enum: ['menu_item', 'poi', 'cartocode']
+            label:
+              type: string
+              description: The result name to be displayed.
+            icon:
+              type: string
+              description: CSS icon.
+            color_fill:
+              type: string
+              description: CSS color.
+            color_line:
+              type: string
+              description: CSS color.
+            filter_property:
+              type: string
+              description: Only for `type=menu_item`. Property to filter on.
+            filter_value:
+              type: string
+              description: Only for `type=menu_item`. Property value to filter on.
+
+    featureCollectionSearch:
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ['FeatureCollection']
+        feature:
+          type: array
+          items:
+            $ref: '#/components/schemas/featureSearch'
+
+  parameters:
+    param_path_project:
+      in: path
+      name: project
+      schema:
+        type: string
+      required: true
+      description: Name of the project.
+      example: cdt99
+
+    param_path_theme:
+      in: path
+      name: theme
+      schema:
+        type: string
+      required: true
+      description: Name of the theme, subset of data.
+      example: tourism
+
+    param_path_id:
+      in: path
+      name: id
+      schema:
+        type: string
+      required: true
+      example: "`66`, `cartocode:A1`, `ref:source-slug:202` (where `source-slug` if the slug of the data source), `osm:w122937626` (osm type and id)"
+
+    param_query_geometry_as:
+      in: query
+      name: geometry_as
+      schema:
+        type: string
+        enum: [point, bbox]
+      description: Simplifie output geometry.
+
+    param_query_short_description:
+      in: query
+      name: short_description
+      schema:
+        type: boolean
+        default: false
+      description: Output only a the beginning of the description in full text format.
