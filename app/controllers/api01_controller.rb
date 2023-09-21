@@ -61,9 +61,10 @@ class Api01Controller < ApplicationController
   private
 
   def query(subject, params)
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
       conn.exec_params("SELECT * FROM #{subject}", params) { |result|
-        JSON.parse(result.first['d'])
+        row = result.first&.[]('d')
+        JSON.parse(row) if !row.nil?
       }
     }
   end

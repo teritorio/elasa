@@ -8,7 +8,10 @@ require_relative '../test_helper'
 
 class Api01ControllerTest < ActionController::TestCase
   def setup
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
+      conn.exec(File.new('docker/directus/elasa-schema.sql').read
+        .gsub('DROP SCHEMA IF EXISTS public;', '')
+        .gsub('CREATE SCHEMA public;', ''))
       conn.exec(File.new('lib/api.sql').read)
     }
 
