@@ -21,16 +21,16 @@ SET row_security = off;
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url) FROM stdin;
-filters	\N	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N
+filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N
-menu_items	\N	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N
+menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N
 menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N
 menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N
-pois	\N	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N
-projects	\N	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}
-sources	\N	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
-themes	\N	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N
+pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N
+projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}
+sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
+themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N
 \.
 
 
@@ -49,8 +49,8 @@ f400ab71-d9c5-4ea8-96aa-0958f373ccca	Administrator	verified	$t:admin_description
 --
 
 COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, theme, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id) FROM stdin;
-3c0b4886-bfde-4fe5-9b68-a65381880aae	Frédéric	Rodrigo	frederic@teritorio.fr	$argon2id$v=19$m=65536,t=3,p=4$iTzKJuByNiJAe475ITlJ3Q$Nw84KHKpVfD7/zifqZdXguhYmXrDCdJjtq4xY0kTiMA	\N	\N	\N	\N	\N	\N	auto	\N	active	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	\N	2023-09-20 11:42:39.775+00	/content/pois	default	\N	\N	t	1
-7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-09-20 12:17:55.666+00	/settings/data-model/menu_items	default	\N	\N	t	1
+3c0b4886-bfde-4fe5-9b68-a65381880aae	Frédéric	Rodrigo	frederic@teritorio.fr	$argon2id$v=19$m=65536,t=3,p=4$iTzKJuByNiJAe475ITlJ3Q$Nw84KHKpVfD7/zifqZdXguhYmXrDCdJjtq4xY0kTiMA	\N	\N	\N	\N	\N	\N	auto	\N	active	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	\N	2023-09-21 08:07:10.461+00	/content/themes	default	\N	\N	t	6
+7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-09-20 21:50:39.146+00	/settings/data-model/filters	default	\N	\N	t	\N
 \.
 
 
@@ -71,7 +71,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 3	junction_directus_roles_undefined	directus_roles_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 4	junction_directus_roles_undefined	item	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 5	junction_directus_roles_undefined	collection	\N	\N	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
-6	projects	polygon	\N	\N	\N	formatted-json-value	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+6	projects	polygon	\N	\N	\N	formatted-json-value	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 7	themes	project_id	\N	select-dropdown-m2o	\N	related-values	{"template":"{{slug}}"}	t	f	2	full	\N	\N	\N	f	\N	\N	\N
 8	themes	slug	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 9	themes	name	cast-json	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
@@ -83,11 +83,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 15	themes	id	\N	\N	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 16	projects	themes	o2m	list-o2m	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 17	projects	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
-18	projects	slug	\N	\N	\N	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
-19	projects	name	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 20	projects	attributions	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-22	projects	bbox_line	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+22	projects	bbox_line	\N	\N	\N	\N	\N	f	t	7	full	\N	\N	\N	f	\N	\N	\N
 23	sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 24	sources	project_id	\N	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 25	sources	slug	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
@@ -100,14 +98,14 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 38	menu_items_childrens	collection	\N	\N	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 40	menu_items	menu_item_parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
-46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":"{{slug}}"}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
+46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":"{{type}}{{slug}}{{name}}"}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	6	full	\N	\N	\N	f	\N	\N	\N
 49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{category_id.slug}}"}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	5	full	\N	\N	\N	t	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
 56	menu_items	selected_by_default	\N	\N	\N	\N	\N	f	f	2	half	\N	\N	\N	f	behavior	\N	\N
-59	menu_items	slug	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+59	menu_items	slug	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 61	menu_items	name	cast-json	input-code	\N	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
 62	menu_items	icon	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	t	UI	\N	\N
 65	menu_items	UI	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
@@ -127,19 +125,19 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 81	menu_items	href	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	link	\N	\N
 82	filters	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 83	filters	type	\N	select-dropdown	{"choices":[{"text":"multiselection","value":"multiselection"},{"text":"checkboxes_list","value":"checkboxes_list"},{"text":"boolean","value":"boolean"},{"text":"date_range","value":"date_range"},{"text":"number_range","value":"number_range"}]}	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
-85	filters	name	cast-json	input-code	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+85	filters	name	cast-json	input-code	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
 86	filters	property_end	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	date_range	\N	\N
 87	filters	property_begin	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
 88	filters	date_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	4	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 89	filters	number_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	5	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 90	filters	min	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	number_range	\N	\N
 91	filters	max	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	number_range	\N	\N
-98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
+98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
 107	menu_items	filters	m2m	list-m2m	\N	\N	\N	f	f	7	full	\N	\N	\N	f	category	\N	\N
 108	menu_items_filters	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 109	menu_items_filters	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 110	menu_items_filters	filters_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-111	menu_items	accordion-xkp6bl	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+111	menu_items	accordion-xkp6bl	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 112	menu_items	menu_group	alias,no-data,group	group-detail	\N	\N	\N	f	f	1	full	\N	\N	\N	f	accordion-xkp6bl	\N	\N
 113	filters	accordion-ysehx-	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 114	filters	multiselection	alias,no-data,group	group-detail	\N	\N	\N	f	f	1	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
@@ -156,6 +154,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 127	menu_items	style_class_string	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	f	category	\N	\N
 128	menu_items	style_class	\N	\N	\N	\N	\N	f	t	6	full	\N	\N	\N	f	category	\N	\N
+129	projects	name	cast-json	input-code	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+131	projects	slug	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
+132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	9	full	\N	\N	\N	t	\N	\N	\N
 \.
 
 
@@ -294,7 +295,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 --
 
 COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios) FROM stdin;
-1	Elasa	\N	\N	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":false},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N
+1	Elasa	\N	\N	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N
 \.
 
 
@@ -333,7 +334,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 128, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 132, true);
 
 
 --

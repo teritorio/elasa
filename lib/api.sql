@@ -49,9 +49,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
-                'menu_group', CASE WHEN
-                    menu_items_sources.menu_items_id IS NULL AND
-                    menu_items.href IS NULL THEN
+                'menu_group', CASE WHEN type = 'menu_group' THEN
                     jsonb_build_object(
                         'id', menu_items.id,
                         'slug', menu_items.slug,
@@ -62,9 +60,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                         'style_class', menu_items.style_class
                     )
                 END,
-                'category', CASE WHEN
-                    menu_items_sources.menu_items_id IS NOT NULL AND
-                    menu_items.href IS NULL THEN
+                'category', CASE WHEN type = 'category' THEN
                     jsonb_build_object(
                         'id', menu_items.id,
                         'slug', menu_items.slug,
@@ -91,8 +87,6 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                             -- TODO ---------------------------
                                             -- value:
                                             --   type: string
-                                            -- name:
-                                            --   $ref: '#/components/schemas/multilingual_string'
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
@@ -100,8 +94,6 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                             -- TODO ---------------------------
                                             -- value:
                                             --   type: string
-                                            -- name:
-                                            --   $ref: '#/components/schemas/multilingual_string'
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -129,9 +121,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                         )
                     )
                 END,
-                'link', CASE WHEN
-                    menu_items_sources.menu_items_id IS NULL AND
-                    menu_items.href IS NOT NULL THEN
+                'link', CASE WHEN type = 'link' THEN
                     jsonb_build_object(
                         'id', menu_items.id,
                         'slug', menu_items.slug,

@@ -741,7 +741,7 @@ CREATE TABLE public.directus_users (
     external_identifier character varying(255),
     auth_data json,
     email_notifications boolean DEFAULT true,
-    project_id integer NOT NULL
+    project_id integer
 );
 
 
@@ -1312,7 +1312,7 @@ ALTER TABLE ONLY public.directus_shares
 --
 
 ALTER TABLE ONLY public.directus_users
-    ADD CONSTRAINT directus_users_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT directus_users_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 
 --
