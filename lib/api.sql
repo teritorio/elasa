@@ -141,8 +141,6 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
             themes.slug = _theme_slug
         JOIN menu_items ON
             menu_items.theme_id = themes.id
-        LEFT JOIN menu_items_sources ON
-            menu_items_sources.menu_items_id = menu_items.id
     WHERE
         projects.slug = _project_slug
     ;
@@ -230,7 +228,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     )
             )) AS feature
         FROM
-            -- TODO only menu_items recursively from theme
+            -- TODO only for not hidden menu_items, recursively from theme
             pois
             JOIN projects ON
                 projects.slug = _project_slug
