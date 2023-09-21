@@ -152,7 +152,13 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 DROP FUNCTION IF EXISTS postgisftw.pois;
 CREATE OR REPLACE FUNCTION postgisftw.pois(
     _project_slug text,
-    _theme_slug text
+    _theme_slug text,
+    _category_id integer,
+    _poi_ids integer[],
+    _geometry_as text,
+    _short_description boolean,
+    _start_date text,
+    _end_date text
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
@@ -165,7 +171,12 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
         SELECT
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
-                'geometry', ST_AsGeoJSON(pois.geom)::jsonb,
+                'geometry',
+                    CASE _geometry_as
+                    WHEN 'point' THEN ST_AsGeoJSON(ST_PointOnSurface(pois.geom))::jsonb
+                    WHEN 'bbox' THEN ST_AsGeoJSON(ST_Envelope(pois.geom))::jsonb
+                    ELSE ST_AsGeoJSON(pois.geom)::jsonb
+                    END,
                 'properties',
                     (pois.properties->'tags')
                         - 'name' - 'description' - 'website:details'
@@ -173,7 +184,12 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
                         'name', pois.properties->'tags'->'name'->'fr',
-                        'description', pois.properties->'tags'->'description'->'fr',
+                        'description',
+                            CASE _short_description
+                            -- TODO strip html tags before substr
+                            WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 21)
+                            ELSE pois.properties->'tags'->'description'->>'fr'
+                            END,
                         'website:details', pois.properties->'tags'->'website:details'->'fr',
                         -- addr
                         'addr:street', pois.properties->'tags'->'addr'->'street',
@@ -215,19 +231,24 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
         FROM
             -- TODO only menu_items recursively from theme
             pois
-            JOIN sources ON
-                sources.id = pois.source_id
             JOIN projects ON
-                projects.id = sources.project_id AND
                 projects.slug = _project_slug
             JOIN themes ON
                 themes.project_id = projects.id AND
                 themes.slug = _theme_slug
             JOIN menu_items ON
-                menu_items.theme_id = themes.id
+                menu_items.theme_id = themes.id AND
+                (_category_id IS NULL OR menu_items.id = _category_id)
+            JOIN sources ON
+                sources.project_id = projects.id
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id AND
                 menu_items_sources.sources_id = sources.id
+        WHERE
+            pois.source_id = sources.id AND
+            (_poi_ids IS NULL OR pois.id = ANY(_poi_ids)) AND
+            (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
+            (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
         GROUP BY
             pois.id,
             pois.properties,

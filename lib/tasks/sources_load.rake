@@ -91,7 +91,6 @@ def load_pois(conn, project_slug, source_slug, pois)
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data('COPY pois_import FROM STDIN (FORMAT binary)', enco) {
     pois.each{ |feature|
-      puts feature['properties']['id']
       conn.put_copy_data([feature['geometry'].to_json, feature['properties'].to_json])
     }
   }

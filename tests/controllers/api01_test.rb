@@ -16,7 +16,8 @@ class Api01ControllerTest < ActionController::TestCase
   end
 
   def schema_for(path)
-    "#/paths/~1{project}~1{theme}~1#{path}/get/responses/200/content/application~1json/schema"
+    path = "/{project}/{theme}/#{path}".gsub('/', '~1')
+    "#/paths/#{path}/get/responses/200/content/application~1json/schema"
   end
 
   def test_settings
@@ -33,11 +34,56 @@ class Api01ControllerTest < ActionController::TestCase
     JSON::Validator.validate!(@schema, json, fragment: schema_for('menu.json'))
   end
 
+  def test_poi
+    get :poi, params: { project: 'seignanx', theme: 'tourism', id: 1 }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}.geojson'))
+  end
+
+  def test_pois_category
+    get :pois_category, params: { project: 'seignanx', theme: 'tourism', category_id: 1175 }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    assert !json['features'].empty?
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois/category/{id}.{format}'))
+  end
+
   def test_pois
     get :pois, params: { project: 'seignanx', theme: 'tourism' }
     assert_response :success
     json = JSON.parse(@response.body)
-    puts JSON.pretty_generate(json)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+  end
+
+  def test_ids
+    get :pois, params: { project: 'seignanx', theme: 'tourism', ids: '1,2' }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+  end
+
+  def test_geometry_as
+    # TODO: check with non point geom
+    get :pois, params: { project: 'seignanx', theme: 'tourism', geometry_as: 'point' }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+  end
+
+  def test_short_description
+    # TODO: check on html long description
+    get :pois, params: { project: 'seignanx', theme: 'tourism', short_description: 'true' }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+  end
+
+  def test_dates
+    # TODO: check on object with dates
+    get :pois, params: { project: 'seignanx', theme: 'tourism', start_date: '2022-01-01', end_date: '2022-12-31' }
+    assert_response :success
+    json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
   end
 end

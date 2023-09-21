@@ -6,6 +6,8 @@ Rails.application.routes.draw do
   scope '/api/0.1/:project/:theme' do
     get 'settings', controller: 'api01'
     get 'menu', controller: 'api01'
+    get 'poi/:id', controller: 'api01', action: :poi
     get 'pois', controller: 'api01'
+    get 'pois/category/:category_id', controller: 'api01', action: :pois_category
   end
 end
