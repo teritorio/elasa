@@ -158,7 +158,8 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
     _geometry_as text,
     _short_description boolean,
     _start_date text,
-    _end_date text
+    _end_date text,
+    _with_deps boolean
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
@@ -247,6 +248,10 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
         WHERE
             pois.source_id = sources.id AND
             (_poi_ids IS NULL OR pois.id = ANY(_poi_ids)) AND
+            (_with_deps IS NULL OR
+                pois.id = ANY(_poi_ids) OR
+                pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.id = ANY(_poi_ids))
+            ) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
         GROUP BY

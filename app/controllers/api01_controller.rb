@@ -20,7 +20,7 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     id = params.require(:id).to_i
 
-    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8)', [
+    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
       project_slug,
       theme_slug,
       nil,
@@ -29,8 +29,9 @@ class Api01Controller < ApplicationController
       params[:short_description],
       nil,
       nil,
+      params[:deps] == true,
     ])
-    render json: pois['features'][0]
+    render json: params[:deps] == true ? pois : pois['features'][0]
   end
 
   def pois
@@ -38,15 +39,16 @@ class Api01Controller < ApplicationController
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
     ids = params[:ids]&.split(',')&.collect(&:to_i)
 
-    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8)', [
-      params[:project_slug],
-      params[:theme_slug],
+    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
+      project_slug,
+      theme_slug,
       category_id,
       PG::TextEncoder::Array.new.encode(ids),
       params[:geometry_as],
       ActiveModel::Type::Boolean.new.cast(params[:short_description]),
       params[:start_date],
       params[:end_date],
+      nil,
     ])
     render json: pois
   end

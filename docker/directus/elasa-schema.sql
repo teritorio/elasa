@@ -27,6 +27,7 @@ ALTER TABLE ONLY public.themes DROP CONSTRAINT menu_items_fk_project_id;
 ALTER TABLE ONLY public.menu_items_filters DROP CONSTRAINT menu_items_filters_menu_items_id_foreign;
 ALTER TABLE ONLY public.menu_items_filters DROP CONSTRAINT menu_items_filters_filters_id_foreign;
 ALTER TABLE ONLY public.filters DROP CONSTRAINT filters_project_id_foreign;
+DROP INDEX public.pois_idx_properties_id;
 ALTER TABLE ONLY public.themes DROP CONSTRAINT themes_project_id_slug_key;
 ALTER TABLE ONLY public.themes DROP CONSTRAINT themes_pkey;
 ALTER TABLE ONLY public.sources DROP CONSTRAINT sources_pkey;
@@ -614,6 +615,13 @@ ALTER TABLE ONLY public.themes
 
 ALTER TABLE ONLY public.themes
     ADD CONSTRAINT themes_project_id_slug_key UNIQUE (project_id, slug);
+
+
+--
+-- Name: pois_idx_properties_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_idx_properties_id ON public.pois USING btree (((properties ->> 'id'::text)));
 
 
 --

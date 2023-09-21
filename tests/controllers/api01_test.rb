@@ -41,6 +41,13 @@ class Api01ControllerTest < ActionController::TestCase
     JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}.geojson'))
   end
 
+  def test_poi_deps
+    get :poi, params: { project: 'seignanx', theme: 'tourism', id: 1 }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}/deps.geojson'))
+  end
+
   def test_pois_category
     get :pois_category, params: { project: 'seignanx', theme: 'tourism', category_id: 1175 }
     assert_response :success
