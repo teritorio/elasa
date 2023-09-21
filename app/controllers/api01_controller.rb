@@ -29,9 +29,9 @@ class Api01Controller < ApplicationController
       params[:short_description],
       nil,
       nil,
-      params[:deps] == true,
+      params[:deps] == 'true',
     ])
-    render json: params[:deps] == true ? pois : pois['features'][0]
+    render json: params[:deps] == 'true' ? pois : pois['features'][0]
   end
 
   def pois
