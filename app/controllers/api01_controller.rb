@@ -6,7 +6,19 @@ class Api01Controller < ApplicationController
     project_slug, = project_theme_params
 
     project = query('postgisftw.project($1)', [project_slug])
-    render json: project
+    render json: project.except('articles')
+  end
+
+  def articles
+    project_slug, = project_theme_params
+
+    project = query('postgisftw.project($1)', [project_slug])
+    render json: project['articles'].collect{ |article|
+      {
+        url: article['url']['fr'],
+        title: article['title']['fr'],
+      }
+    }
   end
 
   def menu

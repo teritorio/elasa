@@ -470,7 +470,8 @@ CREATE TABLE public.projects (
     polygon public.geometry(Polygon,4326),
     bbox_line public.geometry(LineString,4326) GENERATED ALWAYS AS (public.st_makeline(public.st_makepoint(public.st_xmin((polygon)::public.box3d), public.st_ymin((polygon)::public.box3d)), public.st_makepoint(public.st_xmax((polygon)::public.box3d), public.st_ymax((polygon)::public.box3d)))) STORED NOT NULL,
     name json,
-    slug character varying(255) DEFAULT NULL::character varying
+    slug character varying(255) DEFAULT NULL::character varying,
+    articles json
 );
 
 

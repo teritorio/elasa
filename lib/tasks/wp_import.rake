@@ -11,25 +11,33 @@ def fetch_json(url)
   JSON.parse(HTTP.follow.get(url))
 end
 
-def load_settings(project_slug, _theme_slug, url)
+def load_settings(project_slug, _theme_slug, url, url_articles)
   settings = fetch_json(url)
+  articles = fetch_json(url_articles)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec(
       '
-      INSERT INTO projects(slug, name, icon_font_css_url, polygon)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO projects(slug, name, icon_font_css_url, polygon, articles)
+      VALUES ($1, $2, $3, $4, $5)
       ON CONFLICT (slug)
       DO UPDATE SET
         name = $2,
         icon_font_css_url = $3,
-        polygon = $4
+        polygon = $4,
+        articles = $5
       ',
       [
         project_slug,
         { fr: settings['name'] }.to_json,
         'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0',
         settings['polygon']['data'].to_json,
+        articles.collect{ |article|
+          {
+            title: { fr: article['title'] },
+            url: { fr: article['url'] },
+          }
+        }.to_json,
       ]
     )
 
@@ -346,7 +354,7 @@ namespace :wp do
   desc 'Import data from API'
   task :import, %i[project_slug theme_slug] => :environment do |_tasks, args|
     base_url = "https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/#{args[:project_slug]}/#{args[:theme_slug]}"
-    load_settings(args[:project_slug], args[:theme_slug], "#{base_url}/settings.json")
+    load_settings(args[:project_slug], args[:theme_slug], "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
     load_menu(args[:project_slug], args[:theme_slug], "#{base_url}/menu.json", "#{base_url}/pois.json")
   end
 end

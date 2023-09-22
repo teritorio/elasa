@@ -31,6 +31,15 @@ class Api01ControllerTest < ActionController::TestCase
     JSON::Validator.validate!(@schema, json, fragment: schema_for('settings.json'))
   end
 
+  def test_articles
+    get :articles, params: { project: 'test', theme: 'theme' }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('articles.json'))
+
+    assert_equal 1, json.size
+  end
+
   def test_menu
     get :menu, params: { project: 'test', theme: 'theme' }
     assert_response :success
