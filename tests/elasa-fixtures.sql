@@ -44,7 +44,7 @@ INSERT INTO public.fields_fields (id, fields_id, related_fields_id, index) VALUE
 -- Data for Name: filters; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-
+INSERT INTO public.filters (id, type, name, property_end, property_begin, min, max, project_id, multiselection_property, checkboxes_list_property, boolean_property, number_range_property) VALUES (1, 'checkboxes_list', '{"fr":"Nombre d''étoiles"}', NULL, NULL, NULL, NULL, 1, 'stars', 'stars', 'stars', 'stars');
 
 --
 -- Data for Name: junction_directus_roles_undefined; Type: TABLE DATA; Schema: public; Owner: postgres
@@ -80,6 +80,7 @@ INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, par
 -- Data for Name: menu_items_filters; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+INSERT INTO public.menu_items_filters (id, menu_items_id, filters_id) VALUES (1, 5, 1);
 
 
 --
@@ -101,7 +102,7 @@ INSERT INTO public.menu_items_sources (id, menu_items_id, sources_id) VALUES (1,
 --
 
 INSERT INTO public.pois (id, geom, properties, source_id) VALUES (1, '0101000020E6100000C0B167CF652AF7BF01E951A7F2C74540', '{"id": "ORGAQU040FS0002W", "tags": {"ref": {"FR:CRTA": "ORGAQU040FS0002W"}, "addr": {"city": "ONDRES", "street": "2066 avenue du 11 novembre 1918", "postcode": "40440"}, "name": {"fr": "Agence Tout L''Immobilier"}, "description": {"fr": "Tout l’Immobilier – <b>Ondres</b>\nL’agence Tout l’Immobilier est implantée à Ondres depuis 2007.\nLes valeurs fondamentales de cette entreprise sont la qualité de service et la satisfaction client. L’objectif de toute l’équipe est de vous accompagner dans une relation de confiance pour vos futurs projets d’achat, de vente, de gestion et de location de la Côte Sud Landes jusqu’à la Côte Basque."}}, "source": "Sirtaqui", "updated_at": "2023-06-06T11:06:49", "refs": ["ORGAQU040FS0002W-ref1"]}', 1);
-INSERT INTO public.pois (id, geom, properties, source_id) VALUES (2, '0101000020E6100000C0B167CF652AF7BF01E951A7F2C74540', '{"id": "ORGAQU040FS0002W-ref1", "tags": {"name": {"fr": "ref"}}, "source": "Sirtaqui", "updated_at": "2023-06-06T11:06:49"}', 1);
+INSERT INTO public.pois (id, geom, properties, source_id) VALUES (2, '01030000000100000005000000000000000000F03F000000000000F03F0000000000001440000000000000F03F00000000000014400000000000001440000000000000F03F0000000000001440000000000000F03F000000000000F03F', '{"id": "ORGAQU040FS0002W-ref1", "tags": {"name": {"fr": "ref"}, "end_date": "2000-01-01"}, "source": "Sirtaqui", "updated_at": "2023-06-06T11:06:49"}', 1);
 
 
 --

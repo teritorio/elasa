@@ -37,7 +37,8 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('menu.json'))
 
-    # TODO: assert filter
+    assert_equal 5, json[4]['id']
+    assert !json[4]['category']['filters'].empty?
   end
 
   def test_poi
@@ -55,7 +56,7 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}/deps.geojson'))
 
-    assert 2, json['features'].size
+    assert_equal 2, json['features'].size
   end
 
   def test_pois_category
@@ -65,7 +66,7 @@ class Api01ControllerTest < ActionController::TestCase
     assert !json['features'].empty?
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois/category/{id}.{format}'))
 
-    assert 2, json['features'].size
+    assert_equal 2, json['features'].size
   end
 
   def test_pois
@@ -74,7 +75,9 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
 
-    assert 2, json['features'].size
+    assert_equal 2, json['features'].size
+    assert 'Point', json['features'][0]['geometry']['type']
+    assert 'Polygon', json['features'][1]['geometry']['type']
   end
 
   def test_ids
@@ -83,15 +86,16 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
 
-    assert 2, json['features'].size
+    assert_equal 2, json['features'].size
   end
 
   def test_geometry_as
-    # TODO: check with non point geom
-    get :pois, params: { project: 'test', theme: 'theme', geometry_as: 'point' }
+    get :poi, params: { project: 'test', theme: 'theme', id: 2, geometry_as: 'point' }
     assert_response :success
     json = JSON.parse(@response.body)
-    JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}.geojson'))
+
+    assert 'Point', json['geometry']['type']
   end
 
   def test_short_description
@@ -100,15 +104,16 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
 
-    assert 20, json['features'][0]['properties']['description'].size
+    assert_equal 20, json['features'][0]['properties']['description'].size
     # TODO: assert no html tags
   end
 
   def test_dates
-    # TODO: check on object with dates
     get :pois, params: { project: 'test', theme: 'theme', start_date: '2022-01-01', end_date: '2022-12-31' }
     assert_response :success
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('pois.{format}'))
+
+    assert_equal 2, json['features'].size
   end
 end

@@ -218,7 +218,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
-                            WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 21)
+                            WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 20)
                             ELSE pois.properties->'tags'->'description'->>'fr'
                             END,
                         'website:details', pois.properties->'tags'->'website:details'->'fr',
@@ -277,11 +277,10 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                 menu_items_sources.sources_id = sources.id
         WHERE
             pois.source_id = sources.id AND
-            (_poi_ids IS NULL OR pois.id = ANY(_poi_ids)) AND
-            (_with_deps IS NULL OR
+            (_poi_ids IS NULL OR (
                 pois.id = ANY(_poi_ids) OR
-                pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.id = ANY(_poi_ids))
-            ) AND
+                (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.id = ANY(_poi_ids)))
+            )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
         GROUP BY
