@@ -36,6 +36,8 @@ class Api01ControllerTest < ActionController::TestCase
     assert_response :success
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('menu.json'))
+
+    # TODO: assert filter
   end
 
   def test_poi
@@ -43,6 +45,8 @@ class Api01ControllerTest < ActionController::TestCase
     assert_response :success
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('poi/{id}.geojson'))
+
+    assert json.dig('properties', 'editorial', 'popup_fields')
   end
 
   def test_poi_deps

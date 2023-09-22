@@ -21,12 +21,18 @@ ALTER TABLE IF EXISTS ONLY public.pois DROP CONSTRAINT IF EXISTS pois_source_id_
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_theme_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items_sources DROP CONSTRAINT IF EXISTS menu_items_sources_sources_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items_sources DROP CONSTRAINT IF EXISTS menu_items_sources_menu_items_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_popup_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_parent_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_list_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.sources DROP CONSTRAINT IF EXISTS menu_items_fk_project_id;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS menu_items_fk_project_id;
 ALTER TABLE IF EXISTS ONLY public.menu_items_filters DROP CONSTRAINT IF EXISTS menu_items_filters_menu_items_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items_filters DROP CONSTRAINT IF EXISTS menu_items_filters_filters_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_details_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.filters DROP CONSTRAINT IF EXISTS filters_project_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.fields DROP CONSTRAINT IF EXISTS fields_project_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_related_fields_id_foreign;
+ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_fields_id_foreign;
 DROP INDEX IF EXISTS public.pois_idx_properties_id;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_project_id_slug_key;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_pkey;
@@ -41,11 +47,16 @@ ALTER TABLE IF EXISTS ONLY public.menu_items_filters DROP CONSTRAINT IF EXISTS m
 ALTER TABLE IF EXISTS ONLY public.menu_items_childrens DROP CONSTRAINT IF EXISTS menu_items_childrens_pkey;
 ALTER TABLE IF EXISTS ONLY public.junction_directus_roles_undefined DROP CONSTRAINT IF EXISTS junction_directus_roles_undefined_pkey;
 ALTER TABLE IF EXISTS ONLY public.filters DROP CONSTRAINT IF EXISTS filters_pkey;
+ALTER TABLE IF EXISTS ONLY public.fields DROP CONSTRAINT IF EXISTS fields_project_id_field_group_key;
+ALTER TABLE IF EXISTS ONLY public.fields DROP CONSTRAINT IF EXISTS fields_pkey;
+ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_pkey;
 ALTER TABLE IF EXISTS public.menu_items_sources ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.menu_items_filters ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.menu_items_childrens ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.junction_directus_roles_undefined ALTER COLUMN id DROP DEFAULT;
 ALTER TABLE IF EXISTS public.filters ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.fields_fields ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.fields ALTER COLUMN id DROP DEFAULT;
 DROP TABLE IF EXISTS public.themes;
 DROP TABLE IF EXISTS public.sources;
 DROP TABLE IF EXISTS public.property_labels;
@@ -62,6 +73,10 @@ DROP SEQUENCE IF EXISTS public.junction_directus_roles_undefined_id_seq;
 DROP TABLE IF EXISTS public.junction_directus_roles_undefined;
 DROP SEQUENCE IF EXISTS public.filters_id_seq;
 DROP TABLE IF EXISTS public.filters;
+DROP SEQUENCE IF EXISTS public.fields_id_seq;
+DROP SEQUENCE IF EXISTS public.fields_fields_id_seq;
+DROP TABLE IF EXISTS public.fields_fields;
+DROP TABLE IF EXISTS public.fields;
 DROP TYPE IF EXISTS public.menu_item_display_mode_type;
 DROP TYPE IF EXISTS public.category_filters_type_type;
 DROP SCHEMA IF EXISTS public;
@@ -109,6 +124,81 @@ ALTER TYPE public.menu_item_display_mode_type OWNER TO postgres;
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
+
+--
+-- Name: fields; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.fields (
+    id integer NOT NULL,
+    type character varying(255) DEFAULT NULL::character varying NOT NULL,
+    field character varying(255),
+    "group" character varying(255),
+    display_mode character varying(255),
+    icon character varying(255),
+    project_id integer
+);
+
+
+ALTER TABLE public.fields OWNER TO postgres;
+
+--
+-- Name: fields_fields; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.fields_fields (
+    id integer NOT NULL,
+    fields_id integer NOT NULL,
+    related_fields_id integer NOT NULL,
+    index integer DEFAULT 1 NOT NULL
+);
+
+
+ALTER TABLE public.fields_fields OWNER TO postgres;
+
+--
+-- Name: fields_fields_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.fields_fields_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.fields_fields_id_seq OWNER TO postgres;
+
+--
+-- Name: fields_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.fields_fields_id_seq OWNED BY public.fields_fields.id;
+
+
+--
+-- Name: fields_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.fields_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.fields_id_seq OWNER TO postgres;
+
+--
+-- Name: fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.fields_id_seq OWNED BY public.fields.id;
+
 
 --
 -- Name: filters; Type: TABLE; Schema: public; Owner: postgres
@@ -213,7 +303,10 @@ CREATE TABLE public.menu_items (
     href character varying(255),
     style_class_string character varying(255),
     style_class character varying[] GENERATED ALWAYS AS (string_to_array((style_class_string)::text, ','::text)) STORED,
-    type character varying(255)
+    type character varying(255),
+    popup_fields_id integer,
+    details_fields_id integer,
+    list_fields_id integer
 );
 
 
@@ -479,6 +572,20 @@ ALTER TABLE public.themes ALTER COLUMN id ADD GENERATED BY DEFAULT AS IDENTITY (
 
 
 --
+-- Name: fields id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields ALTER COLUMN id SET DEFAULT nextval('public.fields_id_seq'::regclass);
+
+
+--
+-- Name: fields_fields id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_fields ALTER COLUMN id SET DEFAULT nextval('public.fields_fields_id_seq'::regclass);
+
+
+--
 -- Name: filters id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -511,6 +618,30 @@ ALTER TABLE ONLY public.menu_items_filters ALTER COLUMN id SET DEFAULT nextval('
 --
 
 ALTER TABLE ONLY public.menu_items_sources ALTER COLUMN id SET DEFAULT nextval('public.menu_items_sources_id_seq'::regclass);
+
+
+--
+-- Name: fields_fields fields_fields_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_fields
+    ADD CONSTRAINT fields_fields_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fields fields_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields
+    ADD CONSTRAINT fields_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fields fields_project_id_field_group_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields
+    ADD CONSTRAINT fields_project_id_field_group_key UNIQUE (project_id, field, "group");
 
 
 --
@@ -625,11 +756,43 @@ CREATE INDEX pois_idx_properties_id ON public.pois USING btree (((properties ->>
 
 
 --
+-- Name: fields_fields fields_fields_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_fields
+    ADD CONSTRAINT fields_fields_fields_id_foreign FOREIGN KEY (fields_id) REFERENCES public.fields(id) ON DELETE CASCADE;
+
+
+--
+-- Name: fields_fields fields_fields_related_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_fields
+    ADD CONSTRAINT fields_fields_related_fields_id_foreign FOREIGN KEY (related_fields_id) REFERENCES public.fields(id) ON DELETE CASCADE;
+
+
+--
+-- Name: fields fields_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields
+    ADD CONSTRAINT fields_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+
+--
 -- Name: filters filters_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.filters
     ADD CONSTRAINT filters_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: menu_items menu_items_details_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.menu_items
+    ADD CONSTRAINT menu_items_details_fields_id_foreign FOREIGN KEY (details_fields_id) REFERENCES public.fields(id) ON DELETE SET NULL;
 
 
 --
@@ -665,11 +828,27 @@ ALTER TABLE ONLY public.sources
 
 
 --
+-- Name: menu_items menu_items_list_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.menu_items
+    ADD CONSTRAINT menu_items_list_fields_id_foreign FOREIGN KEY (list_fields_id) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
 -- Name: menu_items menu_items_parent_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.menu_items
     ADD CONSTRAINT menu_items_parent_id_foreign FOREIGN KEY (parent_id) REFERENCES public.menu_items(id);
+
+
+--
+-- Name: menu_items menu_items_popup_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.menu_items
+    ADD CONSTRAINT menu_items_popup_fields_id_foreign FOREIGN KEY (popup_fields_id) REFERENCES public.fields(id) ON DELETE SET NULL;
 
 
 --

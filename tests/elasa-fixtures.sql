@@ -24,6 +24,23 @@ INSERT INTO public.projects (id, icon_font_css_url, polygon, name, slug) VALUES 
 
 
 --
+-- Data for Name: fields; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.fields (id, type, field, "group", display_mode, icon, project_id) VALUES (1, 'group', NULL, 'group_fields', NULL, NULL, 1);
+INSERT INTO public.fields (id, type, field, "group", display_mode, icon, project_id) VALUES (2, 'field', 'description', NULL, NULL, NULL, 1);
+
+
+
+--
+-- Data for Name: fields_fields; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.fields_fields (id, fields_id, related_fields_id, index) VALUES (1, 1, 2, 1);
+
+
+
+--
 -- Data for Name: filters; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
@@ -46,11 +63,11 @@ INSERT INTO public.themes (id, project_id, slug, name, description, site_url, ma
 -- Data for Name: menu_items; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type) VALUES (1, 0, false, false, NULL, 1, NULL, '{"en":"Root","fr":"Racine"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group');
-INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type) VALUES (2, 1, false, false, 1, 1, NULL, '{"fr":"Bloc Recherche"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group');
-INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type) VALUES (3, 2, true, false, 2, 1, NULL, '{"fr":"Recherche"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'search');
-INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type) VALUES (4, 3, false, false, 1, 1, NULL, '{"fr":"bloc poi"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group');
-INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type) VALUES (5, 4, false, false, 4, 1, NULL, '{"fr":"Hébergement"}', 'teritorio teritorio-hosting', 'compact', NULL, true, NULL, '#99163a', '#99163a', NULL, NULL, 'category');
+INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type, popup_fields_id, details_fields_id, list_fields_id) VALUES (1, 0, false, false, NULL, 1, NULL, '{"en":"Root","fr":"Racine"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group', NULL, NULL, NULL);
+INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type, popup_fields_id, details_fields_id, list_fields_id) VALUES (2, 1, false, false, 1, 1, NULL, '{"fr":"Bloc Recherche"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group', NULL, NULL, NULL);
+INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type, popup_fields_id, details_fields_id, list_fields_id) VALUES (3, 2, true, false, 2, 1, NULL, '{"fr":"Recherche"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'search', NULL, NULL, NULL);
+INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type, popup_fields_id, details_fields_id, list_fields_id) VALUES (4, 3, false, false, 1, 1, NULL, '{"fr":"bloc poi"}', '', 'compact', NULL, true, NULL, '', '', NULL, NULL, 'menu_group', NULL, NULL, NULL);
+INSERT INTO public.menu_items (id, index_order, hidden, selected_by_default, parent_id, theme_id, slug, name, icon, display_mode, search_indexed, style_merge, zoom, color_fill, color_line, href, style_class_string, type, popup_fields_id, details_fields_id, list_fields_id) VALUES (5, 4, false, false, 4, 1, NULL, '{"fr":"Hébergement"}', 'teritorio teritorio-hosting', 'compact', NULL, true, NULL, '#99163a', '#99163a', NULL, NULL, 'category', 1, 1, 1);
 
 
 --
@@ -96,6 +113,21 @@ INSERT INTO public.pois (id, geom, properties, source_id) VALUES (2, '0101000020
 --
 -- Data for Name: spatial_ref_sys; Type: TABLE DATA; Schema: public; Owner: postgres
 --
+
+
+
+--
+-- Name: fields_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.fields_fields_id_seq', 2, true);
+
+
+--
+-- Name: fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.fields_id_seq', 3, true);
 
 
 

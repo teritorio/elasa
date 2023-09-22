@@ -31,7 +31,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
     WHERE
         projects.slug = _project_slug
     ;
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+$$ LANGUAGE sql PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS postgisftw.menu;
@@ -144,7 +144,39 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
     WHERE
         projects.slug = _project_slug
     ;
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+$$ LANGUAGE sql PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS postgisftw.fields;
+CREATE OR REPLACE FUNCTION postgisftw.fields(
+    _root_field_id integer
+) RETURNS jsonb AS $$
+    SELECT
+        jsonb_strip_nulls(jsonb_build_object(
+            'field', field,
+            'group', "group",
+            'display_mode', display_mode,
+            'icon', icon,
+            'fields', nullif(
+                jsonb_agg(postgisftw.fields(fields_fields.related_fields_id) ORDER BY "index"),
+                '[null]'::jsonb
+            )
+        ))
+    FROM
+        fields
+        LEFT JOIN fields_fields ON
+            fields_fields.fields_id = fields.id
+    WHERE
+        fields.id = _root_field_id
+    GROUP BY
+        fields.id,
+        fields.field,
+        fields."group",
+        fields.display_mode,
+        fields.icon
+    ;
+$$ LANGUAGE sql PARALLEL SAFE;
+
 
 
 DROP FUNCTION IF EXISTS postgisftw.pois;
@@ -210,14 +242,14 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             -- osm_type
                         ),
                         'editorial', jsonb_build_object(
-                            -- 'popup_fields',
-                            -- 'details_fields',
-                            -- 'list_fields',
-                            -- 'class_label',
-                            -- 'class_label_popup',
-                            -- 'class_label_details',
-                            -- 'website:details',
-                            -- 'unavoidable'
+                            'popup_fields', postgisftw.fields((array_agg(menu_items.popup_fields_id ORDER BY menu_items.id))[1])->'fields',
+                            'details_fields', postgisftw.fields((array_agg(menu_items.details_fields_id ORDER BY menu_items.id))[1])->'fields',
+                            'list_fields', postgisftw.fields((array_agg(menu_items.list_fields_id ORDER BY menu_items.id))[1])->'fields',
+                            -- 'class_label', (array_agg(menu_items.class_label ORDER BY menu_items.id))[1],
+                            -- 'class_label_popup', (array_agg(menu_items.class_label_popup ORDER BY menu_items.id))[1],
+                            -- 'class_label_details', (array_agg(menu_items.class_label_details ORDER BY menu_items.id))[1],
+                            'website:details', pois.properties->'tags'->'website:details'
+                            -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1]
                         ),
                         'display', jsonb_build_object(
                             'icon', (array_agg(menu_items.icon ORDER BY menu_items.id))[1],
@@ -258,4 +290,4 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
             pois.geom
     ) AS t
     ;
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+$$ LANGUAGE sql PARALLEL SAFE;
