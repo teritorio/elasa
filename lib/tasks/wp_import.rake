@@ -18,14 +18,16 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec(
       '
-      INSERT INTO projects(slug, name, icon_font_css_url, polygon, articles)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO projects(slug, name, icon_font_css_url, polygon, articles, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (slug)
       DO UPDATE SET
         name = $2,
         icon_font_css_url = $3,
         polygon = $4,
-        articles = $5
+        articles = $5,
+        default_country = $6,
+        default_country_state_opening_hours = $7
       ',
       [
         project_slug,
@@ -38,16 +40,18 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
             url: { fr: article['url'] },
           }
         }.to_json,
+        settings['default_country'],
+        settings['default_country_state_opening_hours'],
       ]
     )
 
     settings['themes'].each{ |theme|
       conn.exec(
         '
-        INSERT INTO themes(project_id, slug, name, description, site_url, main_url, logo_url, favicon_url)
+        INSERT INTO themes(project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, keywords, favorites_mode, explorer_mode)
         VALUES (
           (SELECT id FROM projects WHERE slug = $1),
-          $2, $3, $4, $5, $6, $7, $8
+          $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
         )
         ON CONFLICT (project_id, slug)
         DO UPDATE SET
@@ -56,7 +60,10 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
           site_url = $5,
           main_url = $6,
           logo_url = $7,
-          favicon_url = $8
+          favicon_url = $8,
+          keywords = $9,
+          favorites_mode = $10,
+          explorer_mode = $11
         ',
         [
           project_slug,
@@ -67,6 +74,9 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
           theme['main_url'].to_json,
           theme['logo_url'],
           theme['favicon_url'],
+          { fr: theme['keywords'] || '' }.to_json,
+          theme['favorites_mode'] != false,
+          theme['explorer_mode'] != false,
         ]
       )
     }
@@ -158,7 +168,7 @@ def load_fields(conn, project_slug, url)
   fields = fields.collect{ |y| [y[0][0]] + y[1..] }
 
   multiple_config = fields.group_by(&:first).select{ |_id, g| g.size != 1 }.collect(&:first)
-  if multiple_config.size > 0
+  if !multiple_config.empty?
     puts '==================='
     puts "Mutiple fields configuration for categrories #{multiple_config} - IGNORED"
     puts '==================='
@@ -167,7 +177,7 @@ def load_fields(conn, project_slug, url)
   fields.select{ |field|
     !multiple_config.include?(field)
   }.collect{ |field|
-    ids = field[1..].collect{ |f|
+    field[1..].collect{ |f|
       load_field_group(conn, project_slug, {
         'group' => '',
         'fields' => f,

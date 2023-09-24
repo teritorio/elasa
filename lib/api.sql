@@ -17,9 +17,18 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                 'type', 'geojson',
                 'data', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs'
             ),
+            'attributions', '[]'::jsonb, -- TODO compute from sources
             'themes', (
                 SELECT
-                    json_agg(to_jsonb(themes.*) - 'project_id' - 'name' - 'root_menu_item_id')
+                    jsonb_agg(
+                        to_jsonb(themes.*)
+                            - 'project_id' - 'root_menu_item_id'
+                            - 'name' - 'keywords' ||
+                        jsonb_build_object(
+                            'title', themes.name,
+                            'keywords', coalesce(themes.keywords->>'fr', '')
+                        )
+                    )
                 FROM
                     themes
                 WHERE

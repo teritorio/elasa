@@ -26,6 +26,7 @@ paths:
               schema:
                 type: object
                 additionalProperties: false
+                required: [slug, name, attributions, icon_font_css_url, polygon, bbox_line, default_country, default_country_state_opening_hours, themes]
                 properties:
                   id:
                     type: integer
@@ -63,6 +64,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: false
+                      required: [id, slug, title, description, keywords, logo_url, favicon_url, favorites_mode, explorer_mode]
                       properties:
                         id:
                           type: integer

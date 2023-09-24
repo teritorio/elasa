@@ -471,7 +471,9 @@ CREATE TABLE public.projects (
     bbox_line public.geometry(LineString,4326) GENERATED ALWAYS AS (public.st_makeline(public.st_makepoint(public.st_xmin((polygon)::public.box3d), public.st_ymin((polygon)::public.box3d)), public.st_makepoint(public.st_xmax((polygon)::public.box3d), public.st_ymax((polygon)::public.box3d)))) STORED NOT NULL,
     name json,
     slug character varying(255) DEFAULT NULL::character varying,
-    articles json
+    articles json,
+    default_country character varying(255),
+    default_country_state_opening_hours character varying(255)
 );
 
 
@@ -552,7 +554,10 @@ CREATE TABLE public.themes (
     favicon_url character varying NOT NULL,
     root_menu_item_id integer,
     site_url json NOT NULL,
-    main_url json NOT NULL
+    main_url json NOT NULL,
+    keywords json,
+    favorites_mode boolean DEFAULT true,
+    explorer_mode boolean DEFAULT true
 );
 
 
