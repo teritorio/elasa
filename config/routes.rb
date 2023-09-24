@@ -11,5 +11,6 @@ Rails.application.routes.draw do
     get 'poi/:id/deps', controller: 'api01', action: :poi, defaults: { deps: 'true' }
     get 'pois', controller: 'api01'
     get 'pois/category/:category_id', controller: 'api01', action: :pois_category
+    get 'attribute_translations/:lang.json', controller: 'api01', action: :attribute_translations
   end
 end

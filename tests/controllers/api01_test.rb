@@ -125,4 +125,11 @@ class Api01ControllerTest < ActionController::TestCase
 
     assert_equal 2, json['features'].size
   end
+
+  def test_attribute_translations
+    get :attribute_translations, params: { project: 'test', theme: 'theme', lang: 'fr' }
+    assert_response :success
+    json = JSON.parse(@response.body)
+    JSON::Validator.validate!(@schema, json, fragment: schema_for('attribute_translations/{lang}.json'))
+  end
 end

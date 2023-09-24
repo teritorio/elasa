@@ -70,6 +70,10 @@ class Api01Controller < ApplicationController
     pois
   end
 
+  def attribute_translations
+    render json: {}
+  end
+
   private
 
   def query(subject, params)
