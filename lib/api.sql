@@ -13,10 +13,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                 'type', 'geojson',
                 'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
             ),
-            'bbox_line', jsonb_build_object(
-                'type', 'geojson',
-                'data', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs'
-            ),
+            'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
             'attributions', '[]'::jsonb, -- TODO compute from sources
             'themes', (
                 SELECT
