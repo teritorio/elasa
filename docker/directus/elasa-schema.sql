@@ -548,11 +548,11 @@ CREATE TABLE public.themes (
     slug character varying NOT NULL,
     name jsonb NOT NULL,
     description jsonb,
-    site_url character varying NOT NULL,
-    main_url character varying NOT NULL,
     logo_url character varying NOT NULL,
     favicon_url character varying NOT NULL,
-    root_menu_item_id integer
+    root_menu_item_id integer,
+    site_url json NOT NULL,
+    main_url json NOT NULL
 );
 
 
