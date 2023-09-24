@@ -41,11 +41,33 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
+    WITH RECURSIVE theme_menu_items AS (
+        SELECT
+            menu_items.*
+        FROM
+            projects
+            JOIN themes ON
+                themes.project_id = projects.id AND
+                themes.slug = _theme_slug
+            JOIN menu_items ON
+                menu_items.id = themes.root_menu_item_id
+        WHERE
+            projects.slug = _project_slug
+
+        UNION ALL
+
+        SELECT
+            menu_items.*
+        FROM
+            theme_menu_items
+            JOIN menu_items ON
+                menu_items.parent_id = theme_menu_items.id
+    )
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
                 'id', menu_items.id,
-                'parent_id', menu_items.parent_id,
+                'parent_id', nullif(menu_items.parent_id, themes.root_menu_item_id), -- Excludes root menu
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
@@ -139,10 +161,9 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
         JOIN themes ON
             themes.project_id = projects.id AND
             themes.slug = _theme_slug
-        JOIN menu_items ON
-            menu_items.theme_id = themes.id
-    WHERE
-        projects.slug = _project_slug
+        JOIN theme_menu_items AS menu_items ON
+            -- Excludes root menu
+            menu_items.id != themes.root_menu_item_id
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
 

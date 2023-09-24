@@ -46,8 +46,8 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@schema, json, fragment: schema_for('menu.json'))
 
-    assert_equal 5, json[4]['id']
-    assert !json[4]['category']['filters'].empty?
+    assert_equal 5, json[3]['id']
+    assert !json[3]['category']['filters'].empty?
   end
 
   def test_poi
