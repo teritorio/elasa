@@ -65,7 +65,7 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
           theme['description'].to_json,
           theme['site_url'].to_json,
           theme['main_url'].to_json,
-          theme['logo_url'].to_json,
+          theme['logo_url'],
           theme['favicon_url'],
         ]
       )

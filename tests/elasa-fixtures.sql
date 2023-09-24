@@ -56,7 +56,7 @@ INSERT INTO public.filters (id, type, name, property_end, property_begin, min, m
 -- Data for Name: themes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.themes (id, project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, root_menu_item_id) VALUES (1, 1, 'theme', '{"fr": "Carte et points d''intérêts du Seignanx. Sud-Ouest des Landes"}', '{"fr": "Carte et annuaire : hébergement, restauration, loisirs, sports, balades et commerces"}', '{"fr":"https://carte.seignanx.com/"}', '{"fr":"https://www.seignanx.com/"}', '"https://carte.seignanx.com/content/wp-content/uploads/2022/02/seignanx-com.png"', 'https://carte.seignanx.com/content/wp-content/uploads/2022/03/Favicon.jpg', NULL);
+INSERT INTO public.themes (id, project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, root_menu_item_id) VALUES (1, 1, 'theme', '{"fr": "Carte et points d''intérêts du Seignanx. Sud-Ouest des Landes"}', '{"fr": "Carte et annuaire : hébergement, restauration, loisirs, sports, balades et commerces"}', '{"fr":"https://carte.seignanx.com/"}', '{"fr":"https://www.seignanx.com/"}', 'https://carte.seignanx.com/content/wp-content/uploads/2022/02/seignanx-com.png', 'https://carte.seignanx.com/content/wp-content/uploads/2022/03/Favicon.jpg', NULL);
 
 
 --
