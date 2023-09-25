@@ -79,18 +79,16 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN type = 'menu_group' THEN
                     jsonb_build_object(
-                        'id', menu_items.id,
                         'slug', menu_items.slug,
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
                         'color_line', menu_items.color_line,
-                        'style_class', menu_items.style_class
+                        'display_mode', menu_items.display_mode
                     )
                 END,
                 'category', CASE WHEN type = 'category' THEN
                     jsonb_build_object(
-                        'id', menu_items.id,
                         'slug', menu_items.slug,
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
@@ -98,9 +96,9 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                         'color_fill', menu_items.color_fill,
                         'color_line', menu_items.color_line,
                         'style_class', menu_items.style_class,
-                        'style_merge', menu_items.style_merge,
                         'display_mode', menu_items.display_mode,
-                        'zoom', menu_items.zoom,
+                        'style_merge', menu_items.style_merge,
+                        'zoom', coalesce(menu_items.zoom, 16),
                         'filters', (
                             SELECT
                                 jsonb_agg(
@@ -111,17 +109,13 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     CASE filters.type
                                     WHEN 'multiselection' THEN
                                         jsonb_build_object(
-                                            'property', filters.multiselection_property
-                                            -- TODO ---------------------------
-                                            -- value:
-                                            --   type: string
+                                            'property', filters.multiselection_property,
+                                            'values', '{}'::jsonb -- TODO ---------------------------
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
-                                            'property', filters.checkboxes_list_property
-                                            -- TODO ---------------------------
-                                            -- value:
-                                            --   type: string
+                                            'property', filters.checkboxes_list_property,
+                                            'values', '{}'::jsonb -- TODO ---------------------------
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -151,13 +145,13 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 END,
                 'link', CASE WHEN type = 'link' THEN
                     jsonb_build_object(
-                        'id', menu_items.id,
                         'slug', menu_items.slug,
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
-                        'color_line', menu_items.color_line
+                        'color_line', menu_items.color_line,
+                        'display_mode', menu_items.display_mode
                     )
                 END
             ))
@@ -248,7 +242,6 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 20)
                             ELSE pois.properties->'tags'->'description'->>'fr'
                             END,
-                        'website:details', pois.properties->'tags'->'website:details'->'fr',
                         -- addr
                         'addr:street', pois.properties->'tags'->'addr'->'street',
                         'addr:street', pois.properties->'tags'->'addr'->'street',
@@ -260,7 +253,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'ref:FR:CRTA', pois.properties->'tags'->'ref'->'FR:CRTA',
 
                         'metadata', jsonb_build_object(
-                            -- 'id', pois.properties->'id',
+                            'id', pois.id, -- TODO use public id / slug
                             -- cartocode
                             'category_ids', array_agg(menu_items.id),
                             'updated_at', pois.properties->'updated_at',
@@ -272,11 +265,11 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             'popup_fields', postgisftw.fields((array_agg(menu_items.popup_fields_id ORDER BY menu_items.id))[1])->'fields',
                             'details_fields', postgisftw.fields((array_agg(menu_items.details_fields_id ORDER BY menu_items.id))[1])->'fields',
                             'list_fields', postgisftw.fields((array_agg(menu_items.list_fields_id ORDER BY menu_items.id))[1])->'fields',
-                            -- 'class_label', (array_agg(menu_items.class_label ORDER BY menu_items.id))[1],
-                            -- 'class_label_popup', (array_agg(menu_items.class_label_popup ORDER BY menu_items.id))[1],
-                            -- 'class_label_details', (array_agg(menu_items.class_label_details ORDER BY menu_items.id))[1],
-                            'website:details', pois.properties->'tags'->'website:details'
-                            -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1]
+                            -- 'class_label', (array_agg(menu_items.class_label ORDER BY menu_items.id))[1], -- TODO -------
+                            -- 'class_label_popup', (array_agg(menu_items.class_label_popup ORDER BY menu_items.id))[1], -- TODO -------
+                            -- 'class_label_details', (array_agg(menu_items.class_label_details ORDER BY menu_items.id))[1], -- TODO -------
+                            'website:details', pois.properties->'tags'->'website:details'->'fr'
+                            -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1] -- TODO -------
                         ),
                         'display', jsonb_build_object(
                             'icon', (array_agg(menu_items.icon ORDER BY menu_items.id))[1],

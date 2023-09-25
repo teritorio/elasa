@@ -115,6 +115,7 @@ paths:
                 items:
                   type: object
                   additionalProperties: false
+                  required: [id, index_order]
                   properties:
                     id:
                       type: integer
@@ -133,9 +134,8 @@ paths:
                     menu_group:
                       type: object
                       additionalProperties: false
+                      required: [name, icon, color_fill, color_line, display_mode]
                       properties:
-                        id:
-                          type: integer
                         slug:
                           type: string
                         name:
@@ -149,17 +149,15 @@ paths:
                         color_line:
                           type: string
                           description: CSS color.
-                        style_class:
-                          type: array
-                          items:
-                            type: string
-                          description: One up to three lenght array of class from data ontology.
+                        display_mode:
+                          type: string
+                          enum: [compact, large]
+                          description: How display the menu item.
                     link:
                       type: object
                       additionalProperties: false
+                      required: [href, name, icon, color_fill, color_line, display_mode]
                       properties:
-                        id:
-                          type: integer
                         href:
                           type: string
                           description: The external web link.
@@ -176,12 +174,15 @@ paths:
                         color_line:
                           type: string
                           description: CSS color.
+                        display_mode:
+                          type: string
+                          enum: [compact, large]
+                          description: How display the menu item.
                     category:
                       type: object
                       additionalProperties: false
+                      required: [name, icon, color_fill, color_line, style_merge, display_mode, zoom]
                       properties:
-                        id:
-                          type: integer
                         slug:
                           type: string
                         name:
@@ -219,6 +220,7 @@ paths:
                             oneOf:
                             - type: object
                               additionalProperties: false
+                              required: [type, property, name, values]
                               properties:
                                 type:
                                   type: string
@@ -237,6 +239,7 @@ paths:
                                       $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
+                              required: [type, property, name]
                               properties:
                                 type:
                                   type: string
@@ -247,6 +250,7 @@ paths:
                                   $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
+                              required: [type, property_begin, property_end, name]
                               properties:
                                 type:
                                   type: string
@@ -259,6 +263,7 @@ paths:
                                   $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
+                              required: [type, property, name, min, max]
                               properties:
                                 type:
                                   type: string
@@ -486,9 +491,8 @@ paths:
                 items:
                   type: object
                   additionalProperties: false
+                  required: [title, url]
                   properties:
-                    post_id:
-                      type: integer
                     title:
                       type: string
                     url:
@@ -601,6 +605,7 @@ components:
     featurePoi:
       type: object
       additionalProperties: false
+      required: [type, geometry, properties]
       properties:
         type:
           type: string
@@ -614,6 +619,7 @@ components:
               - type: string
               - type: number
             description: An open of first level properties can provided.
+          required: [metadata]
           properties:
             name:
               type: string
@@ -691,6 +697,7 @@ components:
             metadata:
               type: object
               additionalProperties: false
+              required: [id]
               properties:
                 id:
                   type: integer
@@ -767,6 +774,7 @@ components:
 
     featureCollectionPois:
       additionalProperties: false
+      required: [type, features]
       properties:
         type:
           type: string
@@ -778,6 +786,7 @@ components:
 
     featureCollectionPoiDeps:
       additionalProperties: false
+      required: [type, features]
       properties:
         type:
           type: string
@@ -787,14 +796,18 @@ components:
           items:
             oneOf:
               - $ref: '#/components/schemas/featurePoi' # Main POI and POI deps
-              - properties: # Route waypoints
+              - additionalProperties: false
+                required: [type, geometry, properties]
+                properties: # Route waypoints
                   type:
                     type: string
                     enum: ['Feature']
-                  additionalProperties: false
+                  geometry:
+                    type: object
                   properties:
                     type: object
                     additionalProperties: false
+                    required: [id, "route:point:type"]
                     properties:
                       id:
                         type: integer
