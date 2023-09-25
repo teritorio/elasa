@@ -164,6 +164,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
         JOIN theme_menu_items AS menu_items ON
             -- Excludes root menu
             menu_items.id != themes.root_menu_item_id
+    WHERE
+        projects.slug = _project_slug
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
 
