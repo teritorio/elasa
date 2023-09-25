@@ -175,9 +175,9 @@ def load_fields(conn, project_slug, url)
   end
 
   fields.select{ |field|
-    !multiple_config.include?(field)
+    !multiple_config.include?(field[0])
   }.collect{ |field|
-    field[1..].collect{ |f|
+    [field[0]] + field[1..].collect{ |f|
       load_field_group(conn, project_slug, {
         'group' => '',
         'fields' => f,
@@ -264,9 +264,9 @@ def load_menu(project_slug, theme_slug, url, url_pois)
           menu_dig_all(menu, 'display_mode'),
           menu.dig('category', 'search_indexed'),
           menu.dig('category', 'zoom'),
-          fields_id.nil? ? nil : fields_id[0],
           fields_id.nil? ? nil : fields_id[1],
           fields_id.nil? ? nil : fields_id[2],
+          fields_id.nil? ? nil : fields_id[3],
           menu.dig('link', 'href'),
         ]
       ) { |result|

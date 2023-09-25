@@ -139,7 +139,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                 JOIN filters ON
                                     filters.id = menu_items_filters.filters_id
                             WHERE
-                                menu_items_filters.menu_items_id = menu_items_id
+                                menu_items_filters.menu_items_id = menu_items.id
                         )
                     )
                 END,
