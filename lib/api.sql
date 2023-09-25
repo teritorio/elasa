@@ -255,7 +255,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'metadata', jsonb_build_object(
                             'id', pois.id, -- TODO use public id / slug
                             -- cartocode
-                            'category_ids', array_agg(menu_items.id),
+                            'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source'
                             -- osm_id

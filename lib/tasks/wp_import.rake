@@ -152,20 +152,18 @@ def load_fields(conn, project_slug, url)
   pois = fetch_json(url)
   fields = pois['features'].collect{ |poi|
     [
-      poi.dig('properties', 'metadata', 'category_ids'),
+      poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
       poi.dig('properties', 'editorial', 'popup_fields'),
       poi.dig('properties', 'editorial', 'details_fields'),
       poi.dig('properties', 'editorial', 'list_fields'),
     ]
   }.uniq
 
-  fields.each{ |category_ids, _popup_fields, _details_fields, _list_fields|
-    if category_ids.size != 1
-      throw 'category_ids.size != 1'
-    end
-  }
-
-  fields = fields.collect{ |y| [y[0][0]] + y[1..] }
+  fields = fields.collect{ |y|
+    y[0].collect{ |yy|
+      [yy] + y[1..]
+    }
+  }.flatten(1)
 
   multiple_config = fields.group_by(&:first).select{ |_id, g| g.size != 1 }.collect(&:first)
   if !multiple_config.empty?
@@ -188,7 +186,7 @@ end
 
 def load_menu(project_slug, theme_slug, url, url_pois)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM menu_items WHERE theme_id = (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND projects.slug = $1)', [project_slug, theme_slug])
+    conn.exec('DELETE FROM menu_items WHERE theme_id = (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1)', [project_slug, theme_slug])
     conn.exec('DELETE FROM filters WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
     conn.exec('DELETE FROM fields WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
 
@@ -243,7 +241,7 @@ def load_menu(project_slug, theme_slug, url, url_pois)
           href
         )
         VALUES (
-          (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND projects.slug = $1),
+          (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1),
           $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         )
         RETURNING
@@ -263,7 +261,7 @@ def load_menu(project_slug, theme_slug, url, url_pois)
           menu_dig_all(menu, 'style_class')&.join(','),
           menu_dig_all(menu, 'display_mode'),
           menu.dig('category', 'search_indexed'),
-          menu.dig('category', 'zoom'),
+          Integer(menu.dig('category', 'zoom'), exception: false),
           fields_id.nil? ? nil : fields_id[1],
           fields_id.nil? ? nil : fields_id[2],
           fields_id.nil? ? nil : fields_id[3],
@@ -362,9 +360,11 @@ end
 
 namespace :wp do
   desc 'Import data from API'
-  task :import, %i[project_slug theme_slug] => :environment do |_tasks, args|
-    base_url = "https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/#{args[:project_slug]}/#{args[:theme_slug]}"
-    load_settings(args[:project_slug], args[:theme_slug], "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
-    load_menu(args[:project_slug], args[:theme_slug], "#{base_url}/menu.json", "#{base_url}/pois.json")
+  task :import, [] => :environment do
+    url, project_slug, theme_slug = ARGV[2..]
+    base_url = "#{url}/#{project_slug}/#{theme_slug}"
+    load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json")
+    exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
