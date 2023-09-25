@@ -16,14 +16,14 @@ docker-compose run --rm api bundle exec rake wp:import -- https://carte.seignanx
 docker-compose run --rm api bundle exec rake sources:load -- https://datasources-dev.teritorio.xyz/0.1 seignanx
 
 
-## Load Sources and POIs
-
-docker-compose run --rm api bundle exec rake sources:load
-docker-compose run --rm api bundle exec rake sources:load[dev]
-
-
 ## Test
 
 docker-compose run --rm api bundle exec rake test
 
 docker-compose run --rm api bundle exec rake api:validate -- http://172.29.0.1:12000/api/0.1/seignanx/tourism
+
+
+
+
+docker-compose run --rm api bundle exec rake wp:import -- https://dev.appcarto.teritorio.xyz/content/api.teritorio/geodata/v0.1 dev tourism
+

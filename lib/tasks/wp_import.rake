@@ -172,6 +172,7 @@ def load_fields(conn, project_slug, url)
     puts '==================='
   end
 
+  puts "fields: #{fields.size}"
   fields.select{ |field|
     !multiple_config.include?(field[0])
   }.collect{ |field|
@@ -184,7 +185,7 @@ def load_fields(conn, project_slug, url)
   }
 end
 
-def load_menu(project_slug, theme_slug, url, url_pois)
+def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1)', [project_slug, theme_slug])
     conn.exec('DELETE FROM filters WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
@@ -192,6 +193,8 @@ def load_menu(project_slug, theme_slug, url, url_pois)
 
     fields = load_fields(conn, project_slug, url_pois)
     fields_ids = fields.index_by(&:first)
+
+    menu_sources = fetch_json(url_menu_sources)
 
     menu_items = fetch_json(url)
 
@@ -220,6 +223,7 @@ def load_menu(project_slug, theme_slug, url, url_pois)
     })
 
     catorgry_ids_map = {}
+    puts "menu_items: #{menu_items.size}"
     menu_entries = menu_items.reverse
     until menu_entries.empty?
       menu = menu_entries.pop
@@ -272,6 +276,41 @@ def load_menu(project_slug, theme_slug, url, url_pois)
       }
     end
 
+    menu_sources.each{ |menu_id, sources|
+      category_id = catorgry_ids_map[menu_id.to_i]
+      next if category_id.nil?
+
+      sources.each{ |source|
+        source_slug = source.split('/')[-1].split('.')[0]
+        puts [category_id, source_slug].inspect
+        id = conn.exec(
+          '
+          INSERT INTO menu_items_sources(menu_items_id, sources_id)
+          SELECT
+            $2,
+            sources.id
+          FROM
+            projects
+            JOIN sources ON
+              sources.project_id = projects.id AND
+              sources.slug = $3
+          WHERE
+            projects.slug = $1
+          RETURNING
+            id
+          ',
+          [project_slug, category_id, source_slug]
+        ) { |result|
+          result&.first
+        }
+        if id.nil?
+          puts '==================='
+          puts "Fails link source to menu_item: #{source}"
+          puts '==================='
+        end
+      }
+    }
+
     filters = Hash.new { |h, k| h[k] = [] }
     menu_items.select{ |menu| !menu.dig('category', 'filters').nil? }.each{ |menu|
       menu['category']['filters'].each{ |filter|
@@ -279,6 +318,7 @@ def load_menu(project_slug, theme_slug, url, url_pois)
       }
     }
 
+    puts "filters: #{filters.size}"
     filters = filters.each{ |filter, category_ids|
       filter_id = conn.exec(
         '
@@ -364,7 +404,7 @@ namespace :wp do
     url, project_slug, theme_slug = ARGV[2..]
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
-    load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json")
+    load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
