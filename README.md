@@ -13,6 +13,9 @@ docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm test
 
 docker-compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism
 
+docker-compose run --rm api bundle exec rake sources:load -- https://datasources-dev.teritorio.xyz/0.1 seignanx
+
+
 ## Load Sources and POIs
 
 docker-compose run --rm api bundle exec rake sources:load

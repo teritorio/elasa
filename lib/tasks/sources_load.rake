@@ -158,7 +158,7 @@ def load_sources(datasource_url, project_slug)
 
   projects.select{ |project| project_slug.nil? || project['name'] == project_slug }.each{ |project|
     project_slug = project['name']
-    metadatas = fetch_json("#{datasource_url}#{project_slug}/metadata.json")
+    metadatas = fetch_json("#{datasource_url}/#{project_slug}/metadata.json")
 
     puts "== #{project_slug}: #{metadatas.size} =="
 
@@ -167,7 +167,7 @@ def load_sources(datasource_url, project_slug)
       load_source(conn, project_slug, metadatas)
 
       metadatas.each{ |source_slug, _metadata|
-        pois = fetch_json("#{datasource_url}#{project_slug}/#{source_slug}.geojson")
+        pois = fetch_json("#{datasource_url}/#{project_slug}/#{source_slug}.geojson")
         load_pois(conn, project_slug, source_slug, pois['features'])
         puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
       }
@@ -179,7 +179,9 @@ end
 
 namespace :sources do
   desc 'Load Sources and POIs from datasource'
-  task :load, [:project_slug] => :environment do |_tasks, args|
-    load_sources('https://datasources-dev.teritorio.xyz/data/', args[:project_slug])
+  task :load, [] => :environment do
+    url_base, project_slug = ARGV[2..]
+    load_sources("#{url_base}/data", project_slug)
+    exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
