@@ -154,7 +154,7 @@ def load_pois(conn, project_slug, source_slug, pois)
 end
 
 def load_sources(datasource_url, project_slug)
-  projects = fetch_json(datasource_url)
+  projects = fetch_json("#{datasource_url}.json")
 
   projects.select{ |project| project_slug.nil? || project['name'] == project_slug }.each{ |project|
     project_slug = project['name']
