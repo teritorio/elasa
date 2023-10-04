@@ -243,7 +243,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         '
         INSERT INTO menu_items(
           theme_id,
-          slug, index_order, hidden, parent_id, selected_by_default,
+          slugs, index_order, hidden, parent_id, selected_by_default,
           type,
           name, icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, zoom, popup_fields_id, details_fields_id, list_fields_id,
@@ -258,7 +258,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         ', [
           project_slug,
           theme_slug,
-          menu['id'], # Use original id as slug
+          {fr: menu['id']}.to_json, # Use original id as slug
           menu['index_order'],
           menu['hidden'],
           catorgry_ids_map[menu['parent_id']],

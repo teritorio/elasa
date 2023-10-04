@@ -72,14 +72,14 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
-                'id', menu_items.slug::integer,
-                'parent_id', parent_menu_items.slug::integer,
+                'id', (menu_items.slugs->>'fr')::integer,
+                'parent_id', (parent_menu_items.slugs->>'fr')::integer,
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slug,
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
@@ -89,7 +89,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slug,
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
@@ -145,7 +145,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slug,
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
@@ -258,7 +258,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'ref:FR:CRTA', pois.properties->'tags'->'ref'->'FR:CRTA',
 
                         'metadata', jsonb_build_object(
-                            'id', pois.slugs->'fr', -- use slug as original POI id
+                            'id', (pois.slugs->>'fr')::integer, -- use slug as original POI id
                             -- cartocode
                             'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
@@ -294,7 +294,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                 themes.slug = _theme_slug
             JOIN menu_items ON
                 menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR menu_items.slug = _category_id::text)
+                (_category_id IS NULL OR menu_items.slugs->>'fr' = _category_id::text)
             JOIN sources ON
                 sources.project_id = projects.id
             JOIN menu_items_sources ON
