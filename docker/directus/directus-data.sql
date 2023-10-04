@@ -21,6 +21,8 @@ SET row_security = off;
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url) FROM stdin;
+fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
+fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open	\N
 filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N
 menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N
@@ -29,7 +31,7 @@ menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}
-sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
+sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N
 \.
 
@@ -49,8 +51,8 @@ f400ab71-d9c5-4ea8-96aa-0958f373ccca	Administrator	verified	$t:admin_description
 --
 
 COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, theme, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id) FROM stdin;
-3c0b4886-bfde-4fe5-9b68-a65381880aae	Frédéric	Rodrigo	frederic@teritorio.fr	$argon2id$v=19$m=65536,t=3,p=4$iTzKJuByNiJAe475ITlJ3Q$Nw84KHKpVfD7/zifqZdXguhYmXrDCdJjtq4xY0kTiMA	\N	\N	\N	\N	\N	\N	auto	\N	active	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	\N	2023-09-21 08:07:10.461+00	/content/themes	default	\N	\N	t	6
-7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-09-20 21:50:39.146+00	/settings/data-model/filters	default	\N	\N	t	\N
+3c0b4886-bfde-4fe5-9b68-a65381880aae	Frédéric	Rodrigo	frederic@teritorio.fr	$argon2id$v=19$m=65536,t=3,p=4$iTzKJuByNiJAe475ITlJ3Q$Nw84KHKpVfD7/zifqZdXguhYmXrDCdJjtq4xY0kTiMA	\N	\N	\N	\N	\N	\N	auto	\N	active	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	\N	2023-09-27 13:48:30.643+00	/content/themes/90	default	\N	\N	t	101
+7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-10-04 17:26:45.716+00	/settings/roles/	default	\N	\N	t	\N
 \.
 
 
@@ -76,8 +78,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 8	themes	slug	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 9	themes	name	cast-json	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 10	themes	description	cast-json	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-11	themes	site_url	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-12	themes	main_url	\N	\N	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 13	themes	logo_url	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 14	themes	favicon_url	\N	\N	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 15	themes	id	\N	\N	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
@@ -100,7 +100,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":"{{type}}{{slug}}{{name}}"}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	6	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{category_id.slug}}"}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{slug}}{{name}}"}	related-values	{"template":"{{type}}{{slug}}{{name}}"}	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	5	full	\N	\N	\N	t	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
@@ -112,7 +112,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 66	menu_items	behavior	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 67	menu_items	display_mode	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	UI	\N	\N
 68	menu_items	category	alias,no-data,group	group-detail	\N	\N	\N	f	f	2	full	\N	\N	\N	f	accordion-xkp6bl	\N	\N
-69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	2	half	\N	\N	\N	t	category	\N	\N
+69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	2	half	\N	\N	\N	f	category	\N	\N
 71	menu_items	style_merge	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
 73	menu_items	zoom	\N	slider	{"minValue":12,"maxValue":18}	\N	\N	f	f	5	half	\N	\N	\N	f	category	\N	\N
 74	menu_items	sources	m2m	list-m2m	{"template":"{{sources_id.slug}}"}	\N	\N	f	f	1	full	\N	\N	\N	f	category	\N	\N
@@ -148,8 +148,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 119	filters	boolean_property	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	boolean	\N	\N
 120	filters	number_range_property	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
 121	pois	id	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
-123	pois	geom	geometry	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
-124	pois	properties	cast-json	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+123	pois	geom	geometry	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+124	pois	properties	cast-json	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 125	pois	source_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	2	full	\N	\N	\N	f	\N	\N	\N
 126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 127	menu_items	style_class_string	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	f	category	\N	\N
@@ -157,6 +157,31 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 129	projects	name	cast-json	input-code	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
 131	projects	slug	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
 132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	9	full	\N	\N	\N	t	\N	\N	\N
+133	fields	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
+134	fields	type	\N	select-dropdown	{"choices":[{"text":"field","value":"field"},{"text":"group","value":"group"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
+135	fields	accordion-9juoos	alias,no-data,group	group-accordion	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+136	fields	field	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	accordion-9juoos	\N	\N
+138	fields	group	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	group_block	\N	\N
+139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
+140	fields	icon	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	group_block	\N	\N
+141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	2	full	\N	\N	\N	f	accordion-9juoos	\N	\N
+144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	4	full	\N	\N	\N	f	group_block	\N	\N
+145	fields_fields	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+146	fields_fields	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+147	fields_fields	related_fields_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+148	fields	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	8	half	\N	\N	\N	f	category	\N	\N
+150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	9	half	\N	\N	\N	f	category	\N	\N
+151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	10	half	\N	\N	\N	f	category	\N	\N
+152	projects	articles	cast-json	list	{"fields":[{"field":"title","name":"title","type":"json","meta":{"field":"title","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}},{"field":"url","name":"url","type":"json","meta":{"field":"url","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}}]}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+153	themes	site_url	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
+155	themes	main_url	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
+159	themes	keywords	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	16	full	\N	\N	\N	f	\N	\N	\N
+160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	17	full	\N	\N	\N	f	\N	\N	\N
+161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	18	full	\N	\N	\N	f	\N	\N	\N
+162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -240,11 +265,11 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 25	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 31	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	create	{}	{}	\N	*
 33	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
-34	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes
-35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id
+34	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country
+35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode
 41	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 42	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	create	{}	{}	\N	*
-43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	project_id,theme_id,index_order,selected_by_default,id,parent_id,hidden,category_id,items,menu_group_id,slug,name,UI,color,icon,behavior,display_mode,category,style_merge,zoom,style_class,search_indexed,sources,link,href,filters,color_line,color_fill,accordion-xkp6bl,menu_group,style_class_string
+43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	project_id,theme_id,index_order,selected_by_default,id,parent_id,hidden,category_id,items,menu_group_id,slug,name,UI,color,icon,behavior,display_mode,category,style_merge,zoom,style_class,search_indexed,sources,link,href,filters,color_line,color_fill,accordion-xkp6bl,menu_group,style_class_string,type,popup_fields_id,list_fields_id,details_fields_id
 44	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	update	{}	{}	\N	*
 45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois
@@ -264,7 +289,15 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 74	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
 75	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
 76	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
-83	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties
+83	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs
+84	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	create	{}	{}	\N	*
+85	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	create	{}	{}	\N	*
+86	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,accordion-9juoos,group_block,fields,project_id,icon,group,field,type,display_mode
+87	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,accordion-9juoos,group_block,display_mode,icon,group,field,type,project_id,fields
+88	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
+89	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id
+90	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id
+91	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 \.
 
 
@@ -287,6 +320,12 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 24	menu_items_filters	filters_id	filters	\N	\N	\N	menu_items_id	\N	nullify
 25	menu_items_filters	menu_items_id	menu_items	filters	\N	\N	filters_id	\N	nullify
 26	pois	source_id	sources	pois	\N	\N	\N	\N	nullify
+28	fields_fields	related_fields_id	fields	\N	\N	\N	fields_id	\N	nullify
+29	fields_fields	fields_id	fields	fields	\N	\N	related_fields_id	index	nullify
+30	fields	project_id	projects	\N	\N	\N	\N	\N	nullify
+31	menu_items	popup_fields_id	fields	\N	\N	\N	\N	\N	nullify
+32	menu_items	details_fields_id	fields	\N	\N	\N	\N	\N	nullify
+33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
 \.
 
 
@@ -334,7 +373,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 132, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 166, true);
 
 
 --
@@ -348,7 +387,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 83, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 91, true);
 
 
 --
@@ -362,7 +401,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 26, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 33, true);
 
 
 --
