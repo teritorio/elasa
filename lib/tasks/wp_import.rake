@@ -6,9 +6,14 @@ require 'json'
 require 'http'
 require 'pg'
 
+require_relative 'sources_load'
+
 
 def fetch_json(url)
-  JSON.parse(HTTP.follow.get(url))
+  response = HTTP.follow.get(url)
+  raise "#{url} => #{response.status}" if !response.status.success?
+
+  JSON.parse(response)
 end
 
 def load_settings(project_slug, _theme_slug, url, url_articles)
@@ -401,9 +406,10 @@ end
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
-    url, project_slug, theme_slug = ARGV[2..]
+    url, project_slug, theme_slug, datasource_url = ARGV[2..]
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    load_sources("#{datasource_url}/data", project_slug)
     load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
     exit 0 # Beacause of manually deal with rake command line arguments
   end

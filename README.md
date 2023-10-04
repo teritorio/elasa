@@ -11,10 +11,15 @@ docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm test
 
 ## Import from remote API
 
-docker-compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism
+Import from WP and load from Datasource
+```
+docker-compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism https://datasources-dev.teritorio.xyz/0.1
+```
 
+Update datasource only
+```
 docker-compose run --rm api bundle exec rake sources:load -- https://datasources-dev.teritorio.xyz/0.1 seignanx
-
+```
 
 ## Test
 
