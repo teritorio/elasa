@@ -82,6 +82,7 @@ def load_pois(conn, project_slug, source_slug, pois)
   conn.exec("
     DROP TABLE IF EXISTS pois_import;
     CREATE TEMP TABLE pois_import(
+      slugs json,
       geometry json,
       properties json
     )
@@ -90,7 +91,8 @@ def load_pois(conn, project_slug, source_slug, pois)
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data('COPY pois_import FROM STDIN (FORMAT binary)', enco) {
     pois.each{ |feature|
-      conn.put_copy_data([feature['geometry'].to_json, feature['properties'].to_json])
+      slugs = feature.dig('properties', 'tags', 'name')&.transform_values{ |name| name.parameterize }
+      conn.put_copy_data([slugs.to_json, feature['geometry'].to_json, feature['properties'].to_json])
     }
   }
   conn.exec_params(
@@ -120,9 +122,10 @@ def load_pois(conn, project_slug, source_slug, pois)
         geom = pois_import.geom,
         properties = pois_import.properties
     WHEN NOT MATCHED THEN
-      INSERT (source_id, geom, properties)
+      INSERT (source_id, slugs, geom, properties)
       VALUES (
         pois_import.source_id,
+        pois_import.slugs,
         pois_import.geom,
         pois_import.properties
       )

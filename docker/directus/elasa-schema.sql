@@ -33,7 +33,7 @@ ALTER TABLE IF EXISTS ONLY public.filters DROP CONSTRAINT IF EXISTS filters_proj
 ALTER TABLE IF EXISTS ONLY public.fields DROP CONSTRAINT IF EXISTS fields_project_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_related_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_fields_id_foreign;
-DROP INDEX IF EXISTS public.pois_idx_properties_id;
+DROP INDEX IF EXISTS public.pois_idx_slug_fr_integer;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_project_id_slug_key;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_pkey;
 ALTER TABLE IF EXISTS ONLY public.sources DROP CONSTRAINT IF EXISTS sources_pkey;
@@ -440,7 +440,8 @@ CREATE TABLE public.pois (
     id integer NOT NULL,
     geom public.geometry(Geometry,4326),
     properties jsonb,
-    source_id integer
+    source_id integer,
+    slugs json NOT NULL
 );
 
 
@@ -755,10 +756,10 @@ ALTER TABLE ONLY public.themes
 
 
 --
--- Name: pois_idx_properties_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: pois_idx_slug_fr_integer; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE INDEX pois_idx_properties_id ON public.pois USING btree (((properties ->> 'id'::text)));
+CREATE INDEX pois_idx_slug_fr_integer ON public.pois USING btree (((slugs ->> 'fr'::text)));
 
 
 --

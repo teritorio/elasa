@@ -153,9 +153,8 @@ def load_field_group(conn, project_slug, group)
   end
 end
 
-def load_fields(conn, project_slug, url)
-  pois = fetch_json(url)
-  fields = pois['features'].collect{ |poi|
+def load_fields(conn, project_slug, pois)
+  fields = pois.collect{ |poi|
     [
       poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
       poi.dig('properties', 'editorial', 'popup_fields'),
@@ -196,7 +195,8 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
     conn.exec('DELETE FROM filters WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
     conn.exec('DELETE FROM fields WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
 
-    fields = load_fields(conn, project_slug, url_pois)
+    pois = fetch_json(url_pois)['features']
+    fields = load_fields(conn, project_slug, pois)
     fields_ids = fields.index_by(&:first)
 
     menu_sources = fetch_json(url_menu_sources)
@@ -401,6 +401,43 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
       ',
       [project_slug, theme_slug, catorgry_ids_map[0]]
     )
+
+    pois.select{ |poi|
+      poi.dig('properties', 'metadata', 'source') != 'zone' && poi.dig('properties', 'metadata', 'source') != 'tis'
+    }.collect{ |poi|
+      id = poi.dig('properties', 'metadata', 'id')
+      ref = poi.dig('properties', 'tis_id') || poi.dig('properties', 'metadata', 'source_id')
+      if ref.nil? && !poi.dig('properties', 'metadata', 'osm_type').nil? && !poi.dig('properties', 'metadata', 'osm_id').nil?
+        ref = poi.dig('properties', 'metadata', 'osm_type')[0] + poi.dig('properties', 'metadata', 'osm_id').to_s
+      end
+      if ref.nil? && !poi.dig('properties', 'osm_poi_type').nil? && !poi.dig('properties', 'idosm').nil?
+        ref = poi.dig('properties', 'osm_poi_type')[0] + poi.dig('properties', 'idosm').to_s
+      end
+
+      if id.nil? || ref.nil?
+        puts "nil ref/id on #{JSON.dump(poi)}"
+        nil
+      else
+        [id, ref]
+      end
+    }.compact_blank.each{ |id, ref|
+      conn.exec(
+        '
+        UPDATE
+          pois
+        SET
+          slugs = $3
+        FROM
+          projects
+          JOIN sources ON
+            sources.project_id = projects.id
+        WHERE
+          projects.slug = $1 AND
+          pois.properties->>\'id\' = $2
+        ',
+        [project_slug, ref, { fr: id.to_s }.to_json]
+      )
+    }
   }
 end
 

@@ -258,7 +258,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'ref:FR:CRTA', pois.properties->'tags'->'ref'->'FR:CRTA',
 
                         'metadata', jsonb_build_object(
-                            'id', pois.id, -- TODO use public id / slug
+                            'id', pois.slugs->'fr', -- use slug as original POI id
                             -- cartocode
                             'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
@@ -303,8 +303,8 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
         WHERE
             pois.source_id = sources.id AND
             (_poi_ids IS NULL OR (
-                pois.id = ANY(_poi_ids) OR
-                (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.id = ANY(_poi_ids)))
+                pois.slugs->>'fr' = ANY(_poi_ids::text[]) OR
+                (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'fr' = ANY(_poi_ids::text[])))
             )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
