@@ -258,7 +258,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         ', [
           project_slug,
           theme_slug,
-          {fr: menu['id']}.to_json, # Use original id as slug
+          { original_id: menu['id'] }.to_json, # Use original id as slug
           menu['index_order'],
           menu['hidden'],
           catorgry_ids_map[menu['parent_id']],
@@ -435,7 +435,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
           projects.slug = $1 AND
           pois.properties->>\'id\' = $2
         ',
-        [project_slug, ref, { fr: id.to_s }.to_json]
+        [project_slug, ref, { original_id: id.to_s }.to_json]
       )
     }
   }
