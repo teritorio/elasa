@@ -291,7 +291,7 @@ CREATE TABLE public.menu_items (
     selected_by_default boolean DEFAULT false NOT NULL,
     parent_id integer,
     theme_id integer NOT NULL,
-    slug character varying(255),
+    slug character varying(255) DEFAULT NULL::character varying NOT NULL,
     name json,
     icon character varying(255),
     display_mode public.menu_item_display_mode_type DEFAULT 'compact'::public.menu_item_display_mode_type NOT NULL,

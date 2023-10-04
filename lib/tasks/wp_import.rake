@@ -243,7 +243,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         '
         INSERT INTO menu_items(
           theme_id,
-          index_order, hidden, parent_id, selected_by_default,
+          slug, index_order, hidden, parent_id, selected_by_default,
           type,
           name, icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, zoom, popup_fields_id, details_fields_id, list_fields_id,
@@ -251,13 +251,14 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         )
         VALUES (
           (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1),
-          $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+          $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
         )
         RETURNING
           id
         ', [
           project_slug,
           theme_slug,
+          menu['id'], # Use original id as slug
           menu['index_order'],
           menu['hidden'],
           catorgry_ids_map[menu['parent_id']],
