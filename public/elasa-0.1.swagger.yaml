@@ -618,6 +618,12 @@ components:
             oneOf:
               - type: string
               - type: number
+              - type: array
+                items:
+                  type:
+                    oneOf:
+                      - type: string
+                      - type: number
             description: An open of first level properties can provided.
           required: [metadata]
           properties:
