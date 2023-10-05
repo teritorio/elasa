@@ -262,9 +262,16 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             -- cartocode
                             'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
-                            'source', pois.properties->'source'
-                            -- osm_id
-                            -- osm_type
+                            'source', pois.properties->'source',
+                            'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2) END,
+                            'osm_type',
+                                CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN
+                                    CASE substr(pois.properties->>'id', 1, 1)
+                                    WHEN 'n' THEN 'node'
+                                    WHEN 'w' THEN 'way'
+                                    WHEN 'r' THEN 'relation'
+                                    END
+                                END
                         ),
                         'editorial', jsonb_build_object(
                             'popup_fields', postgisftw.fields((array_agg(menu_items.popup_fields_id ORDER BY menu_items.id))[1])->'fields',
