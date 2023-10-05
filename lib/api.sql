@@ -1,5 +1,26 @@
 CREATE SCHEMA IF NOT EXISTS postgisftw;
 
+DROP FUNCTION IF EXISTS postgisftw.id_from_slugs;
+CREATE FUNCTION postgisftw.id_from_slugs(slugs json) RETURNS integer AS $$
+    SELECT
+        coalesce(
+            (slugs->>'original_id')::integer,
+            (
+                'x' ||
+                substr(
+                    md5(
+                        coalesce(
+                            slugs->>'fr',
+                            slugs->>'en'
+                        )
+                    ),
+                    1, 8
+                )
+            )::bit(32)::integer
+        )
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
 DROP FUNCTION IF EXISTS postgisftw.project;
 CREATE OR REPLACE FUNCTION postgisftw.project(
     _project_slug text
@@ -72,14 +93,14 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
-                'id', (menu_items.slugs->>'original_id')::integer,
-                'parent_id', (parent_menu_items.slugs->>'original_id')::integer,
+                'id', postgisftw.id_from_slugs(menu_items.slugs),
+                'parent_id', postgisftw.id_from_slugs(parent_menu_items.slugs),
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'original_id',
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
@@ -89,7 +110,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'original_id',
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
@@ -145,7 +166,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'original_id',
+                        'slug', menu_items.slugs->'fr',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
@@ -258,7 +279,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'ref:FR:CRTA', pois.properties->'tags'->'ref'->'FR:CRTA',
 
                         'metadata', jsonb_build_object(
-                            'id', (pois.slugs->>'original_id')::integer, -- use slug as original POI id
+                            'id', postgisftw.id_from_slugs(pois.slugs), -- use slug as original POI id
                             -- cartocode
                             'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
@@ -301,7 +322,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                 themes.slug = _theme_slug
             JOIN menu_items ON
                 menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR menu_items.slugs->>'original_id' = _category_id::text)
+                (_category_id IS NULL OR postgisftw.id_from_slugs(menu_items.slugs) = _category_id)
             JOIN sources ON
                 sources.project_id = projects.id
             JOIN menu_items_sources ON
@@ -310,7 +331,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
         WHERE
             pois.source_id = sources.id AND
             (_poi_ids IS NULL OR (
-                pois.slugs->>'original_id' = ANY(_poi_ids::text[]) OR
+                postgisftw.id_from_slugs(pois.slugs) = ANY(_poi_ids) OR
                 (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
             )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
