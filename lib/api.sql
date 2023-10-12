@@ -28,8 +28,9 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
     d jsonb
 ) AS $$
     SELECT
-        to_jsonb(projects.*) - 'polygon' - 'bbox_line' ||
-        jsonb_build_object(
+        to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' ||
+        jsonb_strip_nulls(jsonb_build_object(
+            'name', projects.name->'fr',
             'polygon', jsonb_build_object(
                 'type', 'geojson',
                 'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
@@ -44,7 +45,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                             - 'name' - 'keywords' ||
                         jsonb_build_object(
                             'title', themes.name,
-                            'keywords', coalesce(themes.keywords->>'fr', '')
+                            'keywords', nullif(coalesce(themes.keywords->>'fr', ''), '')
                         )
                     )
                 FROM
@@ -52,7 +53,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                 WHERE
                     themes.project_id = projects.id
             )
-        ) AS project
+        )) AS project
     FROM
         projects
     WHERE

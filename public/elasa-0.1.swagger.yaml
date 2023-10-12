@@ -33,7 +33,7 @@ paths:
                   slug:
                     type: string
                   name:
-                    $ref: '#/components/schemas/multilingual_string'
+                    type: string
                   attributions:
                     type: array
                     items:
