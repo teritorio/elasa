@@ -49,10 +49,13 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                     jsonb_agg(
                         to_jsonb(themes.*)
                             - 'project_id' - 'root_menu_item_id'
-                            - 'name' - 'keywords' ||
+                            - 'name' - 'keywords'
+                            - 'explorer_mode' - 'favorites_mode' ||
                         jsonb_build_object(
                             'title', themes.name,
-                            'keywords', nullif(coalesce(themes.keywords->>'fr', ''), '')
+                            'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
+                            'explorer_mode', nullif(explorer_mode, true),
+                            'favorites_mode', nullif(favorites_mode, true)
                         )
                     )
                 FROM
