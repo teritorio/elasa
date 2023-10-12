@@ -474,7 +474,8 @@ CREATE TABLE public.projects (
     slug character varying(255) DEFAULT NULL::character varying,
     articles json,
     default_country character varying(255),
-    default_country_state_opening_hours character varying(255)
+    default_country_state_opening_hours character varying(255),
+    polygons_extra json
 );
 
 

@@ -23,22 +23,24 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec(
       '
-      INSERT INTO projects(slug, name, icon_font_css_url, polygon, articles, default_country, default_country_state_opening_hours)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO projects(slug, name, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (slug)
       DO UPDATE SET
         name = $2,
         icon_font_css_url = $3,
         polygon = $4,
-        articles = $5,
-        default_country = $6,
-        default_country_state_opening_hours = $7
+        polygons_extra = $5,
+        articles = $6,
+        default_country = $7,
+        default_country_state_opening_hours = $8
       ',
       [
         project_slug,
         { fr: settings['name'] }.to_json,
         'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0',
         settings['polygon']['data'].to_json,
+        settings['polygons_extra'].to_json,
         articles.collect{ |article|
           {
             title: { fr: article['title'] },
