@@ -42,7 +42,8 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                 FROM
                     sources
                 WHERE
-                    sources.project_id = projects.id
+                    sources.project_id = projects.id AND
+                    attribution IS NOT NULL
             ),
             'themes', (
                 SELECT
