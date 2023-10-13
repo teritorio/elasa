@@ -409,3 +409,39 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
     ) AS t
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS postgisftw.attribute_translations;
+CREATE OR REPLACE FUNCTION postgisftw.attribute_translations(
+    _project_slug text,
+    _theme_slug text,
+    _lang text
+) RETURNS TABLE (
+    d jsonb
+) AS $$
+    SELECT
+        jsonb_strip_nulls(jsonb_object_agg(
+            key, jsonb_build_object(
+                'label', jsonb_build_object(
+                    'fr', key_translations->'@default'->_lang
+                ),
+                'values', (
+                    SELECT
+                        jsonb_object_agg(
+                            key, jsonb_build_object(
+                                'label', jsonb_build_object(
+                                    'fr', value->'@default:full'->_lang
+                                )
+                            )
+                        )
+                    FROM
+                        json_each(values_translations)
+                )
+            )
+        ))
+    FROM
+        translations
+    JOIN projects ON
+        projects.slug = _project_slug
+    ;
+$$ LANGUAGE sql PARALLEL SAFE;

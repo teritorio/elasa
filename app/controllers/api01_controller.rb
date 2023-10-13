@@ -71,7 +71,12 @@ class Api01Controller < ApplicationController
   end
 
   def attribute_translations
-    render json: {}
+    params.require(%i[project theme lang])
+    project_slug, theme_slug = project_theme_params
+    lang = params[:lang]
+
+    attribute_translations = query('postgisftw.attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang])
+    render json: attribute_translations
   end
 
   private

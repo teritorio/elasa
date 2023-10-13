@@ -22,7 +22,7 @@ SET row_security = off;
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url) FROM stdin;
 fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
-fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open	\N
+fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N
 filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N
 menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N
@@ -33,6 +33,7 @@ pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}
 sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N
+translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N
 \.
 
 
@@ -183,6 +184,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 167	menu_items	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 168	projects	polygons_extra	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
+169	translations	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
+171	translations	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+172	translations	key	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+173	translations	key_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+174	translations	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -299,6 +305,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 89	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id
 90	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id
 91	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
+92	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	translations	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,key,values_translations,project_id,key_translations
 \.
 
 
@@ -327,6 +334,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 31	menu_items	popup_fields_id	fields	\N	\N	\N	\N	\N	nullify
 32	menu_items	details_fields_id	fields	\N	\N	\N	\N	\N	nullify
 33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
+34	translations	project_id	projects	\N	\N	\N	\N	\N	nullify
 \.
 
 
@@ -374,7 +382,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 168, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 174, true);
 
 
 --
@@ -388,7 +396,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 91, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 92, true);
 
 
 --
@@ -402,7 +410,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 33, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 34, true);
 
 
 --

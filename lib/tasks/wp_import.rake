@@ -444,6 +444,26 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
   }
 end
 
+def load_i18n(project_slug, url)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('DELETE FROM translations WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
+
+    i18ns = fetch_json(url)
+    i18ns.each{ |key, i18n|
+      id = conn.exec(
+        '
+        INSERT INTO translations(project_id, key, key_translations, values_translations)
+        VALUES (
+          (SELECT id FROM projects WHERE projects.slug = $1),
+          $2, $3, $4
+        )
+        ',
+        [project_slug, key, i18n.except('values').to_json, i18n['values']&.to_json]
+      )
+    }
+  }
+end
+
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
@@ -452,6 +472,7 @@ namespace :wp do
     load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
     load_sources("#{datasource_url}/data", project_slug)
     load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
+    load_i18n(project_slug, "#{datasource_url}/data/#{project_slug}/i18n.json")
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
