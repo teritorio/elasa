@@ -72,6 +72,61 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS postgisftw.filter_values;
+CREATE OR REPLACE FUNCTION postgisftw.filter_values(
+    _menu_items_id integer,
+    property text
+) RETURNS jsonb AS $$
+    WITH
+    properties AS (
+        SELECT
+            coalesce(
+                pois.properties->'tags'->property,
+                pois.properties->'natives'->property
+            ) AS property
+        FROM
+            menu_items_sources
+            JOIN sources ON
+                sources.id = menu_items_sources.sources_id
+            JOIN pois ON
+                pois.source_id = sources.id
+        WHERE
+            menu_items_sources.menu_items_id = _menu_items_id
+    ),
+    values AS (
+        SELECT
+            jsonb_array_elements_text(
+                CASE jsonb_typeof(property)
+                wHEN 'array' THEN property
+                ELSE jsonb_build_array(property)
+                END
+            ) AS value
+        FROM
+            properties
+        WHERE
+            property is not NULL
+    ),
+    values_uniq AS (
+        SELECT
+            DISTINCT value
+        FROM
+            values
+    )
+    SELECT
+        jsonb_agg(
+            jsonb_build_object(
+                'value', value,
+                'name', jsonb_build_object(
+                    'fr', value -- TODO get i18n values
+                )
+            )
+        )
+    FROM
+        values_uniq
+    ;
+$$ LANGUAGE sql PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS postgisftw.menu;
 CREATE OR REPLACE FUNCTION postgisftw.menu(
     _project_slug text,
@@ -142,12 +197,12 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     WHEN 'multiselection' THEN
                                         jsonb_build_object(
                                             'property', filters.multiselection_property,
-                                            'values', '{}'::jsonb -- TODO ---------------------------
+                                            'values', postgisftw.filter_values(menu_items.id, filters.multiselection_property)
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
                                             'property', filters.checkboxes_list_property,
-                                            'values', '{}'::jsonb -- TODO ---------------------------
+                                            'values', postgisftw.filter_values(menu_items.id, filters.checkboxes_list_property)
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(

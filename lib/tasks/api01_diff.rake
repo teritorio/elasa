@@ -86,6 +86,17 @@ def compare_menu(url_old, url_new)
         menu['category']['zoom'] = menu['category']['zoom'].to_i
       end
 
+      if menu.dig('category', 'filters')
+        menu['category']['filters'] = menu['category']['filters'].sort_by{ |filter| filter['property'] || filter['property_begin'] }
+        menu['category']['filters'] = menu['category']['filters'].collect{ |filter|
+          puts filter.inspect
+          if filter['values']
+            filter['values'] = filter['values'].sort_by{ |value| value['value'] }
+          end
+          filter
+        }
+      end
+
       menu
     }
   }
