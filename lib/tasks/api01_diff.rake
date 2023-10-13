@@ -79,11 +79,12 @@ def compare_menu(url_old, url_new)
       menu['id']
     }.collect{ |menu|
       menu['menu_group']&.delete('id')
+      menu['menu_group']&.delete('style_class')
       menu['category']&.delete('id')
       menu['link']&.delete('id')
 
       if menu['category']
-        menu['category']['zoom'] = menu['category']['zoom'].to_i
+        menu['category']['zoom'] = Integer(menu['category']['zoom'], exception: false)
       end
 
       if menu.dig('category', 'filters')
