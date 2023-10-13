@@ -217,6 +217,80 @@ COPY public.directus_flows (id, name, icon, color, description, status, trigger,
 
 
 --
+-- Data for Name: directus_migrations; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.directus_migrations (version, name, "timestamp") FROM stdin;
+20201028A	Remove Collection Foreign Keys	2023-09-12 16:28:23.719649+00
+20201029A	Remove System Relations	2023-09-12 16:28:23.732513+00
+20201029B	Remove System Collections	2023-09-12 16:28:23.7442+00
+20201029C	Remove System Fields	2023-09-12 16:28:23.765668+00
+20201105A	Add Cascade System Relations	2023-09-12 16:28:23.801125+00
+20201105B	Change Webhook URL Type	2023-09-12 16:28:23.806682+00
+20210225A	Add Relations Sort Field	2023-09-12 16:28:23.811358+00
+20210304A	Remove Locked Fields	2023-09-12 16:28:23.814317+00
+20210312A	Webhooks Collections Text	2023-09-12 16:28:23.82012+00
+20210331A	Add Refresh Interval	2023-09-12 16:28:23.822659+00
+20210415A	Make Filesize Nullable	2023-09-12 16:28:23.829007+00
+20210416A	Add Collections Accountability	2023-09-12 16:28:23.833062+00
+20210422A	Remove Files Interface	2023-09-12 16:28:23.835324+00
+20210506A	Rename Interfaces	2023-09-12 16:28:23.854436+00
+20210510A	Restructure Relations	2023-09-12 16:28:23.869453+00
+20210518A	Add Foreign Key Constraints	2023-09-12 16:28:23.876093+00
+20210519A	Add System Fk Triggers	2023-09-12 16:28:23.895511+00
+20210521A	Add Collections Icon Color	2023-09-12 16:28:23.89815+00
+20210525A	Add Insights	2023-09-12 16:28:23.912573+00
+20210608A	Add Deep Clone Config	2023-09-12 16:28:23.915188+00
+20210626A	Change Filesize Bigint	2023-09-12 16:28:23.92532+00
+20210716A	Add Conditions to Fields	2023-09-12 16:28:23.927754+00
+20210721A	Add Default Folder	2023-09-12 16:28:23.93284+00
+20210802A	Replace Groups	2023-09-12 16:28:23.937105+00
+20210803A	Add Required to Fields	2023-09-12 16:28:23.939677+00
+20210805A	Update Groups	2023-09-12 16:28:23.943151+00
+20210805B	Change Image Metadata Structure	2023-09-12 16:28:23.946616+00
+20210811A	Add Geometry Config	2023-09-12 16:28:23.949574+00
+20210831A	Remove Limit Column	2023-09-12 16:28:23.952294+00
+20210903A	Add Auth Provider	2023-09-12 16:28:23.963731+00
+20210907A	Webhooks Collections Not Null	2023-09-12 16:28:23.969422+00
+20210910A	Move Module Setup	2023-09-12 16:28:23.972914+00
+20210920A	Webhooks URL Not Null	2023-09-12 16:28:23.978699+00
+20210924A	Add Collection Organization	2023-09-12 16:28:23.98269+00
+20210927A	Replace Fields Group	2023-09-12 16:28:23.989448+00
+20210927B	Replace M2M Interface	2023-09-12 16:28:23.991791+00
+20210929A	Rename Login Action	2023-09-12 16:28:23.993926+00
+20211007A	Update Presets	2023-09-12 16:28:23.999225+00
+20211009A	Add Auth Data	2023-09-12 16:28:24.002096+00
+20211016A	Add Webhook Headers	2023-09-12 16:28:24.004962+00
+20211103A	Set Unique to User Token	2023-09-12 16:28:24.009231+00
+20211103B	Update Special Geometry	2023-09-12 16:28:24.012198+00
+20211104A	Remove Collections Listing	2023-09-12 16:28:24.015503+00
+20211118A	Add Notifications	2023-09-12 16:28:24.027947+00
+20211211A	Add Shares	2023-09-12 16:28:24.04049+00
+20211230A	Add Project Descriptor	2023-09-12 16:28:24.043074+00
+20220303A	Remove Default Project Color	2023-09-12 16:28:24.048742+00
+20220308A	Add Bookmark Icon and Color	2023-09-12 16:28:24.051482+00
+20220314A	Add Translation Strings	2023-09-12 16:28:24.053885+00
+20220322A	Rename Field Typecast Flags	2023-09-12 16:28:24.057988+00
+20220323A	Add Field Validation	2023-09-12 16:28:24.060331+00
+20220325A	Fix Typecast Flags	2023-09-12 16:28:24.064264+00
+20220325B	Add Default Language	2023-09-12 16:28:24.071419+00
+20220402A	Remove Default Value Panel Icon	2023-09-12 16:28:24.077365+00
+20220429A	Add Flows	2023-09-12 16:28:24.104206+00
+20220429B	Add Color to Insights Icon	2023-09-12 16:28:24.10743+00
+20220429C	Drop Non Null From IP of Activity	2023-09-12 16:28:24.110441+00
+20220429D	Drop Non Null From Sender of Notifications	2023-09-12 16:28:24.113391+00
+20220614A	Rename Hook Trigger to Event	2023-09-12 16:28:24.116298+00
+20220801A	Update Notifications Timestamp Column	2023-09-12 16:28:24.123437+00
+20220802A	Add Custom Aspect Ratios	2023-09-12 16:28:24.126871+00
+20220826A	Add Origin to Accountability	2023-09-12 16:28:24.131282+00
+20230401A	Update Material Icons	2023-09-12 16:28:24.139153+00
+20230525A	Add Preview Settings	2023-09-12 16:28:24.142323+00
+20230526A	Migrate Translation Strings	2023-09-12 16:28:24.152613+00
+20230721A	Require Shares Fields	2023-09-12 16:28:24.15664+00
+\.
+
+
+--
 -- Data for Name: directus_notifications; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
