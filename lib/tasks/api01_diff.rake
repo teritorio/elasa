@@ -8,7 +8,6 @@ require 'hash_diff'
 
 
 def fetch_json(url)
-  puts url.inspect
   JSON.parse(HTTP.follow.get(url))
 end
 
@@ -90,7 +89,6 @@ def compare_menu(url_old, url_new)
       if menu.dig('category', 'filters')
         menu['category']['filters'] = menu['category']['filters'].sort_by{ |filter| filter['property'] || filter['property_begin'] }
         menu['category']['filters'] = menu['category']['filters'].collect{ |filter|
-          puts filter.inspect
           if filter['values']
             filter['values'] = filter['values'].sort_by{ |value| value['value'] }
           end
