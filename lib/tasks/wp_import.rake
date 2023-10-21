@@ -5,6 +5,7 @@ require 'rake'
 require 'json'
 require 'http'
 require 'pg'
+require 'cgi'
 
 require_relative 'sources_load'
 
@@ -16,7 +17,7 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
-def load_settings(project_slug, _theme_slug, url, url_articles)
+def load_settings(project_slug, theme_slug, url, url_articles)
   settings = fetch_json(url)
   articles = fetch_json(url_articles)
 
@@ -74,7 +75,7 @@ def load_settings(project_slug, _theme_slug, url, url_articles)
         ',
         [
           project_slug,
-          theme['slug'],
+          theme_slug,
           theme['title'].to_json,
           theme['description'].to_json,
           theme['site_url'].to_json,
@@ -290,8 +291,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
       next if category_id.nil?
 
       sources.each{ |source|
-        source_slug = source.split('/')[-1].split('.')[0]
-        puts [category_id, source_slug].inspect
+        source_slug = CGI.unescape(source.split('/')[-1].split('.')[0])
         id = conn.exec(
           '
           INSERT INTO menu_items_sources(menu_items_id, sources_id)
@@ -314,7 +314,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         }
         if id.nil?
           puts '==================='
-          puts "Fails link source to menu_item: #{source}"
+          puts "Fails link source to menu_item: #{source} (#{source_slug})"
           puts '==================='
         end
       }
