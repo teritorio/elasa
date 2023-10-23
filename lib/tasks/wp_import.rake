@@ -404,7 +404,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
     )
 
     puts "pois slug update: #{pois.size}"
-    pois.select{ |poi|
+    slugs = pois.select{ |poi|
       poi.dig('properties', 'metadata', 'source') != 'zone' && poi.dig('properties', 'metadata', 'source') != 'tis'
     }.collect{ |poi|
       id = poi.dig('properties', 'metadata', 'id')
@@ -422,23 +422,39 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
       else
         [id, ref]
       end
-    }.compact_blank.each{ |id, ref|
-      conn.exec(
-        '
-        UPDATE
-          pois
-        SET
-          slugs = $3
-        FROM
-          sources
-        WHERE
-          sources.project_id = $1 AND
-          pois.source_id = sources.id AND
-          pois.properties->>\'id\' = $2
-        ',
-        [project_id, ref, { original_id: id.to_s }.to_json]
-      )
+    }.compact_blank.collect{ |id, ref|
+      [project_id, ref, { original_id: id.to_s }.to_json]
     }
+
+    conn.exec("
+      CREATE TEMP TABLE pois_slug_import(
+        project_id varchar NOT NULL,
+        ref varchar NOT NULL,
+        original_id json NOT NULL
+      )
+    ")
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data('COPY pois_slug_import FROM STDIN (FORMAT binary)', enco) {
+      slugs.each { |i|
+        conn.put_copy_data(i)
+      }
+    }
+
+    conn.exec_params(
+      "
+      UPDATE
+        pois
+      SET
+        slugs = (slugs::jsonb || pois_slug_import.original_id::jsonb)::json
+      FROM
+        sources,
+        pois_slug_import
+      WHERE
+        sources.project_id = pois_slug_import.project_id::integer AND
+        pois.source_id = sources.id AND
+        pois.properties->>'id' = pois_slug_import.ref
+      "
+    )
   }
 end
 
