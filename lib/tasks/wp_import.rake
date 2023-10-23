@@ -467,12 +467,13 @@ end
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
-    url, project_slug, theme_slug, datasource_url = ARGV[2..]
+    url, project_slug, theme_slug, datasource_url, datasource_project = ARGV[2..]
+    datasource_project ||= project_slug
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
-    load_sources("#{datasource_url}/data", project_slug)
+    load_sources("#{datasource_url}/data", project_slug, datasource_project)
     load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
-    load_i18n(project_slug, "#{datasource_url}/data/#{project_slug}/i18n.json")
+    load_i18n(project_slug, "#{datasource_url}/data/#{datasource_project}/i18n.json")
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
