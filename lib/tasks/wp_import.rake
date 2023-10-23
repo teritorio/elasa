@@ -12,7 +12,7 @@ require_relative 'sources_load'
 
 def fetch_json(url)
   response = HTTP.follow.get(url)
-  raise "#{url} => #{response.status}" if !response.status.success?
+  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
 
   JSON.parse(response)
 end
@@ -174,9 +174,7 @@ def load_fields(conn, project_slug, pois)
 
   multiple_config = fields.group_by(&:first).select{ |_id, g| g.size != 1 }.collect(&:first)
   if !multiple_config.empty?
-    puts '==================='
-    puts "Mutiple fields configuration for categrories #{multiple_config} - IGNORED"
-    puts '==================='
+    puts "[ERROR] Mutiple fields configuration for categrories #{multiple_config} - IGNORED"
   end
 
   puts "fields: #{fields.size}"
@@ -313,9 +311,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
           result&.first
         }
         if id.nil?
-          puts '==================='
-          puts "Fails link source to menu_item: #{source} (#{source_slug})"
-          puts '==================='
+          puts "[ERROR] Fails link source to menu_item: #{source} (#{source_slug})"
         end
       }
     }
@@ -405,6 +401,7 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
       [project_slug, theme_slug, catorgry_ids_map[0]]
     )
 
+    puts "pois slug update: #{pois.size}"
     pois.select{ |poi|
       poi.dig('properties', 'metadata', 'source') != 'zone' && poi.dig('properties', 'metadata', 'source') != 'tis'
     }.collect{ |poi|
@@ -449,6 +446,7 @@ def load_i18n(project_slug, url)
     conn.exec('DELETE FROM translations WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
 
     i18ns = fetch_json(url)
+    puts "i18n: #{i18ns.size}"
     i18ns.each{ |key, i18n|
       id = conn.exec(
         '
@@ -469,6 +467,7 @@ namespace :wp do
   task :import, [] => :environment do
     url, project_slug, theme_slug, datasource_url, datasource_project = ARGV[2..]
     datasource_project ||= project_slug
+    puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
     load_sources("#{datasource_url}/data", project_slug, datasource_project)

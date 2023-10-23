@@ -162,7 +162,7 @@ def load_sources(datasource_url, project_slug, datasource_project)
     project_slug = project['name']
     metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
-    puts "== #{project_slug}: #{metadatas.size} =="
+    puts "source #{project_slug} (#{metadatas.size})"
 
     # Output a table of current connections to the DB
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
