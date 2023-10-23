@@ -25,8 +25,8 @@ ALTER TABLE IF EXISTS ONLY public.menu_items_sources DROP CONSTRAINT IF EXISTS m
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_popup_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_parent_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_list_fields_id_foreign;
-ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS menu_items_fk_project_id;
 ALTER TABLE IF EXISTS ONLY public.sources DROP CONSTRAINT IF EXISTS menu_items_fk_project_id;
+ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS menu_items_fk_project_id;
 ALTER TABLE IF EXISTS ONLY public.menu_items_filters DROP CONSTRAINT IF EXISTS menu_items_filters_menu_items_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items_filters DROP CONSTRAINT IF EXISTS menu_items_filters_filters_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.menu_items DROP CONSTRAINT IF EXISTS menu_items_details_fields_id_foreign;
@@ -877,18 +877,18 @@ ALTER TABLE ONLY public.menu_items_filters
 
 
 --
--- Name: sources menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.sources
-    ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-
-
---
 -- Name: themes menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.themes
+    ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sources menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sources
     ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 

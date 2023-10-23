@@ -189,6 +189,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 172	translations	key	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 173	translations	key_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 174	translations	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	12	full	\N	\N	\N	f	\N	\N	\N
+176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -408,7 +410,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 31	menu_items	popup_fields_id	fields	\N	\N	\N	\N	\N	nullify
 32	menu_items	details_fields_id	fields	\N	\N	\N	\N	\N	nullify
 33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
-34	translations	project_id	projects	\N	\N	\N	\N	\N	nullify
+34	translations	project_id	projects	translations	\N	\N	\N	\N	nullify
+35	sources	project_id	projects	sources	\N	\N	\N	\N	nullify
 \.
 
 
@@ -456,7 +459,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 174, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 176, true);
 
 
 --
@@ -484,7 +487,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 34, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 35, true);
 
 
 --
