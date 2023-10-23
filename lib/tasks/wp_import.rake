@@ -22,7 +22,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
   articles = fetch_json(url_articles)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec(
+    project_id = conn.exec(
       '
       INSERT INTO projects(slug, name, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -35,6 +35,8 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         articles = $6,
         default_country = $7,
         default_country_state_opening_hours = $8
+      RETURNING
+        id
       ',
       [
         project_slug,
@@ -51,43 +53,49 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         settings['default_country'],
         settings['default_country_state_opening_hours'],
       ]
-    )
-
-    settings['themes'].each{ |theme|
-      conn.exec(
-        '
-        INSERT INTO themes(project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, keywords, favorites_mode, explorer_mode)
-        VALUES (
-          (SELECT id FROM projects WHERE slug = $1),
-          $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-        )
-        ON CONFLICT (project_id, slug)
-        DO UPDATE SET
-          name = $3,
-          description = $4,
-          site_url = $5,
-          main_url = $6,
-          logo_url = $7,
-          favicon_url = $8,
-          keywords = $9,
-          favorites_mode = $10,
-          explorer_mode = $11
-        ',
-        [
-          project_slug,
-          theme_slug,
-          theme['title'].to_json,
-          theme['description'].to_json,
-          theme['site_url'].to_json,
-          theme['main_url'].to_json,
-          theme['logo_url'],
-          theme['favicon_url'],
-          { fr: theme['keywords'] || '' }.to_json,
-          theme['favorites_mode'] != false,
-          theme['explorer_mode'] != false,
-        ]
-      )
+    ) { |result|
+      result.first['id'].to_i
     }
+
+    theme = settings['themes'].first
+    theme_id = conn.exec(
+      '
+      INSERT INTO themes(project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, keywords, favorites_mode, explorer_mode)
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+      )
+      ON CONFLICT (project_id, slug)
+      DO UPDATE SET
+        name = $3,
+        description = $4,
+        site_url = $5,
+        main_url = $6,
+        logo_url = $7,
+        favicon_url = $8,
+        keywords = $9,
+        favorites_mode = $10,
+        explorer_mode = $11
+      RETURNING
+        id
+        ',
+      [
+        project_id,
+        theme_slug,
+        theme['title'].to_json,
+        theme['description'].to_json,
+        theme['site_url'].to_json,
+        theme['main_url'].to_json,
+        theme['logo_url'],
+        theme['favicon_url'],
+        { fr: theme['keywords'] || '' }.to_json,
+        theme['favorites_mode'] != false,
+        theme['explorer_mode'] != false,
+      ]
+    ) { |result|
+      result.first['id'].to_i
+    }
+
+    [project_id, theme_id]
   }
 end
 
@@ -109,14 +117,14 @@ end
 
 @fields = {}
 
-def load_field_group(conn, project_slug, group)
+def load_field_group(conn, project_id, group)
   group_key = group.except('group')
   if @fields[group_key]
     @fields[group_key]
   else
     if group['group']
       ids = (group['fields'] || []).collect{ |f|
-        load_field_group(conn, project_slug, f)
+        load_field_group(conn, project_id, f)
       }
     end
 
@@ -129,13 +137,12 @@ def load_field_group(conn, project_slug, group)
       "group", display_mode, icon
     )
     VALUES (
-      (SELECT id FROM projects WHERE slug = $1),
-      $2, $3, $4, $5, $6
+      $1, $2, $3, $4, $5, $6
     )
     RETURNING
       id
     ', [
-        project_slug,
+        project_id,
         group['group'] ? 'group' : 'field',
         group['field'],
         group['group'],
@@ -156,7 +163,7 @@ def load_field_group(conn, project_slug, group)
   end
 end
 
-def load_fields(conn, project_slug, pois)
+def load_fields(conn, project_id, pois)
   fields = pois.collect{ |poi|
     [
       poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
@@ -182,7 +189,7 @@ def load_fields(conn, project_slug, pois)
     !multiple_config.include?(field[0])
   }.collect{ |field|
     [field[0]] + field[1..].collect{ |f|
-      load_field_group(conn, project_slug, {
+      load_field_group(conn, project_id, {
         'group' => '',
         'fields' => f,
       })
@@ -190,14 +197,14 @@ def load_fields(conn, project_slug, pois)
   }
 end
 
-def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
+def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM menu_items WHERE theme_id = (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1)', [project_slug, theme_slug])
-    conn.exec('DELETE FROM filters WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
-    conn.exec('DELETE FROM fields WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
+    conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
+    conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
+    conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
 
     pois = fetch_json(url_pois)['features']
-    fields = load_fields(conn, project_slug, pois)
+    fields = load_fields(conn, project_id, pois)
     fields_ids = fields.index_by(&:first)
 
     menu_sources = fetch_json(url_menu_sources)
@@ -251,14 +258,12 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
           href
         )
         VALUES (
-          (SELECT themes.id FROM projects JOIN themes ON themes.slug = $2 AND themes.project_id = projects.id WHERE projects.slug = $1),
-          $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
         )
         RETURNING
           id
         ', [
-          project_slug,
-          theme_slug,
+          theme_id,
           { original_id: menu['id'] }.to_json, # Use original id as slug
           menu['index_order'],
           menu['hidden'],
@@ -297,16 +302,14 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
             $2,
             sources.id
           FROM
-            projects
-            JOIN sources ON
-              sources.project_id = projects.id AND
-              sources.slug = $3
+            sources
           WHERE
-            projects.slug = $1
+            sources.project_id = $1 AND
+            sources.slug = $3
           RETURNING
             id
           ',
-          [project_slug, category_id, source_slug]
+          [project_id, category_id, source_slug]
         ) { |result|
           result&.first
         }
@@ -346,13 +349,12 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
           boolean_property
         )
         VALUES (
-          (SELECT id FROM projects WHERE projects.slug = $1),
-          $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
         )
         RETURNING
           id
         ', [
-          project_slug,
+          project_id,
           filter['type'],
           filter['name'].to_json,
           # date_range
@@ -394,11 +396,11 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
       FROM
         projects
       WHERE
-        projects.slug = $1 AND
+        projects.id = $1 AND
         themes.project_id = projects.id AND
-        themes.slug = $2
+        themes.id = $2
       ',
-      [project_slug, theme_slug, catorgry_ids_map[0]]
+      [project_id, theme_id, catorgry_ids_map[0]]
     )
 
     puts "pois slug update: #{pois.size}"
@@ -428,22 +430,21 @@ def load_menu(project_slug, theme_slug, url, url_pois, url_menu_sources)
         SET
           slugs = $3
         FROM
-          projects
-          JOIN sources ON
-            sources.project_id = projects.id
+          sources
         WHERE
-          projects.slug = $1 AND
+          sources.project_id = $1 AND
+          pois.source_id = sources.id AND
           pois.properties->>\'id\' = $2
         ',
-        [project_slug, ref, { original_id: id.to_s }.to_json]
+        [project_id, ref, { original_id: id.to_s }.to_json]
       )
     }
   }
 end
 
-def load_i18n(project_slug, url)
+def load_i18n(project_id, url)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM translations WHERE project_id = (SELECT id FROM projects WHERE projects.slug = $1)', [project_slug])
+    conn.exec('DELETE FROM translations WHERE project_id = $1', [project_id])
 
     i18ns = fetch_json(url)
     puts "i18n: #{i18ns.size}"
@@ -452,11 +453,10 @@ def load_i18n(project_slug, url)
         '
         INSERT INTO translations(project_id, key, key_translations, values_translations)
         VALUES (
-          (SELECT id FROM projects WHERE projects.slug = $1),
-          $2, $3, $4
+          $1, $2, $3, $4
         )
         ',
-        [project_slug, key, i18n.except('values').to_json, i18n['values']&.to_json]
+        [project_id, key, i18n.except('values').to_json, i18n['values']&.to_json]
       )
     }
   }
@@ -469,10 +469,10 @@ namespace :wp do
     datasource_project ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
-    load_sources("#{datasource_url}/data", project_slug, datasource_project)
-    load_menu(project_slug, theme_slug, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
-    load_i18n(project_slug, "#{datasource_url}/data/#{datasource_project}/i18n.json")
+    project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    load_from_source("#{datasource_url}/data", project_slug, datasource_project)
+    load_menu(project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
+    load_i18n(project_id, "#{datasource_url}/data/#{datasource_project}/i18n.json")
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end

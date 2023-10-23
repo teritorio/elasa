@@ -155,11 +155,10 @@ def load_pois(conn, project_slug, source_slug, pois)
   )
 end
 
-def load_sources(datasource_url, project_slug, datasource_project)
+def load_from_source(datasource_url, project_slug, datasource_project)
   projects = fetch_json("#{datasource_url}.json")
 
-  projects.select{ |project| project_slug.nil? || project['name'] == project_slug }.each{ |project|
-    project_slug = project['name']
+  projects.select{ |project| datasource_project.nil? || project['name'] == datasource_project }.each{ |_project|
     metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
     puts "source #{project_slug} (#{metadatas.size})"
