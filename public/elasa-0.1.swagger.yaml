@@ -64,7 +64,7 @@ paths:
                     items:
                       type: object
                       additionalProperties: false
-                      required: [id, slug, title, description, keywords, logo_url, favicon_url, favorites_mode, explorer_mode]
+                      required: [id, slug, title, description, logo_url, favicon_url]
                       properties:
                         id:
                           type: integer
@@ -220,7 +220,7 @@ paths:
                             oneOf:
                             - type: object
                               additionalProperties: false
-                              required: [type, property, name, values]
+                              required: [type, property, values]
                               properties:
                                 type:
                                   type: string
@@ -230,13 +230,16 @@ paths:
                                 name:
                                   $ref: '#/components/schemas/multilingual_string'
                                 values:
-                                  type: object
-                                  additionalProperties: false
-                                  properties:
-                                    value:
-                                      type: string
-                                    name:
-                                      $ref: '#/components/schemas/multilingual_string'
+                                  type: array
+                                  items:
+                                    type: object
+                                    additionalProperties: false
+                                    required: [value]
+                                    properties:
+                                      value:
+                                        type: string
+                                      name:
+                                        $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
                               required: [type, property, name]
@@ -250,7 +253,7 @@ paths:
                                   $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
-                              required: [type, property_begin, property_end, name]
+                              required: [type, property_begin, property_end]
                               properties:
                                 type:
                                   type: string
@@ -263,7 +266,7 @@ paths:
                                   $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
-                              required: [type, property, name, min, max]
+                              required: [type, property, min, max]
                               properties:
                                 type:
                                   type: string

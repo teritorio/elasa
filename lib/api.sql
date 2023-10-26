@@ -28,43 +28,45 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
     d jsonb
 ) AS $$
     SELECT
-        to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' ||
-        jsonb_strip_nulls(jsonb_build_object(
-            'name', projects.name->'fr',
-            'polygon', jsonb_build_object(
-                'type', 'geojson',
-                'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
-            ),
-            'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
-            'attributions', (
-                SELECT
-                    array_agg(DISTINCT attribution)
-                FROM
-                    sources
-                WHERE
-                    sources.project_id = projects.id AND
-                    attribution IS NOT NULL
-            ),
-            'themes', (
-                SELECT
-                    jsonb_agg(
-                        to_jsonb(themes.*)
-                            - 'project_id' - 'root_menu_item_id'
-                            - 'name' - 'keywords'
-                            - 'explorer_mode' - 'favorites_mode' ||
-                        jsonb_build_object(
-                            'title', themes.name,
-                            'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
-                            'explorer_mode', nullif(explorer_mode, true),
-                            'favorites_mode', nullif(favorites_mode, true)
+        jsonb_strip_nulls(
+            to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' ||
+            jsonb_build_object(
+                'name', projects.name->'fr',
+                'polygon', jsonb_build_object(
+                    'type', 'geojson',
+                    'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
+                ),
+                'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
+                'attributions', (
+                    SELECT
+                        array_agg(DISTINCT attribution)
+                    FROM
+                        sources
+                    WHERE
+                        sources.project_id = projects.id AND
+                        attribution IS NOT NULL
+                ),
+                'themes', (
+                    SELECT
+                        jsonb_agg(
+                            to_jsonb(themes.*)
+                                - 'project_id' - 'root_menu_item_id'
+                                - 'name' - 'keywords'
+                                - 'explorer_mode' - 'favorites_mode' ||
+                            jsonb_build_object(
+                                'title', themes.name,
+                                'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
+                                'explorer_mode', nullif(explorer_mode, true),
+                                'favorites_mode', nullif(favorites_mode, true)
+                            )
                         )
-                    )
-                FROM
-                    themes
-                WHERE
-                    themes.project_id = projects.id
+                    FROM
+                        themes
+                    WHERE
+                        themes.project_id = projects.id
+                )
             )
-        )) AS project
+        ) AS project
     FROM
         projects
     WHERE
@@ -75,10 +77,21 @@ $$ LANGUAGE sql PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS postgisftw.filter_values;
 CREATE OR REPLACE FUNCTION postgisftw.filter_values(
+    _project_id integer,
     _menu_items_id integer,
     property text
 ) RETURNS jsonb AS $$
     WITH
+    translation AS (
+        SELECT
+            values_translations
+        FROM
+            translations
+        WHERE
+            project_id = project_id AND
+            key = property
+        LIMIT 1
+    ),
     properties AS (
         SELECT
             coalesce(
@@ -117,13 +130,17 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
         jsonb_agg(
             jsonb_build_object(
                 'value', value,
-                'name', jsonb_build_object(
-                    'fr', value -- TODO get i18n values
-                )
+                'name',
+                    CASE WHEN translation.values_translations IS NOT NULL THEN
+                        jsonb_build_object(
+                            'fr', translation.values_translations->value->'@default'->'fr'
+                        )
+                    END
             )
         )
     FROM
-        values_uniq
+        values_uniq,
+        translation
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
 
@@ -198,12 +215,12 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     WHEN 'multiselection' THEN
                                         jsonb_build_object(
                                             'property', filters.multiselection_property,
-                                            'values', postgisftw.filter_values(menu_items.id, filters.multiselection_property)
+                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property)
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
                                             'property', filters.checkboxes_list_property,
-                                            'values', postgisftw.filter_values(menu_items.id, filters.checkboxes_list_property)
+                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property)
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -227,7 +244,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                 JOIN filters ON
                                     filters.id = menu_items_filters.filters_id
                             WHERE
-                                menu_items_filters.menu_items_id = menu_items.id
+                                menu_items_filters.menu_items_id = menu_items.id AND
+                                (filters.type NOT IN ('multiselection', 'checkboxes_list') OR postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL)
                         )
                     )
                 END,
