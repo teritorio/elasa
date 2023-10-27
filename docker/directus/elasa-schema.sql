@@ -36,6 +36,7 @@ ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields
 ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_fields_id_foreign;
 DROP INDEX IF EXISTS public.pois_idx_slug_original_id_integer;
 ALTER TABLE IF EXISTS ONLY public.translations DROP CONSTRAINT IF EXISTS translations_pkey;
+ALTER TABLE IF EXISTS ONLY public.translations DROP CONSTRAINT IF EXISTS translation_uniq_project_id_key;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_project_id_slug_key;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_pkey;
 ALTER TABLE IF EXISTS ONLY public.sources DROP CONSTRAINT IF EXISTS sources_pkey;
@@ -446,7 +447,7 @@ CREATE TABLE public.pois (
     geom public.geometry(Geometry,4326),
     properties jsonb,
     source_id integer,
-    slugs json NOT NULL
+    slugs json
 );
 
 
@@ -803,6 +804,14 @@ ALTER TABLE ONLY public.themes
 
 ALTER TABLE ONLY public.themes
     ADD CONSTRAINT themes_project_id_slug_key UNIQUE (project_id, slug);
+
+
+--
+-- Name: translations translation_uniq_project_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.translations
+    ADD CONSTRAINT translation_uniq_project_id_key UNIQUE (project_id, key);
 
 
 --
