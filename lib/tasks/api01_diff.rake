@@ -91,6 +91,10 @@ def compare_menu(url_old, url_new)
         menu['category']['filters'] = menu['category']['filters'].collect{ |filter|
           if filter['values']
             filter['values'] = filter['values'].sort_by{ |value| value['value'] }
+            filter['values'] = filter['values'].collect{ |value|
+              value['name'] = value['name']&.transform_values{ |v| v == value['value'] ? nil : v }&.compact_blank
+              value.compact_blank
+            }
           end
           filter
         }

@@ -79,7 +79,7 @@ DROP FUNCTION IF EXISTS postgisftw.filter_values;
 CREATE OR REPLACE FUNCTION postgisftw.filter_values(
     _project_id integer,
     _menu_items_id integer,
-    property text
+    _property text
 ) RETURNS jsonb AS $$
     WITH
     translation AS (
@@ -89,14 +89,14 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
             translations
         WHERE
             project_id = project_id AND
-            key = property
+            key = _property
         LIMIT 1
     ),
     properties AS (
         SELECT
             coalesce(
-                pois.properties->'tags'->property,
-                pois.properties->'natives'->property
+                jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || replace(_property, ':', '.'))::jsonpath),
+                jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || replace(_property, ':', '.'))::jsonpath)
             ) AS property
         FROM
             menu_items_sources
@@ -127,20 +127,22 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
             values
     )
     SELECT
-        jsonb_agg(
-            jsonb_build_object(
-                'value', value,
-                'name',
-                    CASE WHEN translation.values_translations IS NOT NULL THEN
-                        jsonb_build_object(
-                            'fr', translation.values_translations->value->'@default'->'fr'
-                        )
-                    END
+        jsonb_strip_nulls(
+            jsonb_agg(
+                jsonb_build_object(
+                    'value', value,
+                    'name',
+                        CASE WHEN translation.values_translations IS NOT NULL THEN
+                            jsonb_build_object(
+                                'fr', translation.values_translations->value->'@default'->'fr'
+                            )
+                        END
+                )
             )
         )
     FROM
-        values_uniq,
-        translation
+        values_uniq
+        LEFT JOIN translation ON true
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
 
@@ -220,7 +222,7 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
                                             'property', filters.checkboxes_list_property,
-                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property)
+                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.checkboxes_list_property)
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -245,7 +247,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     filters.id = menu_items_filters.filters_id
                             WHERE
                                 menu_items_filters.menu_items_id = menu_items.id AND
-                                (filters.type NOT IN ('multiselection', 'checkboxes_list') OR postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL)
+                                (filters.type != 'multiselection' OR postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
+                                (filters.type != 'checkboxes_list' OR postgisftw.filter_values(projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
                         )
                     )
                 END,
