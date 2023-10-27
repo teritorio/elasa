@@ -45,7 +45,10 @@ def compare_settings(url_old, url_new)
     hash = fetch_json(url).except('id', 'slug')
     hash['themes'].each{ |theme|
       theme.delete('id')
+      theme.delete('slug') # Ignore
     }
+    hash['polygon'] = nil # Ignore polygons
+    hash['bbox_line'] = nil # Ignore polygons
     hash
   }
 
