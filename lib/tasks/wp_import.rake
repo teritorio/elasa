@@ -445,7 +445,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
       UPDATE
         pois
       SET
-        slugs = (slugs::jsonb || pois_slug_import.original_id::jsonb)::json
+        slugs = (coalesce(slugs::jsonb, '{}'::jsonb) || pois_slug_import.original_id::jsonb)::json
       FROM
         sources,
         pois_slug_import

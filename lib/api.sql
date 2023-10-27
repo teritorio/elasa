@@ -310,6 +310,35 @@ CREATE OR REPLACE FUNCTION postgisftw.fields(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
+-- Function inspired by https://stackoverflow.com/questions/45585462/recursively-flatten-a-nested-jsonb-in-postgres-without-unknown-depth-and-unknown
+DROP FUNCTION IF EXISTS postgisftw.json_flat;
+CREATE OR REPLACE FUNCTION postgisftw.json_flat(
+    _prefix text,
+    _json jsonb
+) RETURNS jsonb AS $$
+    WITH RECURSIVE flat (key, value) AS (
+        SELECT
+            key, value
+        FROM
+            jsonb_each(_json)
+    UNION
+        SELECT
+            concat(f.key, ':', j.key), j.value
+        FROM
+            flat f,
+            jsonb_each(f.value) j
+        WHERE
+            jsonb_typeof(f.value) = 'object'
+    )
+    SELECT
+        jsonb_object_agg(_prefix || ':' || key, value) AS data
+    FROM
+        flat
+    WHERE
+        jsonb_typeof(value) <> 'object'
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
 
 DROP FUNCTION IF EXISTS postgisftw.pois;
 CREATE OR REPLACE FUNCTION postgisftw.pois(
@@ -343,7 +372,11 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                 'properties',
                     (pois.properties->'tags')
                         - 'name' - 'description' - 'website:details'
-                        - 'addr' - 'ref' ||
+                        - 'addr' - 'ref' - 'route' - 'source' ||
+                    coalesce(postgisftw.json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
+                    coalesce(postgisftw.json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
+                    coalesce(postgisftw.json_flat('route', pois.properties->'tags'->'route'), '{}'::jsonb) ||
+                    coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
                         'name', pois.properties->'tags'->'name'->'fr',
@@ -353,23 +386,13 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 20)
                             ELSE pois.properties->'tags'->'description'->>'fr'
                             END,
-                        -- addr
-                        'addr:street', pois.properties->'tags'->'addr'->'street',
-                        'addr:street', pois.properties->'tags'->'addr'->'street',
-                        'addr:hamlet', pois.properties->'tags'->'addr'->'hamlet',
-                        'addr:postcode', pois.properties->'tags'->'addr'->'postcode',
-                        'addr:city', pois.properties->'tags'->'addr'->'city',
-                        'addr:country', pois.properties->'tags'->'addr'->'country',
-                        -- ref
-                        'ref:FR:CRTA', pois.properties->'tags'->'ref'->'FR:CRTA',
-
                         'metadata', jsonb_build_object(
                             'id', postgisftw.id_from_slugs(pois.slugs), -- use slug as original POI id
                             -- cartocode
                             'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
-                            'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2) END,
+                            'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
                             'osm_type',
                                 CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN
                                     CASE substr(pois.properties->>'id', 1, 1)

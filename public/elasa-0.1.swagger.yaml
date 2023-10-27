@@ -670,7 +670,7 @@ components:
               type: integer
               description: In minutes.
             route:hiking:length:
-              type: integer
+              type: number
               description: In kilometers.
             route:bicycle:difficulty:
               type: string
@@ -680,7 +680,7 @@ components:
               type: integer
               description: In minutes.
             route:bicycle:length:
-              type: integer
+              type: number
               description: In kilometers.
             route:road:difficulty:
               type: string
@@ -690,7 +690,7 @@ components:
               type: integer
               description: In minutes.
             route:road:length:
-              type: integer
+              type: number
               description: In kilometers.
             start_date:
               type: string
