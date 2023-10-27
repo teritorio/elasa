@@ -41,7 +41,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       [
         project_slug,
         { fr: settings['name'] }.to_json,
-        'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0',
+        settings['icon_font_css_url'],
         settings['polygon']['data'].to_json,
         settings['polygons_extra'].to_json,
         articles.collect{ |article|
