@@ -95,8 +95,8 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
     properties AS (
         SELECT
             coalesce(
-                jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || replace(_property, ':', '.'))::jsonpath),
-                jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || replace(_property, ':', '.'))::jsonpath)
+                jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"' END)::jsonpath),
+                jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"'  END)::jsonpath)
             ) AS property
         FROM
             menu_items_sources
