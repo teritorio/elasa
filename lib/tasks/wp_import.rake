@@ -297,7 +297,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           menu['selected_by_default'],
           menu_type(menu),
           menu_dig_all(menu, 'name').to_json,
-          labels[menu['id']].nil? ? nil : labels[menu['id']].to_json,
+          labels[menu['id']]&.to_json,
           menu_dig_all(menu, 'icon'),
           menu_dig_all(menu, 'color_fill'),
           menu_dig_all(menu, 'color_line'),
@@ -347,9 +347,9 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
     }
 
     filters = Hash.new { |h, k| h[k] = [] }
-    menu_items.select{ |menu| !menu.dig('category', 'filters').nil? }.each{ |menu|
-      menu['category']['filters'].each{ |filter|
-        filters[filter] << menu['category']['id']
+    menu_items.select{ |menu_item| !menu_item.dig('category', 'filters').nil? }.each{ |category|
+      category['category']['filters'].each{ |filter|
+        filters[filter] << category['category']['id']
       }
     }
 
@@ -492,7 +492,7 @@ def load_i18n(project_id, url)
     i18ns = fetch_json(url)
     puts "i18n: #{i18ns.size}"
     i18ns.each{ |key, i18n|
-      id = conn.exec(
+      conn.exec(
         '
         INSERT INTO translations(project_id, key, key_translations, values_translations)
         VALUES (

@@ -91,7 +91,7 @@ def load_pois(conn, project_slug, source_slug, pois)
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data('COPY pois_import FROM STDIN (FORMAT binary)', enco) {
     pois.each{ |feature|
-      slugs = feature.dig('properties', 'tags', 'name')&.transform_values{ |name| name.parameterize }
+      slugs = feature.dig('properties', 'tags', 'name')&.transform_values(&:parameterize)
       conn.put_copy_data([slugs&.to_json, feature['geometry'].to_json, feature['properties'].to_json])
     }
   }

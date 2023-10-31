@@ -28,8 +28,8 @@ end
 class Hash
   def compact_blank_deep
     r = each_with_object({}) { |(k, v), h|
-      if (_v = v.compact_blank_deep)
-        h[k] = _v
+      if (v = v.compact_blank_deep)
+        h[k] = v
       end
     }.compact_blank
 
