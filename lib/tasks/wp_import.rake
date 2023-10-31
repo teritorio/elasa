@@ -134,10 +134,11 @@ def load_field_group(conn, project_id, group)
       project_id,
       type,
       field,
+      label,
       "group", display_mode, icon
     )
     VALUES (
-      $1, $2, $3, $4, $5, $6
+      $1, $2, $3, $4, $5, $6, $7
     )
     RETURNING
       id
@@ -145,6 +146,7 @@ def load_field_group(conn, project_id, group)
         project_id,
         group['group'] ? 'group' : 'field',
         group['field'],
+        group['label'],
         group['group'],
         group['display_mode'],
         group['icon'],

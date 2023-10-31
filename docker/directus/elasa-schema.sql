@@ -144,7 +144,8 @@ CREATE TABLE public.fields (
     "group" character varying(255),
     display_mode character varying(255),
     icon character varying(255),
-    project_id integer NOT NULL
+    project_id integer NOT NULL,
+    label boolean DEFAULT false
 );
 
 
