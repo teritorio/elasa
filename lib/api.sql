@@ -286,29 +286,117 @@ DROP FUNCTION IF EXISTS postgisftw.fields;
 CREATE OR REPLACE FUNCTION postgisftw.fields(
     _root_field_id integer
 ) RETURNS jsonb AS $$
+    WITH
+    a AS (
+        -- Recursive down
+        WITH RECURSIVE a AS (
+            SELECT
+                fields.id,
+                fields_fields.related_fields_id AS children_id,
+                fields_fields."index"
+            FROM
+                fields
+                LEFT JOIN fields_fields ON
+                    fields_fields.fields_id = fields.id
+            WHERE
+                fields.id = _root_field_id
+        UNION ALL
+            SELECT
+                fields.id,
+                fields_fields.related_fields_id AS children_id,
+                fields_fields."index"
+            FROM
+                a
+                JOIN fields ON
+                    fields.id = a.children_id
+                LEFT JOIN fields_fields ON
+                    fields_fields.fields_id = fields.id
+        )
+        SELECT
+            *
+        FROM
+            a
+    ),
+    b AS (
+        -- Recursive up, manualy
+        SELECT
+            a.id,
+            jsonb_strip_nulls(jsonb_build_object(
+                'field', field,
+                'group', "group",
+                'display_mode', display_mode,
+                'icon', icon
+                -- 'fields', null
+            )) AS json
+        FROM
+            a
+            JOIN fields ON
+                fields.id = a.id
+        WHERE
+            "index" IS NULL -- leaf
+    ),
+    c AS (
+        SELECT
+            a.id,
+            jsonb_strip_nulls(jsonb_build_object(
+                'field', field,
+                'group', "group",
+                'display_mode', display_mode,
+                'icon', icon,
+                'fields', jsonb_agg(json ORDER BY "index")
+            )) as json
+        FROM
+            a
+            JOIN b ON
+                b.id = a.children_id
+            JOIN fields ON
+                fields.id = a.id
+        GROUP BY
+            a.id,
+            fields.id,
+            fields.field,
+            fields."group",
+            fields.display_mode,
+            fields.icon
+    ),
+    d AS (
+        SELECT
+            id,
+            json
+        FROM
+            c
+        WHERE
+            id = _root_field_id
+    UNION ALL
+        SELECT
+            a.id,
+            jsonb_strip_nulls(jsonb_build_object(
+                'field', field,
+                'group', "group",
+                'display_mode', display_mode,
+                'icon', icon,
+                'fields', jsonb_agg(json ORDER BY "index")
+            )) as json
+        FROM
+            a
+            JOIN c ON
+                c.id = a.children_id
+            JOIN fields ON
+                fields.id = a.id
+        WHERE
+            c.id != _root_field_id
+        GROUP BY
+            a.id,
+            fields.id,
+            fields.field,
+            fields."group",
+            fields.display_mode,
+            fields.icon
+    )
     SELECT
-        jsonb_strip_nulls(jsonb_build_object(
-            'field', field,
-            'group', "group",
-            'display_mode', display_mode,
-            'icon', icon,
-            'fields', nullif(
-                jsonb_agg(postgisftw.fields(fields_fields.related_fields_id) ORDER BY "index"),
-                '[null]'::jsonb
-            )
-        ))
+        json
     FROM
-        fields
-        LEFT JOIN fields_fields ON
-            fields_fields.fields_id = fields.id
-    WHERE
-        fields.id = _root_field_id
-    GROUP BY
-        fields.id,
-        fields.field,
-        fields."group",
-        fields.display_mode,
-        fields.icon
+        d
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
 
