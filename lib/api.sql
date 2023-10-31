@@ -466,7 +466,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         - 'addr' - 'ref' - 'route' - 'source' ||
                     coalesce(postgisftw.json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
-                    coalesce(postgisftw.json_flat('route', pois.properties->'tags'->'route'), '{}'::jsonb) ||
+                    coalesce(postgisftw.json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr')), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
@@ -513,22 +513,22 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
             )) AS feature
         FROM
             -- TODO only for not hidden menu_items, recursively from theme
-            pois
-            JOIN projects ON
-                projects.slug = _project_slug
+            projects
             JOIN themes ON
                 themes.project_id = projects.id AND
                 themes.slug = _theme_slug
             JOIN menu_items ON
                 menu_items.theme_id = themes.id AND
                 (_category_id IS NULL OR postgisftw.id_from_slugs(menu_items.slugs) = _category_id)
-            JOIN sources ON
-                sources.project_id = projects.id
             JOIN menu_items_sources ON
-                menu_items_sources.menu_items_id = menu_items.id AND
-                menu_items_sources.sources_id = sources.id
+                menu_items_sources.menu_items_id = menu_items.id
+            JOIN sources ON
+                sources.project_id = projects.id AND
+                sources.id = menu_items_sources.sources_id
+            JOIN pois ON
+                pois.source_id = sources.id
         WHERE
-            pois.source_id = sources.id AND
+            projects.slug = _project_slug AND
             (_poi_ids IS NULL OR (
                 postgisftw.id_from_slugs(pois.slugs) = ANY(_poi_ids) OR
                 (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
