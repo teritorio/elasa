@@ -34,7 +34,9 @@ ALTER TABLE IF EXISTS ONLY public.filters DROP CONSTRAINT IF EXISTS filters_proj
 ALTER TABLE IF EXISTS ONLY public.fields DROP CONSTRAINT IF EXISTS fields_project_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_related_fields_id_foreign;
 ALTER TABLE IF EXISTS ONLY public.fields_fields DROP CONSTRAINT IF EXISTS fields_fields_fields_id_foreign;
+DROP INDEX IF EXISTS public.pois_idx_source_id;
 DROP INDEX IF EXISTS public.pois_idx_slug_original_id_integer;
+DROP INDEX IF EXISTS public.fields_fields_idx_fields_id;
 ALTER TABLE IF EXISTS ONLY public.translations DROP CONSTRAINT IF EXISTS translations_pkey;
 ALTER TABLE IF EXISTS ONLY public.translations DROP CONSTRAINT IF EXISTS translation_uniq_project_id_key;
 ALTER TABLE IF EXISTS ONLY public.themes DROP CONSTRAINT IF EXISTS themes_project_id_slug_key;
@@ -823,10 +825,24 @@ ALTER TABLE ONLY public.translations
 
 
 --
+-- Name: fields_fields_idx_fields_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX fields_fields_idx_fields_id ON public.fields_fields USING btree (fields_id);
+
+
+--
 -- Name: pois_idx_slug_original_id_integer; Type: INDEX; Schema: public; Owner: postgres
 --
 
 CREATE INDEX pois_idx_slug_original_id_integer ON public.pois USING btree (((slugs ->> 'original_id'::text)));
+
+
+--
+-- Name: pois_idx_source_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_idx_source_id ON public.pois USING btree (source_id);
 
 
 --
