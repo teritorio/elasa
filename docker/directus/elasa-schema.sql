@@ -314,7 +314,8 @@ CREATE TABLE public.menu_items (
     popup_fields_id integer,
     details_fields_id integer,
     list_fields_id integer,
-    slugs json NOT NULL
+    slugs json NOT NULL,
+    name_singular json
 );
 
 

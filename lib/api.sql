@@ -497,9 +497,9 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             'popup_fields', postgisftw.fields((array_agg(menu_items.popup_fields_id ORDER BY menu_items.id))[1])->'fields',
                             'details_fields', postgisftw.fields((array_agg(menu_items.details_fields_id ORDER BY menu_items.id))[1])->'fields',
                             'list_fields', postgisftw.fields((array_agg(menu_items.list_fields_id ORDER BY menu_items.id))[1])->'fields',
-                            -- 'class_label', (array_agg(menu_items.class_label ORDER BY menu_items.id))[1], -- TODO -------
-                            -- 'class_label_popup', (array_agg(menu_items.class_label_popup ORDER BY menu_items.id))[1], -- TODO -------
-                            -- 'class_label_details', (array_agg(menu_items.class_label_details ORDER BY menu_items.id))[1], -- TODO -------
+                            'class_label', jsonb_build_object('fr', (array_agg(menu_items.name->'fr' ORDER BY menu_items.id))[1]),
+                            'class_label_popup', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
+                            'class_label_details', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
                             'website:details', pois.properties->'tags'->'website:details'->'fr'
                             -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1] -- TODO -------
                         ),

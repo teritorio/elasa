@@ -197,6 +197,29 @@ def load_fields(conn, project_id, pois)
   }
 end
 
+def load_class_labels(pois)
+  labels = pois.collect{ |poi|
+    [
+      poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
+      poi.dig('properties', 'editorial', 'class_label_popup'),
+    ]
+  }.uniq
+
+  labels = labels.collect{ |y|
+    y[0].collect{ |yy|
+      [yy] + y[1..]
+    }
+  }.flatten(1)
+
+  labels = labels.group_by(&:first)
+  multiple_config = labels.select{ |_id, g| g.size != 1 }.collect(&:first)
+  if !multiple_config.empty?
+    puts "[ERROR] Mutiple labels configuration for categrories #{multiple_config} - IGNORED"
+  end
+
+  labels.select{ |_id, g| g.size == 1 }.transform_values(&:last).transform_values(&:last)
+end
+
 def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
@@ -235,6 +258,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
       },
     })
 
+    labels = load_class_labels(pois)
     catorgry_ids_map = {}
     puts "menu_items: #{menu_items.size}"
     menu_entries = menu_items.reverse
@@ -253,12 +277,12 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           theme_id,
           slugs, index_order, hidden, parent_id, selected_by_default,
           type,
-          name, icon, color_fill, color_line, style_class_string, display_mode,
+          name, name_singular, icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
           href
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
         )
         RETURNING
           id
@@ -271,6 +295,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           menu['selected_by_default'],
           menu_type(menu),
           menu_dig_all(menu, 'name').to_json,
+          labels[menu['id']].nil? ? nil : labels[menu['id']].to_json,
           menu_dig_all(menu, 'icon'),
           menu_dig_all(menu, 'color_fill'),
           menu_dig_all(menu, 'color_line'),
