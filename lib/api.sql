@@ -480,7 +480,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'metadata', jsonb_build_object(
                             'id', postgisftw.id_from_slugs(pois.slugs), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array_agg(menu_items.id), -- FIXME Should be all menu_items.id not just one from the current selection
+                            'category_ids', array_agg(postgisftw.id_from_slugs(menu_items.slugs)), -- FIXME Should be all menu_items.id not just one from the current selection
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
