@@ -156,8 +156,8 @@ def load_field_group(conn, project_id, group)
     }
 
     if group['group']
-      ids.each { |i|
-        conn.exec('INSERT INTO fields_fields(fields_id, related_fields_id) VALUES ($1, $2)', [id, i])
+      ids.each_with_index { |i, index|
+        conn.exec('INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3)', [id, i, index])
       }
     end
 

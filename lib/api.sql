@@ -475,7 +475,10 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
-                        'name', pois.properties->'tags'->'name'->'fr',
+                        'name', coalesce(
+                            pois.properties->'tags'->'name'->>'fr',
+                            (array_agg(menu_items.name_singular->>'fr' ORDER BY menu_items.id))[1]
+                        ),
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
@@ -505,7 +508,12 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             'class_label', jsonb_build_object('fr', (array_agg(menu_items.name->'fr' ORDER BY menu_items.id))[1]),
                             'class_label_popup', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
                             'class_label_details', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
-                            'website:details', CASE WHEN (array_agg(menu_items.use_details_link ORDER BY menu_items.id))[1] THEN pois.properties->'tags'->'website:details'->'fr' END
+                            'website:details', CASE WHEN (array_agg(menu_items.use_details_link ORDER BY menu_items.id))[1] THEN
+                                coalesce(
+                                    pois.properties->'tags'->'website:details'->>'fr',
+                                    min(themes.site_url->>'fr') || '/poi/' || postgisftw.id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
+                                )
+                            END
                             -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1] -- TODO -------
                         ),
                         'display', jsonb_build_object(

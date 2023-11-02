@@ -128,6 +128,9 @@ def compare_pois(url_old, url_new)
           poi['properties'][i] = poi['properties'][i].to_i
         end
       }
+      if !poi['properties']['metadata']['osm_id'].nil?
+        poi['properties']['metadata']['osm_id'] = poi['properties']['metadata']['osm_id'].to_i
+      end
       poi['properties']['metadata']&.delete('source_id')
       poi['properties']['editorial']&.delete('hasfiche')
 
