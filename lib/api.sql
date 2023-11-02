@@ -323,7 +323,7 @@ CREATE OR REPLACE FUNCTION postgisftw.fields(
             a.id,
             jsonb_strip_nulls(jsonb_build_object(
                 'field', field,
-                'label', label,
+                'label', nullif(label, false),
                 'group', "group",
                 'display_mode', display_mode,
                 'icon', icon
@@ -341,7 +341,7 @@ CREATE OR REPLACE FUNCTION postgisftw.fields(
             a.id,
             jsonb_strip_nulls(jsonb_build_object(
                 'field', field,
-                'label', label,
+                'label', nullif(label, false),
                 'group', "group",
                 'display_mode', display_mode,
                 'icon', icon,
@@ -375,7 +375,7 @@ CREATE OR REPLACE FUNCTION postgisftw.fields(
             a.id,
             jsonb_strip_nulls(jsonb_build_object(
                 'field', field,
-                'label', label,
+                'label', nullif(label, false),
                 'group', "group",
                 'display_mode', display_mode,
                 'icon', icon,
