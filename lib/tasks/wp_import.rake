@@ -83,7 +83,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         theme_slug,
         theme['title'].to_json,
         theme['description'].to_json,
-        theme['site_url'].to_json,
+        theme['site_url'].transform_values{ |url| url.end_with?('/') ? url[0..-2] : url }.transform_values{ |url| url.start_with?('http') ? url : "https://#{url}" }.to_json,
         theme['main_url'].to_json,
         theme['logo_url'],
         theme['favicon_url'],
