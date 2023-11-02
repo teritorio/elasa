@@ -505,7 +505,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             'class_label', jsonb_build_object('fr', (array_agg(menu_items.name->'fr' ORDER BY menu_items.id))[1]),
                             'class_label_popup', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
                             'class_label_details', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
-                            'website:details', pois.properties->'tags'->'website:details'->'fr'
+                            'website:details', CASE WHEN (array_agg(menu_items.use_details_link ORDER BY menu_items.id))[1] THEN pois.properties->'tags'->'website:details'->'fr' END
                             -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1] -- TODO -------
                         ),
                         'display', jsonb_build_object(

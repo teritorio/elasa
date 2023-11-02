@@ -199,11 +199,11 @@ def load_fields(conn, project_id, pois)
   }
 end
 
-def load_class_labels(pois)
+def menu_from_poi(pois)
   labels = pois.collect{ |poi|
     [
       poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
-      poi.dig('properties', 'editorial', 'class_label_popup'),
+      yield(poi)
     ]
   }.uniq
 
@@ -216,10 +216,22 @@ def load_class_labels(pois)
   labels = labels.group_by(&:first)
   multiple_config = labels.select{ |_id, g| g.size != 1 }.collect(&:first)
   if !multiple_config.empty?
-    puts "[ERROR] Mutiple labels configuration for categrories #{multiple_config} - IGNORED"
+    puts "[ERROR] Mutiple configuration #{multiple_config} - IGNORED"
   end
 
   labels.select{ |_id, g| g.size == 1 }.transform_values(&:last).transform_values(&:last)
+end
+
+def load_class_labels(pois)
+  menu_from_poi(pois) { |poi|
+    poi.dig('properties', 'editorial', 'class_label_popup')
+  }
+end
+
+def load_use_details_link(pois)
+  menu_from_poi(pois) { |poi|
+    !poi.dig('properties', 'editorial', 'website:details').nil?
+  }
 end
 
 def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
@@ -261,6 +273,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
     })
 
     labels = load_class_labels(pois)
+    use_details_link = load_use_details_link(pois)
     catorgry_ids_map = {}
     puts "menu_items: #{menu_items.size}"
     menu_entries = menu_items.reverse
@@ -281,10 +294,10 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           type,
           name, name_singular, icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
-          href
+          href, use_details_link
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
         )
         RETURNING
           id
@@ -310,6 +323,7 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           fields_id.nil? ? nil : fields_id[2],
           fields_id.nil? ? nil : fields_id[3],
           menu.dig('link', 'href'),
+          use_details_link[menu['id']],
         ]
       ) { |result|
         catorgry_ids_map[menu['id']] = result.first['id']

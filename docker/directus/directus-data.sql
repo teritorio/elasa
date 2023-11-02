@@ -193,6 +193,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
 177	menu_items	name_singular	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	category	\N	\N
 178	fields	label	cast-boolean	boolean	\N	\N	\N	f	f	5	full	\N	\N	\N	f	group_block	\N	\N
+179	menu_items	use_details_link	cast-boolean	boolean	\N	\N	\N	f	f	12	full	\N	\N	\N	f	category	\N	\N
 \.
 
 
@@ -354,7 +355,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode
 41	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 42	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	create	{}	{}	\N	*
-43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	project_id,theme_id,index_order,selected_by_default,id,parent_id,hidden,category_id,items,menu_group_id,slug,name,UI,color,icon,behavior,display_mode,category,style_merge,zoom,style_class,search_indexed,sources,link,href,filters,color_line,color_fill,accordion-xkp6bl,menu_group,style_class_string,type,popup_fields_id,list_fields_id,details_fields_id,slugs,name_singular
+43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	project_id,theme_id,index_order,selected_by_default,id,parent_id,hidden,category_id,items,menu_group_id,slug,name,UI,color,icon,behavior,display_mode,category,style_merge,zoom,style_class,search_indexed,sources,link,href,filters,color_line,color_fill,accordion-xkp6bl,menu_group,style_class_string,type,popup_fields_id,list_fields_id,details_fields_id,slugs,name_singular,use_details_link
 44	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	update	{}	{}	\N	*
 45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois
@@ -461,7 +462,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 178, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 179, true);
 
 
 --

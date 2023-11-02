@@ -316,7 +316,8 @@ CREATE TABLE public.menu_items (
     details_fields_id integer,
     list_fields_id integer,
     slugs json NOT NULL,
-    name_singular json
+    name_singular json,
+    use_details_link boolean DEFAULT true
 );
 
 
