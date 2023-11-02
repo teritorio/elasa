@@ -116,11 +116,50 @@ def compare_pois(url_old, url_new)
     "#{url_old}/pois.json",
     "#{url_new}/pois.json",
   ].collect{ |url|
-    array = fetch_json(url)['features'].compact_blank_deep
-    array.sort_by{ |poi|
-      poi['id']
+    array = fetch_json(url)['features'].compact_blank_deep.collect{ |poi|
+      poi['properties'].delete('classe')
+      ['route:hiking:length', 'route:bicycle:length'].each{ |r|
+        if poi.dig('properties', r)
+          poi['properties'][r] = poi['properties'][r].round(4)
+        end
+      }
+      ['capacity:persons', 'capacity:pitches', 'capacity:rooms'].each{ |i|
+        if poi['properties'][i]
+          poi['properties'][i] = poi['properties'][i].to_i
+        end
+      }
+      poi['properties']['metadata']&.delete('source_id')
+      poi['properties']['editorial']&.delete('hasfiche')
+
+      poi['properties']['editorial']&.delete('class_label')
+      poi['properties']['editorial']&.delete('class_label_popup')
+      poi['properties']['editorial']&.delete('class_label_details')
+
+      poi['properties']['metadata']&.delete('natives') # Buggy WP
+      poi['properties'].delete('description:de') # Buggy WP
+      poi['properties'].delete('description:es') # Buggy WP
+      poi['properties'].delete('description:nl') # Buggy WP
+      poi['properties'].delete('website:details') # Buggy WP
+
+      poi
+    }
+    array.collect{ |poi|
+      poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids'].sort
+      poi
+    }.uniq{ |poi|
+      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
+    }.sort_by{ |poi|
+      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
     }
   }
+
+  ids = hashes.collect{ |h|
+    h.collect{ |poi|
+      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
+    }
+  }
+  common_ids = Set.new(ids[0] & ids[1])
+  hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?([poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]) } }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   puts JSON.dump(diff.diff) if !diff.diff.empty?
