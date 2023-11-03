@@ -407,8 +407,8 @@ $$ LANGUAGE sql PARALLEL SAFE;
 
 
 -- Function inspired by https://stackoverflow.com/questions/45585462/recursively-flatten-a-nested-jsonb-in-postgres-without-unknown-depth-and-unknown
-DROP FUNCTION IF EXISTS postgisftw.json_flat;
-CREATE OR REPLACE FUNCTION postgisftw.json_flat(
+DROP FUNCTION IF EXISTS postgisftw.json_flat_object;
+CREATE OR REPLACE FUNCTION postgisftw.json_flat_object(
     _prefix text,
     _json jsonb
 ) RETURNS jsonb AS $$
@@ -432,6 +432,20 @@ CREATE OR REPLACE FUNCTION postgisftw.json_flat(
         flat
     WHERE
         jsonb_typeof(value) <> 'object'
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS postgisftw.json_flat;
+CREATE OR REPLACE FUNCTION postgisftw.json_flat(
+    _prefix text,
+    _json jsonb
+) RETURNS jsonb AS $$
+    SELECT
+        CASE jsonb_typeof(_json)
+            WHEN 'object' THEN postgisftw.json_flat_object(_prefix, _json)
+            ELSE jsonb_build_object(_prefix, _json)
+        END
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
@@ -471,7 +485,12 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         - 'addr' - 'ref' - 'route' - 'source' ||
                     coalesce(postgisftw.json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
-                    coalesce(postgisftw.json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr')), '{}'::jsonb) ||
+                    coalesce(
+                        CASE jsonb_typeof(pois.properties->'tags'->'route')
+                            WHEN 'object' THEN postgisftw.json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr'))
+                            ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
+                        END, '{}'::jsonb) ||
+                    coalesce(postgisftw.json_flat('route', pois.properties->'tags'->'route'), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
