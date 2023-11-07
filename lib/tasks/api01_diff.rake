@@ -116,7 +116,7 @@ def compare_pois(url_old, url_new)
     "#{url_old}/pois.json",
     "#{url_new}/pois.json",
   ].collect{ |url|
-    array = fetch_json(url)['features'].compact_blank_deep.collect{ |poi|
+    array = fetch_json(url)['features']&.compact_blank_deep&.collect{ |poi|
       poi['properties'].delete('classe')
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
@@ -147,7 +147,7 @@ def compare_pois(url_old, url_new)
       poi['properties'].delete('website:details') # Buggy WP
 
       poi
-    }
+    } || []
     array.collect{ |poi|
       poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids'].sort
       poi
