@@ -490,7 +490,6 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             WHEN 'object' THEN postgisftw.json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr'))
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
-                    coalesce(postgisftw.json_flat('route', pois.properties->'tags'->'route'), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
