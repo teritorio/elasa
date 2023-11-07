@@ -123,7 +123,7 @@ def compare_pois(url_old, url_new)
           poi['properties'][r] = poi['properties'][r].round(4)
         end
       }
-      ['capacity:persons', 'capacity:pitches', 'capacity:rooms', 'capacity:caravans', 'capacity:cabins', 'capacity:beds'].each{ |i|
+      ['capacity', 'capacity:persons', 'capacity:pitches', 'capacity:rooms', 'capacity:caravans', 'capacity:cabins', 'capacity:beds'].each{ |i|
         if poi['properties'][i]
           poi['properties'][i] = poi['properties'][i].to_i
         end
@@ -132,6 +132,7 @@ def compare_pois(url_old, url_new)
         poi['properties']['metadata']['osm_id'] = poi['properties']['metadata']['osm_id'].to_i
       end
       poi['properties']['metadata']&.delete('source_id')
+      poi['properties']['metadata']&.delete('updated_at')
       poi['properties']['editorial']&.delete('hasfiche')
       poi['properties']&.delete('tis_id')
 
