@@ -1,13 +1,17 @@
-bash import/import.sh
-bash import/import-directus.sh
+Elasa
 
-docker-compose exec -u postgres postgres psql
+## Setup
 
-
-docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml build tools
-
-docker-compose -f docker-compose.yaml -f docker-compose-tools.yaml run --rm test_api bash
-
+Build
+```
+cp .env.template .env
+docker-compose build
+docker-compose up -d postgres
+cat docker/directus/elasa-schema.sql | docker-compose exec -T -u postgres postgres psql
+cat docker/directus/directus-schema.sql | docker-compose exec -T -u postgres postgres psql
+cat docker/directus/directus-data.sql | docker-compose exec -T -u postgres postgres psql
+cat lib/api.sql | docker-compose exec -T -u postgres postgres psql
+```
 
 ## Import from remote API
 
