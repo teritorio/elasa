@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
 
   directus:
-    image: directus/directus:latest
+    image: directus/directus:10.6.1
     ports:
       - 8055:8055
     volumes:
