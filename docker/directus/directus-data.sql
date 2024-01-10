@@ -52,7 +52,6 @@ f400ab71-d9c5-4ea8-96aa-0958f373ccca	Administrator	verified	$t:admin_description
 --
 
 COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, theme, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id) FROM stdin;
-3c0b4886-bfde-4fe5-9b68-a65381880aae	Frédéric	Rodrigo	frederic@teritorio.fr	$argon2id$v=19$m=65536,t=3,p=4$iTzKJuByNiJAe475ITlJ3Q$Nw84KHKpVfD7/zifqZdXguhYmXrDCdJjtq4xY0kTiMA	\N	\N	\N	\N	\N	\N	auto	\N	active	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	\N	2023-09-27 13:48:30.643+00	/content/themes/90	default	\N	\N	t	101
 7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-10-04 17:26:45.716+00	/settings/roles/	default	\N	\N	t	\N
 \.
 
