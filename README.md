@@ -7,9 +7,9 @@ Build
 cp .env.template .env
 docker-compose build
 docker-compose up -d postgres
-cat docker/directus/elasa-schema.sql | docker-compose exec -T -u postgres postgres psql
-cat docker/directus/directus-schema.sql | docker-compose exec -T -u postgres postgres psql
-cat docker/directus/directus-data.sql | docker-compose exec -T -u postgres postgres psql
+cat docker/directus/elasa-schema.sql | docker-compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat docker/directus/directus-schema.sql | docker-compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat docker/directus/directus-data.sql | docker-compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 cat lib/api.sql | docker-compose exec -T -u postgres postgres psql
 ```
 
