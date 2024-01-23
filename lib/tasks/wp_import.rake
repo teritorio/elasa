@@ -234,6 +234,30 @@ def load_use_details_link(pois)
   }
 end
 
+def load_icon(pois)
+  menu_from_poi(pois) { |poi|
+    poi.dig('properties', 'display', 'icon')
+  }
+end
+
+def load_style_class(pois)
+  menu_from_poi(pois) { |poi|
+    poi.dig('properties', 'display', 'style_class')
+  }
+end
+
+def load_color_fill(pois)
+  menu_from_poi(pois) { |poi|
+    poi.dig('properties', 'display', 'color_fill')
+  }
+end
+
+def load_color_line(pois)
+  menu_from_poi(pois) { |poi|
+    poi.dig('properties', 'display', 'color_line')
+  }
+end
+
 def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
@@ -274,6 +298,10 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
 
     labels = load_class_labels(pois)
     use_details_link = load_use_details_link(pois)
+    icon = load_icon(pois)
+    style_class = load_style_class(pois)
+    color_fill = load_color_fill(pois)
+    color_line = load_color_line(pois)
     catorgry_ids_map = {}
     puts "menu_items: #{menu_items.size}"
     menu_entries = menu_items.reverse
@@ -311,10 +339,10 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
           menu_type(menu),
           menu_dig_all(menu, 'name').to_json,
           labels[menu['id']]&.to_json,
-          menu_dig_all(menu, 'icon'),
-          menu_dig_all(menu, 'color_fill'),
-          menu_dig_all(menu, 'color_line'),
-          menu_dig_all(menu, 'style_class')&.join(','),
+          menu_dig_all(menu, 'icon').presence || icon[menu['id']],
+          menu_dig_all(menu, 'color_fill').presence || color_fill[menu['id']],
+          menu_dig_all(menu, 'color_line').presence || color_line[menu['id']],
+          (menu_dig_all(menu, 'style_class')&.compact_blank || style_class[menu['id']])&.join(','),
           menu_dig_all(menu, 'display_mode'),
           menu.dig('category', 'search_indexed'),
           menu.dig('category', 'style_merge'),
