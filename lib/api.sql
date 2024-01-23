@@ -481,7 +481,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     END,
                 'properties',
                     (pois.properties->'tags')
-                        - 'name' - 'description' - 'website:details'
+                        - 'name' - 'description' - 'website:details' - 'colour'
                         - 'addr' - 'ref' - 'route' - 'source' ||
                     coalesce(postgisftw.json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(postgisftw.json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
@@ -536,8 +536,8 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         ),
                         'display', jsonb_build_object(
                             'icon', (array_agg(menu_items.icon ORDER BY menu_items.id))[1],
-                            'color_fill', (array_agg(menu_items.color_fill ORDER BY menu_items.id))[1],
-                            'color_line', (array_agg(menu_items.color_line ORDER BY menu_items.id))[1],
+                            'color_fill', coalesce(pois.properties->'tags'->>'colour', (array_agg(menu_items.color_fill ORDER BY menu_items.id))[1]),
+                            'color_line', coalesce(pois.properties->'tags'->>'colour', (array_agg(menu_items.color_line ORDER BY menu_items.id))[1]),
                             'style_class', (array_agg(array_to_json(menu_items.style_class) ORDER BY menu_items.id))[1]
                         )
                     )
