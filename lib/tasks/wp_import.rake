@@ -199,7 +199,7 @@ def load_fields(conn, project_id, pois)
   }
 end
 
-def menu_from_poi(pois)
+def menu_from_poi(pois, object)
   labels = pois.collect{ |poi|
     [
       poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
@@ -216,44 +216,44 @@ def menu_from_poi(pois)
   labels = labels.group_by(&:first)
   multiple_config = labels.select{ |_id, g| g.size != 1 }.collect(&:first)
   if !multiple_config.empty?
-    puts "[ERROR] Mutiple configuration #{multiple_config} - IGNORED"
+    puts "[ERROR] Mutiple configuration for #{object}: #{multiple_config} - IGNORED"
   end
 
   labels.select{ |_id, g| g.size == 1 }.transform_values(&:last).transform_values(&:last)
 end
 
 def load_class_labels(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'editorial.class_label_popup') { |poi|
     poi.dig('properties', 'editorial', 'class_label_popup')
   }
 end
 
 def load_use_details_link(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'editorial.website:details') { |poi|
     !poi.dig('properties', 'editorial', 'website:details').nil?
   }
 end
 
 def load_icon(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'display.icon') { |poi|
     poi.dig('properties', 'display', 'icon')
   }
 end
 
 def load_style_class(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'display.style_class') { |poi|
     poi.dig('properties', 'display', 'style_class')
   }
 end
 
 def load_color_fill(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'display.color_fill') { |poi|
     poi.dig('properties', 'display', 'color_fill')
   }
 end
 
 def load_color_line(pois)
-  menu_from_poi(pois) { |poi|
+  menu_from_poi(pois, 'display.color_line') { |poi|
     poi.dig('properties', 'display', 'color_line')
   }
 end
