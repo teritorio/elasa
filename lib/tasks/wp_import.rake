@@ -555,9 +555,9 @@ namespace :wp do
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
-    load_from_source("#{datasource_url}/data", project_slug, datasource_project)
+    loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     load_menu(project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
-    load_i18n(project_id, "#{datasource_url}/data/#{datasource_project}/i18n.json")
+    load_i18n(project_id, "#{datasource_url}/data/#{datasource_project}/i18n.json") if !loaded_from_datasource.empty?
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
