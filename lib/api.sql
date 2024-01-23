@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                     'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
                 ),
                 'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
-                'attributions', (
+                'attributions', coalesce((
                     SELECT
                         array_agg(DISTINCT attribution)
                     FROM
@@ -45,7 +45,7 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
                     WHERE
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
-                ),
+                ), array[]::text[]),
                 'themes', (
                     SELECT
                         jsonb_agg(
