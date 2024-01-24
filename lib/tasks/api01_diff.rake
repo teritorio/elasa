@@ -46,9 +46,17 @@ def compare_settings(url_old, url_new)
     hash['themes'].each{ |theme|
       theme.delete('id')
       theme.delete('slug') # Ignore
+      theme['site_url'].each{ |lang, url|
+        if url[-1] == '/'
+          theme['site_url'][lang] = url[..-2]
+        end
+      }
     }
     hash['polygon'] = nil # Ignore polygons
     hash['bbox_line'] = nil # Ignore polygons
+    hash['icon_font_css_url'] = nil # Ignore remote changes
+    hash['attributions'] = (hash['attributions']&.sort || []).collect{ |a| a.gsub('&copy;', '©') }
+
     hash
   }
 
