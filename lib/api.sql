@@ -470,7 +470,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
             'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
         )
     FROM (
-        SELECT
+        SELECT DISTINCT ON (menu_items.id, pois.id)
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
                 'geometry',
@@ -495,7 +495,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     jsonb_build_object(
                         'name', coalesce(
                             pois.properties->'tags'->'name'->>'fr',
-                            (array_agg(menu_items.name_singular->>'fr' ORDER BY menu_items.id))[1]
+                            menu_items.name_singular->>'fr'
                         ),
                         'description',
                             CASE _short_description
@@ -506,7 +506,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                         'metadata', jsonb_build_object(
                             'id', postgisftw.id_from_slugs(pois.slugs), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array_agg(postgisftw.id_from_slugs(menu_items.slugs)), -- FIXME Should be all menu_items.id not just one from the current selection
+                            'category_ids', array[postgisftw.id_from_slugs(menu_items.slugs)], -- FIXME Should be all menu_items.id
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -520,25 +520,25 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                                 END
                         ),
                         'editorial', jsonb_build_object(
-                            'popup_fields', postgisftw.fields((array_agg(menu_items.popup_fields_id ORDER BY menu_items.id))[1])->'fields',
-                            'details_fields', postgisftw.fields((array_agg(menu_items.details_fields_id ORDER BY menu_items.id))[1])->'fields',
-                            'list_fields', postgisftw.fields((array_agg(menu_items.list_fields_id ORDER BY menu_items.id))[1])->'fields',
-                            'class_label', jsonb_build_object('fr', (array_agg(menu_items.name->'fr' ORDER BY menu_items.id))[1]),
-                            'class_label_popup', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
-                            'class_label_details', jsonb_build_object('fr', (array_agg(menu_items.name_singular->'fr' ORDER BY menu_items.id))[1]),
-                            'website:details', CASE WHEN (array_agg(menu_items.use_details_link ORDER BY menu_items.id))[1] THEN
+                            'popup_fields', postgisftw.fields(menu_items.popup_fields_id)->'fields',
+                            'details_fields', postgisftw.fields(menu_items.details_fields_id)->'fields',
+                            'list_fields', postgisftw.fields(menu_items.list_fields_id)->'fields',
+                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
+                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                            'website:details', CASE WHEN menu_items.use_details_link THEN
                                 coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
-                                    min(themes.site_url->>'fr') || '/poi/' || postgisftw.id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
+                                    themes.site_url->>'fr' || '/poi/' || postgisftw.id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
                                 )
                             END
-                            -- 'unavoidable', (array_agg(menu_items.unavoidable ORDER BY menu_items.id))[1] -- TODO -------
+                            -- 'unavoidable', menu_items.unavoidable -- TODO -------
                         ),
                         'display', jsonb_build_object(
-                            'icon', (array_agg(menu_items.icon ORDER BY menu_items.id))[1],
-                            'color_fill', coalesce(pois.properties->'tags'->>'colour', (array_agg(menu_items.color_fill ORDER BY menu_items.id))[1]),
-                            'color_line', coalesce(pois.properties->'tags'->>'colour', (array_agg(menu_items.color_line ORDER BY menu_items.id))[1]),
-                            'style_class', (array_agg(array_to_json(menu_items.style_class) ORDER BY menu_items.id))[1]
+                            'icon', menu_items.icon,
+                            'color_fill', coalesce(pois.properties->'tags'->>'colour', menu_items.color_fill),
+                            'color_line', coalesce(pois.properties->'tags'->>'colour', menu_items.color_line),
+                            'style_class', array_to_json(menu_items.style_class)
                         )
                     )
             )) AS feature
@@ -566,10 +566,9 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
             )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
-        GROUP BY
-            pois.id,
-            pois.properties,
-            pois.geom
+        ORDER BY
+            menu_items.id,
+            pois.id
     ) AS t
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
