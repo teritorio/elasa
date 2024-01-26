@@ -10,6 +10,18 @@ require 'cgi'
 require_relative 'sources_load'
 
 
+# Back port from active_support
+class String
+  def slugify
+    s = gsub(/\s+/, ' ')
+    s.strip!
+    s.gsub!(' ', '-')
+    s.gsub!('&', 'and')
+    s.gsub!(/[^\w-]/u, '')
+    s.mb_chars.downcase.to_s
+  end
+end
+
 def fetch_json(url)
   response = HTTP.follow.get(url)
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
@@ -258,7 +270,7 @@ def load_color_line(pois)
   }
 end
 
-def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
+def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -524,6 +536,76 @@ def load_menu(project_id, theme_id, url, url_pois, url_menu_sources)
         pois.properties->>'id' = pois_slug_import.ref
       "
     )
+
+    # Categories not linked to datasource
+    categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id']) }
+    load_local_pois(conn, project_slug, categories_local, pois)
+  }
+end
+
+def load_local_pois(conn, project_slug, categories_local, pois)
+  categories_local.each{ |category_local|
+    source_name = category_local['category']['name']['fr'].slugify
+    table = "local_#{project_slug}_#{source_name}".gsub('-', '_')
+    ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
+    puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
+
+    value_stats = ps.collect{ |p|
+      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe').collect{ |k, v|
+        if v.is_a?(Array)
+          [k, '[]']
+        elsif v.is_a?(Hash)
+          [k, '{}']
+        else
+          [k, v.size <= 15 ? v : v.size >= 255 ? '...' : nil]
+        end
+      }
+    }.flatten(1).group_by(&:first).transform_values{ |key_values|
+      key_values.collect(&:last).tally
+    }.transform_values{ |stats|
+      stats.size > ps.size / 10 ? { nil => stats.size } : stats
+    }
+    fields = value_stats.sort_by{ |_key, stats| -stats.values.sum }.collect{ |key, stats|
+      i = if stats&.keys&.include?('[]')
+            f = ->(i) { i&.to_json }
+            "\"#{key}\" json"
+          elsif stats&.keys&.include?('{}')
+            f = ->(i) { i&.to_json }
+            "\"#{key}\" json"
+          elsif stats&.keys&.include?('...')
+            f = ->(i) { i }
+            "\"#{key}\" text"
+          else
+            f = ->(i) { i }
+            "\"#{key}\" varchar"
+          end
+      if !stats.keys.include?(nil) && stats.keys.size == ps.size
+        i += ' NOT NULL'
+      end
+      [key, f, i]
+    } + [['geom', nil, 'geom json NOT NULL']]
+    create_table = fields.collect(&:last).join(",\n")
+    conn.exec("DROP TABLE IF EXISTS t_#{table}")
+    conn.exec("CREATE TEMP TABLE t_#{table} (#{create_table})")
+
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data("COPY t_#{table}(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
+      ps.each{ |p|
+        values = fields.collect{ |field, t, _|
+          if field == 'geom'
+            p['geometry'].to_json
+          else
+            t.call(p['properties'][field])
+          end
+        }
+        conn.put_copy_data(values)
+      }
+    }
+
+    create_table = create_table.gsub('geom json', 'geom geometry(Geometry,4326)').gsub(' json', ' jsonb')
+    conn.exec("DROP TABLE IF EXISTS #{table}")
+    conn.exec("CREATE TABLE #{table} (id serial primary key,\n#{create_table})")
+    conn.exec("INSERT INTO #{table}(\"#{fields.collect(&:first).join('", "')}\") SELECT \"#{fields[..-2].collect(&:first).join('", "')}\", ST_GeomFromGeoJSON(geom) FROM t_#{table}")
   }
 end
 
