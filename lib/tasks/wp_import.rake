@@ -632,6 +632,9 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
       ps.each{ |p|
         values = fields.collect{ |field, t, _|
           if field == 'geom'
+            if p['geometry']['type'] == 'Feature'
+              p['geometry'] = p['geometry']['geometry']
+            end
             p['geometry'].to_json
           else
             t.call(p['properties'][field])
