@@ -623,6 +623,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
       [key, f, i]
     } + [['geom', nil, 'geom json NOT NULL']]
     create_table = fields.collect(&:last).join(",\n")
+    conn.exec('SET client_min_messages TO WARNING')
     conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
     conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})")
 
