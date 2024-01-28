@@ -281,7 +281,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     fields_ids = fields.index_by(&:first)
 
     menu_sources = fetch_json(url_menu_sources)
-    if menu_sources.size == 0
+    if menu_sources.empty?
       menu_sources = {} # Buggy WP, replace empty [] by {}
     end
 
@@ -575,9 +575,9 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
     source_name = ActiveSupport::Inflector.transliterate(category_local['category']['name']['fr']).slugify.gsub('-', '_').gsub(/_+/, '_')
     table = "local-#{project_slug}-#{source_name}"
     ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
-    puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
+    # puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
 
-    next if ps.size == 0
+    next if ps.empty?
 
     conn.exec('DELETE FROM sources WHERE project_id = $1 AND slug = $2', [project_id, source_name])
     source_id = conn.exec('INSERT INTO sources(project_id, slug, name, attribution) VALUES ($1, $2, $3, NULL) RETURNING id', [
@@ -685,7 +685,7 @@ namespace :wp do
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
-    load_menu(project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
+    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
     load_i18n(project_id, "#{datasource_url}/data/#{datasource_project}/i18n.json") if !loaded_from_datasource.empty?
     exit 0 # Beacause of manually deal with rake command line arguments
   end
