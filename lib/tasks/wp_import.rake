@@ -621,7 +621,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
         i += ' NOT NULL'
       end
       [key, f, i]
-    } + [['geom', nil, 'geom json NOT NULL']]
+    } + [['id', nil, 'id varchar'], ['geom', nil, 'geom json NOT NULL']]
     create_table = fields.collect(&:last).join(",\n")
     conn.exec('SET client_min_messages TO WARNING')
     conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
@@ -631,7 +631,9 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
     conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
       ps.each{ |p|
         values = fields.collect{ |field, t, _|
-          if field == 'geom'
+          if field == 'id'
+            p['properties']['metadata']['id']
+          elsif field == 'geom'
             if p['geometry']['type'] == 'Feature'
               p['geometry'] = p['geometry']['geometry']
             end
@@ -644,10 +646,11 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
       }
     }
 
-    create_table = create_table.gsub('geom json', 'geom geometry(Geometry,4326)').gsub(' json', ' jsonb')
+    create_table = create_table.gsub('id varchar', 'id SERIAL PRIMARY KEY').gsub('geom json', 'geom geometry(Geometry,4326)').gsub(' json', ' jsonb')
     conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
-    conn.exec("CREATE TABLE \"#{table}\" (id serial primary key,\n#{create_table})")
-    conn.exec("INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\") SELECT \"#{fields[..-2].collect(&:first).join('", "')}\", ST_GeomFromGeoJSON(geom) FROM \"t_#{table}\"")
+    conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
+    conn.exec("INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\") SELECT \"#{fields[..-3].collect(&:first).join('", "')}\", id::integer, ST_GeomFromGeoJSON(geom) FROM \"t_#{table}\"")
+    conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
 
     source_id
   }
