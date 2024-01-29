@@ -58,7 +58,7 @@ services:
 
       # Make sure to set this in production
       # (see https://docs.directus.io/reference/environment-variables/#general)
-      # PUBLIC_URL: 'https://directus.example.com'
+      PUBLIC_URL: $DIRECTUS_PUBLIC_URL
     restart: unless-stopped
 
   api:
