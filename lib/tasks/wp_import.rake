@@ -611,7 +611,6 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
             f = ->(i) { i&.to_json }
             "\"#{key}\" json"
           elsif %w[name description].include?(key)
-            puts [table, key].inspect
             f = ->(i) { { 'fr' => i }.to_json }
             "\"#{key}\" json"
           elsif stats&.keys&.include?('...')
