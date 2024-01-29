@@ -77,6 +77,7 @@ $$ LANGUAGE sql PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS postgisftw.filter_values;
 CREATE OR REPLACE FUNCTION postgisftw.filter_values(
+    _project_slug text,
     _project_id integer,
     _menu_items_id integer,
     _property text
@@ -102,7 +103,11 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
             menu_items_sources
             JOIN sources ON
                 sources.id = menu_items_sources.sources_id
-            JOIN pois ON
+            JOIN (
+                SELECT * FROM pois
+                UNION ALL
+                SELECT * FROM postgisftw.pois_local(_project_slug)
+            ) AS pois ON
                 pois.source_id = sources.id
         WHERE
             menu_items_sources.menu_items_id = _menu_items_id
@@ -118,13 +123,16 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
         FROM
             properties
         WHERE
-            property is not NULL
+            property IS NOT NULL AND
+            property != 'null'::jsonb
     ),
     values_uniq AS (
-        SELECT
-            DISTINCT value
+        SELECT DISTINCT ON (upper(value))
+            value
         FROM
             values
+        ORDER BY
+            upper(value)
     )
     SELECT
         jsonb_strip_nulls(
@@ -217,12 +225,12 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     WHEN 'multiselection' THEN
                                         jsonb_build_object(
                                             'property', filters.multiselection_property,
-                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property)
+                                            'values', postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property)
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
                                             'property', filters.checkboxes_list_property,
-                                            'values', postgisftw.filter_values(projects.id, menu_items.id, filters.checkboxes_list_property)
+                                            'values', postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property)
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -247,8 +255,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     filters.id = menu_items_filters.filters_id
                             WHERE
                                 menu_items_filters.menu_items_id = menu_items.id AND
-                                (filters.type != 'multiselection' OR postgisftw.filter_values(projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
-                                (filters.type != 'checkboxes_list' OR postgisftw.filter_values(projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
+                                (filters.type != 'multiselection' OR postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
+                                (filters.type != 'checkboxes_list' OR postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
                         )
                     )
                 END,
