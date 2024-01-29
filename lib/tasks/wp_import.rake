@@ -639,7 +639,9 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
             end
             p['geometry'].to_json
           else
-            t.call(p['properties'][field])
+            r = t.call(p['properties'][field])
+            r = r.strip if r.is_a?(String)
+            r
           end
         }
         conn.put_copy_data(values)
