@@ -117,18 +117,24 @@ def compare_menu(url_old, url_new)
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   puts JSON.dump(diff.diff) if !diff.diff.empty?
+
+  hashes.collect{ |menu|
+    menu.select{ |entry| entry['category'] }.collect{ |entry| entry['id'] }
+  }
 end
 
-def compare_pois(url_old, url_new)
+def compare_pois(url_old, url_new, category_ids)
   hashes = [
     "#{url_old}/pois.json",
     "#{url_new}/pois.json",
-  ].collect{ |url|
-    array = fetch_json(url)['features']&.compact_blank_deep&.collect{ |poi|
+  ].each_with_index.collect{ |url, index|
+    array = fetch_json(url)['features']&.compact_blank_deep&.select{ |poi|
+              !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty?
+            }&.collect{ |poi|
       poi['properties'].delete('classe')
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
-          poi['properties'][r] = poi['properties'][r].round(4)
+          poi['properties'][r] = poi['properties'][r].to_f.round(4)
         end
       }
       ['capacity', 'capacity:persons', 'capacity:pitches', 'capacity:rooms', 'capacity:caravans', 'capacity:cabins', 'capacity:beds'].each{ |i|
@@ -139,6 +145,9 @@ def compare_pois(url_old, url_new)
       if !poi['properties']['metadata']['osm_id'].nil?
         poi['properties']['metadata']['osm_id'] = poi['properties']['metadata']['osm_id'].to_i
       end
+      poi['properties'] = poi['properties'].transform_values{ |v|
+        v.is_a?(String) ? v.strip : v
+      }
       poi['properties']['metadata']&.delete('source_id')
       poi['properties']['metadata']&.delete('updated_at')
       poi['properties']['editorial']&.delete('hasfiche')
@@ -154,25 +163,37 @@ def compare_pois(url_old, url_new)
       poi['properties'].delete('description:nl') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
 
+      poi['geometry']&.delete('coordinates') #### TMP, TODO approx commp are 0.0001
+
+      #### TEMP before switch to clearance
+      poi['properties']['metadata']&.delete('osm_id')
+      poi['properties']['metadata']&.delete('osm_type')
+      poi['properties']['metadata']&.delete('source')
+
       poi
     } || []
     array.collect{ |poi|
       poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids'].sort
       poi
     }.uniq{ |poi|
-      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
+      poi['properties']['metadata']['id']
     }.sort_by{ |poi|
-      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
+      poi['properties']['metadata']['id']
     }
   }
 
+  puts "Diff size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
+
   ids = hashes.collect{ |h|
     h.collect{ |poi|
-      [poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]
+      poi['properties']['metadata']['id']
     }
   }
+  diff = HashDiff::Comparison.new(ids[0], ids[1])
+  puts "Diff ids\n#{JSON.dump(diff.diff)}" if !diff.diff.empty?
+
   common_ids = Set.new(ids[0] & ids[1])
-  hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?([poi['properties']['metadata']['category_ids'], poi['properties']['metadata']['id']]) } }
+  hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   puts JSON.dump(diff.diff) if !diff.diff.empty?
@@ -197,8 +218,8 @@ namespace :api do
     url_old, url_new = ARGV[2..]
     compare_settings(url_old, url_new)
     compare_articles(url_old, url_new)
-    compare_menu(url_old, url_new)
-    compare_pois(url_old, url_new)
+    category_ids = compare_menu(url_old, url_new)
+    compare_pois(url_old, url_new, category_ids)
     compare_attribute_translations(url_old, url_new)
 
     exit 0 # Beacause of manually deal with rake command line arguments
