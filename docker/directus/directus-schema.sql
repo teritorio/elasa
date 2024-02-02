@@ -85,7 +85,8 @@ CREATE TABLE public.directus_collections (
     sort integer,
     "group" character varying(64),
     collapse character varying(255) DEFAULT 'open'::character varying NOT NULL,
-    preview_url character varying(255)
+    preview_url character varying(255),
+    versioning boolean DEFAULT false NOT NULL
 );
 
 
@@ -107,6 +108,18 @@ CREATE TABLE public.directus_dashboards (
 
 
 ALTER TABLE public.directus_dashboards OWNER TO postgres;
+
+--
+-- Name: directus_extensions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_extensions (
+    name character varying(255) NOT NULL,
+    enabled boolean DEFAULT true NOT NULL
+);
+
+
+ALTER TABLE public.directus_extensions OWNER TO postgres;
 
 --
 -- Name: directus_fields; Type: TABLE; Schema: public; Owner: postgres
@@ -464,7 +477,8 @@ CREATE TABLE public.directus_revisions (
     item character varying(255) NOT NULL,
     data json,
     delta json,
-    parent integer
+    parent integer,
+    version uuid
 );
 
 
@@ -535,7 +549,7 @@ CREATE TABLE public.directus_settings (
     id integer NOT NULL,
     project_name character varying(100) DEFAULT 'Directus'::character varying NOT NULL,
     project_url character varying(255),
-    project_color character varying(50) DEFAULT NULL::character varying,
+    project_color character varying(255) DEFAULT '#6644FF'::character varying NOT NULL,
     project_logo uuid,
     public_foreground uuid,
     public_background uuid,
@@ -551,7 +565,13 @@ CREATE TABLE public.directus_settings (
     module_bar json,
     project_descriptor character varying(100),
     default_language character varying(255) DEFAULT 'en-US'::character varying NOT NULL,
-    custom_aspect_ratios json
+    custom_aspect_ratios json,
+    public_favicon uuid,
+    default_appearance character varying(255) DEFAULT 'auto'::character varying NOT NULL,
+    default_theme_light character varying(255),
+    theme_light_overrides json,
+    default_theme_dark character varying(255),
+    theme_dark_overrides json
 );
 
 
@@ -631,7 +651,6 @@ CREATE TABLE public.directus_users (
     tags json,
     avatar uuid,
     language character varying(255) DEFAULT NULL::character varying,
-    theme character varying(20) DEFAULT 'auto'::character varying,
     tfa_secret character varying(255),
     status character varying(16) DEFAULT 'active'::character varying NOT NULL,
     role uuid,
@@ -642,11 +661,36 @@ CREATE TABLE public.directus_users (
     external_identifier character varying(255),
     auth_data json,
     email_notifications boolean DEFAULT true,
-    project_id integer
+    project_id integer,
+    appearance character varying(255),
+    theme_dark character varying(255),
+    theme_light character varying(255),
+    theme_light_overrides json,
+    theme_dark_overrides json
 );
 
 
 ALTER TABLE public.directus_users OWNER TO postgres;
+
+--
+-- Name: directus_versions; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_versions (
+    id uuid NOT NULL,
+    key character varying(64) NOT NULL,
+    name character varying(255),
+    collection character varying(64) NOT NULL,
+    item character varying(255) NOT NULL,
+    hash character varying(255),
+    date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    date_updated timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    user_created uuid,
+    user_updated uuid
+);
+
+
+ALTER TABLE public.directus_versions OWNER TO postgres;
 
 --
 -- Name: directus_webhooks; Type: TABLE; Schema: public; Owner: postgres
@@ -774,6 +818,14 @@ ALTER TABLE ONLY public.directus_collections
 
 ALTER TABLE ONLY public.directus_dashboards
     ADD CONSTRAINT directus_dashboards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directus_extensions directus_extensions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_extensions
+    ADD CONSTRAINT directus_extensions_pkey PRIMARY KEY (name);
 
 
 --
@@ -969,6 +1021,14 @@ ALTER TABLE ONLY public.directus_users
 
 
 --
+-- Name: directus_versions directus_versions_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_versions
+    ADD CONSTRAINT directus_versions_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: directus_webhooks directus_webhooks_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1137,6 +1197,14 @@ ALTER TABLE ONLY public.directus_revisions
 
 
 --
+-- Name: directus_revisions directus_revisions_version_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_revisions
+    ADD CONSTRAINT directus_revisions_version_foreign FOREIGN KEY (version) REFERENCES public.directus_versions(id) ON DELETE CASCADE;
+
+
+--
 -- Name: directus_sessions directus_sessions_share_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1166,6 +1234,14 @@ ALTER TABLE ONLY public.directus_settings
 
 ALTER TABLE ONLY public.directus_settings
     ADD CONSTRAINT directus_settings_public_background_foreign FOREIGN KEY (public_background) REFERENCES public.directus_files(id);
+
+
+--
+-- Name: directus_settings directus_settings_public_favicon_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_settings
+    ADD CONSTRAINT directus_settings_public_favicon_foreign FOREIGN KEY (public_favicon) REFERENCES public.directus_files(id);
 
 
 --
@@ -1222,6 +1298,30 @@ ALTER TABLE ONLY public.directus_users
 
 ALTER TABLE ONLY public.directus_users
     ADD CONSTRAINT directus_users_role_foreign FOREIGN KEY (role) REFERENCES public.directus_roles(id) ON DELETE SET NULL;
+
+
+--
+-- Name: directus_versions directus_versions_collection_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_versions
+    ADD CONSTRAINT directus_versions_collection_foreign FOREIGN KEY (collection) REFERENCES public.directus_collections(collection) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_versions directus_versions_user_created_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_versions
+    ADD CONSTRAINT directus_versions_user_created_foreign FOREIGN KEY (user_created) REFERENCES public.directus_users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: directus_versions directus_versions_user_updated_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_versions
+    ADD CONSTRAINT directus_versions_user_updated_foreign FOREIGN KEY (user_updated) REFERENCES public.directus_users(id);
 
 
 --

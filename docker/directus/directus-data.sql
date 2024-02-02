@@ -20,20 +20,20 @@ SET row_security = off;
 -- Data for Name: directus_collections; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url) FROM stdin;
-fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N
-fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N
-filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N
-junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N
-menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N
-menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N
-menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N
-menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N
-pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N
-projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}
-sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N
-themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N
-translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N
+COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url, versioning) FROM stdin;
+fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
+fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N	f
+filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
+menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
+menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
+menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N	f
+menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
+pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
+projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}	f
+sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
+themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
+translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
 \.
 
 
@@ -51,8 +51,8 @@ f400ab71-d9c5-4ea8-96aa-0958f373ccca	Administrator	verified	$t:admin_description
 -- Data for Name: directus_users; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, theme, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id) FROM stdin;
-7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	auto	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-10-04 17:26:45.716+00	/settings/roles/	default	\N	\N	t	\N
+COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id, appearance, theme_dark, theme_light, theme_light_overrides, theme_dark_overrides) FROM stdin;
+7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2023-10-04 17:26:45.716+00	/settings/roles/	default	\N	\N	t	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -61,6 +61,14 @@ COPY public.directus_users (id, first_name, last_name, email, password, location
 --
 
 COPY public.directus_dashboards (id, name, icon, note, date_created, user_created, color) FROM stdin;
+\.
+
+
+--
+-- Data for Name: directus_extensions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.directus_extensions (name, enabled) FROM stdin;
 \.
 
 
@@ -291,6 +299,11 @@ COPY public.directus_migrations (version, name, "timestamp") FROM stdin;
 20230525A	Add Preview Settings	2023-09-12 16:28:24.142323+00
 20230526A	Migrate Translation Strings	2023-09-12 16:28:24.152613+00
 20230721A	Require Shares Fields	2023-09-12 16:28:24.15664+00
+20230823A	Add Content Versioning	2024-02-02 09:09:59.965395+00
+20230927A	Themes	2024-02-02 09:09:59.980332+00
+20231009A	Update CSV Fields to Text	2024-02-02 09:09:59.986484+00
+20231009B	Update Panel Options	2024-02-02 09:09:59.989722+00
+20231010A	Add Extensions	2024-02-02 09:09:59.994272+00
 \.
 
 
@@ -421,8 +434,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 -- Data for Name: directus_settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios) FROM stdin;
-1	Elasa	\N	\N	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N
+COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides) FROM stdin;
+1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N
 \.
 
 
@@ -439,6 +452,14 @@ COPY public.directus_shares (id, name, collection, item, role, password, user_cr
 --
 
 COPY public.directus_translations (id, language, key, value) FROM stdin;
+\.
+
+
+--
+-- Data for Name: directus_versions; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.directus_versions (id, key, name, collection, item, hash, date_created, date_updated, user_created, user_updated) FROM stdin;
 \.
 
 
