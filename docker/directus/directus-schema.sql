@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.4 (Debian 15.4-1.pgdg110+1)
--- Dumped by pg_dump version 15.4 (Debian 15.4-1.pgdg110+1)
+-- Dumped from database version 16.1 (Debian 16.1-1.pgdg110+1)
+-- Dumped by pg_dump version 16.1 (Debian 16.1-1.pgdg110+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -53,7 +53,7 @@ CREATE SEQUENCE public.directus_activity_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_activity_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_activity_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_activity_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -163,7 +163,7 @@ CREATE SEQUENCE public.directus_fields_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_fields_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_fields_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -283,7 +283,7 @@ CREATE SEQUENCE public.directus_notifications_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_notifications_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_notifications_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_notifications_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -370,7 +370,7 @@ CREATE SEQUENCE public.directus_permissions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_permissions_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_permissions_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_permissions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -415,7 +415,7 @@ CREATE SEQUENCE public.directus_presets_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_presets_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_presets_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_presets_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -457,7 +457,7 @@ CREATE SEQUENCE public.directus_relations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_relations_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_relations_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_relations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -497,7 +497,7 @@ CREATE SEQUENCE public.directus_revisions_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_revisions_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_revisions_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_revisions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -590,7 +590,7 @@ CREATE SEQUENCE public.directus_settings_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_settings_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_settings_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -724,7 +724,7 @@ CREATE SEQUENCE public.directus_webhooks_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.directus_webhooks_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.directus_webhooks_id_seq OWNER TO postgres;
 
 --
 -- Name: directus_webhooks_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres

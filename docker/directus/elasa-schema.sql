@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 15.4 (Debian 15.4-1.pgdg110+1)
--- Dumped by pg_dump version 15.4 (Debian 15.4-1.pgdg110+1)
+-- Dumped from database version 16.1 (Debian 16.1-1.pgdg110+1)
+-- Dumped by pg_dump version 16.1 (Debian 16.1-1.pgdg110+1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -105,7 +105,7 @@ CREATE SEQUENCE public.fields_fields_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.fields_fields_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.fields_fields_id_seq OWNER TO postgres;
 
 --
 -- Name: fields_fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -127,7 +127,7 @@ CREATE SEQUENCE public.fields_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.fields_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.fields_id_seq OWNER TO postgres;
 
 --
 -- Name: fields_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -171,7 +171,7 @@ CREATE SEQUENCE public.filters_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.filters_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.filters_id_seq OWNER TO postgres;
 
 --
 -- Name: filters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -207,7 +207,7 @@ CREATE SEQUENCE public.junction_directus_roles_undefined_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.junction_directus_roles_undefined_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.junction_directus_roles_undefined_id_seq OWNER TO postgres;
 
 --
 -- Name: junction_directus_roles_undefined_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -277,7 +277,7 @@ CREATE SEQUENCE public.menu_items_childrens_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.menu_items_childrens_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.menu_items_childrens_id_seq OWNER TO postgres;
 
 --
 -- Name: menu_items_childrens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -312,7 +312,7 @@ CREATE SEQUENCE public.menu_items_filters_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.menu_items_filters_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.menu_items_filters_id_seq OWNER TO postgres;
 
 --
 -- Name: menu_items_filters_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -361,7 +361,7 @@ CREATE SEQUENCE public.menu_items_sources_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.menu_items_sources_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.menu_items_sources_id_seq OWNER TO postgres;
 
 --
 -- Name: menu_items_sources_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
@@ -545,7 +545,7 @@ CREATE SEQUENCE public.translations_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.translations_id_seq OWNER TO postgres;
+ALTER SEQUENCE public.translations_id_seq OWNER TO postgres;
 
 --
 -- Name: translations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
