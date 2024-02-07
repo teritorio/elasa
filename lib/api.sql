@@ -1,7 +1,5 @@
-CREATE SCHEMA IF NOT EXISTS postgisftw;
-
-DROP FUNCTION IF EXISTS postgisftw.id_from_slugs;
-CREATE FUNCTION postgisftw.id_from_slugs(slugs json) RETURNS integer AS $$
+DROP FUNCTION IF EXISTS id_from_slugs;
+CREATE FUNCTION id_from_slugs(slugs json) RETURNS integer AS $$
     SELECT
         coalesce(
             (slugs->>'original_id')::integer,
@@ -21,8 +19,8 @@ CREATE FUNCTION postgisftw.id_from_slugs(slugs json) RETURNS integer AS $$
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
-DROP FUNCTION IF EXISTS postgisftw.project;
-CREATE OR REPLACE FUNCTION postgisftw.project(
+DROP FUNCTION IF EXISTS project;
+CREATE OR REPLACE FUNCTION project(
     _project_slug text
 ) RETURNS TABLE (
     d jsonb
@@ -75,8 +73,8 @@ CREATE OR REPLACE FUNCTION postgisftw.project(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.filter_values;
-CREATE OR REPLACE FUNCTION postgisftw.filter_values(
+DROP FUNCTION IF EXISTS filter_values;
+CREATE OR REPLACE FUNCTION filter_values(
     _project_slug text,
     _project_id integer,
     _menu_items_id integer,
@@ -106,7 +104,7 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT * FROM postgisftw.pois_local(_project_slug)
+                SELECT * FROM pois_local(_project_slug)
             ) AS pois ON
                 pois.source_id = sources.id
         WHERE
@@ -155,8 +153,8 @@ CREATE OR REPLACE FUNCTION postgisftw.filter_values(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.menu;
-CREATE OR REPLACE FUNCTION postgisftw.menu(
+DROP FUNCTION IF EXISTS menu;
+CREATE OR REPLACE FUNCTION menu(
     _project_slug text,
     _theme_slug text
 ) RETURNS TABLE (
@@ -187,8 +185,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
-                'id', postgisftw.id_from_slugs(menu_items.slugs),
-                'parent_id', postgisftw.id_from_slugs(parent_menu_items.slugs),
+                'id', id_from_slugs(menu_items.slugs),
+                'parent_id', id_from_slugs(parent_menu_items.slugs),
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
@@ -225,12 +223,12 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     WHEN 'multiselection' THEN
                                         jsonb_build_object(
                                             'property', filters.multiselection_property,
-                                            'values', postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property)
+                                            'values', filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property)
                                         )
                                     WHEN 'checkboxes_list' THEN
                                         jsonb_build_object(
                                             'property', filters.checkboxes_list_property,
-                                            'values', postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property)
+                                            'values', filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property)
                                         )
                                     WHEN 'boolean' THEN
                                         jsonb_build_object(
@@ -255,8 +253,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
                                     filters.id = menu_items_filters.filters_id
                             WHERE
                                 menu_items_filters.menu_items_id = menu_items.id AND
-                                (filters.type != 'multiselection' OR postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
-                                (filters.type != 'checkboxes_list' OR postgisftw.filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
+                                (filters.type != 'multiselection' OR filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
+                                (filters.type != 'checkboxes_list' OR filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
                         )
                     )
                 END,
@@ -290,8 +288,8 @@ CREATE OR REPLACE FUNCTION postgisftw.menu(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.fields;
-CREATE OR REPLACE FUNCTION postgisftw.fields(
+DROP FUNCTION IF EXISTS fields;
+CREATE OR REPLACE FUNCTION fields(
     _root_field_id integer
 ) RETURNS jsonb AS $$
     WITH
@@ -415,8 +413,8 @@ $$ LANGUAGE sql PARALLEL SAFE;
 
 
 -- Function inspired by https://stackoverflow.com/questions/45585462/recursively-flatten-a-nested-jsonb-in-postgres-without-unknown-depth-and-unknown
-DROP FUNCTION IF EXISTS postgisftw.json_flat_object;
-CREATE OR REPLACE FUNCTION postgisftw.json_flat_object(
+DROP FUNCTION IF EXISTS json_flat_object;
+CREATE OR REPLACE FUNCTION json_flat_object(
     _prefix text,
     _json jsonb
 ) RETURNS jsonb AS $$
@@ -444,22 +442,22 @@ CREATE OR REPLACE FUNCTION postgisftw.json_flat_object(
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.json_flat;
-CREATE OR REPLACE FUNCTION postgisftw.json_flat(
+DROP FUNCTION IF EXISTS json_flat;
+CREATE OR REPLACE FUNCTION json_flat(
     _prefix text,
     _json jsonb
 ) RETURNS jsonb AS $$
     SELECT
         CASE jsonb_typeof(_json)
-            WHEN 'object' THEN postgisftw.json_flat_object(_prefix, _json)
+            WHEN 'object' THEN json_flat_object(_prefix, _json)
             ELSE jsonb_build_object(_prefix, _json)
         END
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.pois_local;
-CREATE OR REPLACE FUNCTION postgisftw.pois_local(
+DROP FUNCTION IF EXISTS pois_local;
+CREATE OR REPLACE FUNCTION pois_local(
     _project_slug text
 ) RETURNS TABLE (
     id integer,
@@ -510,8 +508,8 @@ END;
 $$ LANGUAGE plpgsql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.pois;
-CREATE OR REPLACE FUNCTION postgisftw.pois(
+DROP FUNCTION IF EXISTS pois;
+CREATE OR REPLACE FUNCTION pois(
     _project_slug text,
     _theme_slug text,
     _category_id integer,
@@ -543,14 +541,14 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                     (pois.properties->'tags')
                         - 'name' - 'description' - 'website:details' - 'colour'
                         - 'addr' - 'ref' - 'route' - 'source' ||
-                    coalesce(postgisftw.json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
-                    coalesce(postgisftw.json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
+                    coalesce(json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
+                    coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
                     coalesce(
                         CASE jsonb_typeof(pois.properties->'tags'->'route')
-                            WHEN 'object' THEN postgisftw.json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr'))
+                            WHEN 'object' THEN json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr'))
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
-                    coalesce(postgisftw.json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
+                    coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     coalesce(pois.properties->'natives', '{}'::jsonb) ||
                     jsonb_build_object(
                         'name', coalesce(
@@ -564,9 +562,9 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                             ELSE pois.properties->'tags'->'description'->>'fr'
                             END,
                         'metadata', jsonb_build_object(
-                            'id', postgisftw.id_from_slugs(pois.slugs), -- use slug as original POI id
+                            'id', id_from_slugs(pois.slugs), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array[postgisftw.id_from_slugs(menu_items.slugs)], -- FIXME Should be all menu_items.id
+                            'category_ids', array[id_from_slugs(menu_items.slugs)], -- FIXME Should be all menu_items.id
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -580,16 +578,16 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                                 END
                         ),
                         'editorial', jsonb_build_object(
-                            'popup_fields', postgisftw.fields(menu_items.popup_fields_id)->'fields',
-                            'details_fields', postgisftw.fields(menu_items.details_fields_id)->'fields',
-                            'list_fields', postgisftw.fields(menu_items.list_fields_id)->'fields',
+                            'popup_fields', fields(menu_items.popup_fields_id)->'fields',
+                            'details_fields', fields(menu_items.details_fields_id)->'fields',
+                            'list_fields', fields(menu_items.list_fields_id)->'fields',
                             'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
                             'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
                             'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr'),
                             'website:details', CASE WHEN menu_items.use_details_link THEN
                                 coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
-                                    themes.site_url->>'fr' || '/poi/' || postgisftw.id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
+                                    themes.site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
                                 )
                             END
                             -- 'unavoidable', menu_items.unavoidable -- TODO -------
@@ -610,7 +608,7 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
                 themes.slug = _theme_slug
             JOIN menu_items ON
                 menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR postgisftw.id_from_slugs(menu_items.slugs) = _category_id)
+                (_category_id IS NULL OR id_from_slugs(menu_items.slugs) = _category_id)
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
@@ -619,13 +617,13 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT * FROM postgisftw.pois_local(_project_slug)
+                SELECT * FROM pois_local(_project_slug)
             ) AS pois ON
                 pois.source_id = sources.id
         WHERE
             projects.slug = _project_slug AND
             (_poi_ids IS NULL OR (
-                postgisftw.id_from_slugs(pois.slugs) = ANY(_poi_ids) OR
+                id_from_slugs(pois.slugs) = ANY(_poi_ids) OR
                 (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
             )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
@@ -638,8 +636,8 @@ CREATE OR REPLACE FUNCTION postgisftw.pois(
 $$ LANGUAGE sql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS postgisftw.attribute_translations;
-CREATE OR REPLACE FUNCTION postgisftw.attribute_translations(
+DROP FUNCTION IF EXISTS attribute_translations;
+CREATE OR REPLACE FUNCTION attribute_translations(
     _project_slug text,
     _theme_slug text,
     _lang text

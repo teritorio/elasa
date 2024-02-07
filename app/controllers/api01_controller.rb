@@ -5,14 +5,14 @@ class Api01Controller < ApplicationController
   def settings
     project_slug, = project_theme_params
 
-    project = query('postgisftw.project($1)', [project_slug])
+    project = query('project($1)', [project_slug])
     render json: project.except('articles')
   end
 
   def articles
     project_slug, = project_theme_params
 
-    project = query('postgisftw.project($1)', [project_slug])
+    project = query('project($1)', [project_slug])
     render json: project['articles'].collect{ |article|
       {
         url: article['url']['fr'],
@@ -24,7 +24,7 @@ class Api01Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('postgisftw.menu($1, $2)', [project_slug, theme_slug])
+    menu_items = query('menu($1, $2)', [project_slug, theme_slug])
     render json: menu_items
   end
 
@@ -32,7 +32,7 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     id = params.require(:id).to_i
 
-    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
+    pois = query('pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
       project_slug,
       theme_slug,
       nil,
@@ -51,7 +51,7 @@ class Api01Controller < ApplicationController
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
     ids = params[:ids]&.split(',')&.collect(&:to_i)
 
-    pois = query('postgisftw.pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
+    pois = query('pois($1, $2, $3, $4::integer[], $5, $6, $7, $8, $9)', [
       project_slug,
       theme_slug,
       category_id,
@@ -75,7 +75,7 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     lang = params[:lang]
 
-    attribute_translations = query('postgisftw.attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang])
+    attribute_translations = query('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang])
     render json: attribute_translations
   end
 
