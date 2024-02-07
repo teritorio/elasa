@@ -22,6 +22,14 @@ class String
   end
 end
 
+def uncapitalize(s)
+  if s[0].match(/\p{Upper}/) && !s[1].match(/\p{Upper}/)
+    s[0].downcase + s[1..]
+  else
+    s
+  end
+end
+
 def fetch_json(url)
   response = HTTP.follow.get(url)
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
@@ -270,7 +278,7 @@ def load_color_line(pois)
   }
 end
 
-def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources)
+def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -542,7 +550,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
 
     # Categories not linked to datasource
     categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id']) }
-    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois)
+    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -570,9 +578,10 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
   }
 end
 
-def load_local_pois(conn, project_slug, project_id, categories_local, pois)
+def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
   categories_local.collect{ |category_local|
-    source_name = category_local['id'].to_s + '_' + ActiveSupport::Inflector.transliterate(category_local['category']['name']['fr']).slugify.gsub('-', '_').gsub(/_+/, '_')
+    name = category_local['category']['name']['fr']
+    source_name = category_local['id'].to_s + '_' + ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
     table = "local-#{project_slug}-#{source_name}"
     ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
     # puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
@@ -657,6 +666,29 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois)
     conn.exec("INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\") SELECT \"#{fields[..-3].collect(&:first).join('", "')}\", id::integer, ST_GeomFromGeoJSON(geom) FROM \"t_#{table}\"")
     conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
 
+    conn.exec('
+      INSERT INTO directus_collections(collection, translations) VALUES ($1, $2)
+      ON CONFLICT (collection)
+      DO UPDATE SET
+        translations = $2
+    ', [
+      table[..63],
+      [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+    ])
+    fields.each{ |key, _, _|
+      # TODO: It does not support other types of labels like label_details
+      name = i18ns.dig(key, 'label', 'fr')
+      next if name.nil?
+
+      conn.exec('
+        INSERT INTO directus_fields(collection, field, translations) VALUES ($1, $2, $3)
+      ', [
+        table[..63],
+        key,
+        [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+      ])
+    }
+
     source_id
   }
 end
@@ -690,7 +722,8 @@ namespace :wp do
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
-    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json")
+    i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
+    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns)
     load_i18n(project_id, "#{datasource_url}/data/#{datasource_project}/i18n.json") if !loaded_from_datasource.empty?
     exit 0 # Beacause of manually deal with rake command line arguments
   end

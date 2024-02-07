@@ -644,6 +644,34 @@ CREATE OR REPLACE FUNCTION attribute_translations(
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
+    WITH
+    translations AS (
+        SELECT
+            key,
+            key_translations,
+            values_translations
+        FROM
+            translations
+            JOIN projects ON
+                projects.slug = _project_slug AND
+                projects.id = translations.project_id
+    ),
+    translations_local AS (
+        SELECT
+            field AS key,
+            json_build_object(
+                '@default', json_build_object(
+                    -- TODO loop to get the right language translations
+                    substring(translations->0->>'language', 1, 2), translations->0->'translation'
+                )
+            ) AS key_translations,
+            NULL::json AS values_translations
+        FROM
+            directus_fields
+        WHERE
+            directus_fields.collection LIKE 'local-' || _project_slug || '-%' AND
+            translations IS NOT NULL
+    )
     SELECT
         jsonb_strip_nulls(jsonb_object_agg(
             key, jsonb_build_object(
@@ -664,9 +692,10 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                 )
             )
         ))
-    FROM
-        translations
-    JOIN projects ON
-        projects.slug = _project_slug
+    FROM (
+        SELECT * FROM translations
+        UNION ALL
+        SELECT * FROM translations_local
+    ) AS translations
     ;
 $$ LANGUAGE sql PARALLEL SAFE;
