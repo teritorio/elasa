@@ -13,6 +13,12 @@ cat docker/directus/directus-data.sql | docker-compose exec -T -u postgres postg
 cat lib/api.sql | docker-compose exec -T -u postgres postgres psql
 ```
 
+## Create new project
+
+```
+docker-compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city
+```
+
 ## Import from remote API
 
 Import from WP and load from Datasource

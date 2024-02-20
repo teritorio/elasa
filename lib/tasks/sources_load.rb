@@ -10,6 +10,18 @@ def fetch_json(url)
   JSON.parse(HTTP.follow.get(url))
 end
 
+# Back port from active_support
+class String
+  def slugify
+    s = gsub(/\s+/, ' ')
+    s.strip!
+    s.gsub!(' ', '-')
+    s.gsub!('&', 'and')
+    s.gsub!(/[^\w-]/u, '')
+    s.mb_chars.downcase.to_s
+  end
+end
+
 def load_source(conn, project_slug, metadatas)
   conn.exec("
     CREATE TEMP TABLE sources_import(
@@ -175,5 +187,25 @@ def load_from_source(datasource_url, project_slug, datasource_project)
     }
 
     puts ''
+  }
+end
+
+def load_i18n(project_id, url)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('DELETE FROM translations WHERE project_id = $1', [project_id])
+
+    i18ns = fetch_json(url)
+    puts "i18n: #{i18ns.size}"
+    i18ns.each{ |key, i18n|
+      conn.exec(
+        '
+        INSERT INTO translations(project_id, key, key_translations, values_translations)
+        VALUES (
+          $1, $2, $3, $4
+        )
+        ',
+        [project_id, key, i18n.except('values').to_json, i18n['values']&.to_json]
+      )
+    }
   }
 end

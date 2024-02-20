@@ -10,18 +10,6 @@ require 'cgi'
 require_relative 'sources_load'
 
 
-# Back port from active_support
-class String
-  def slugify
-    s = gsub(/\s+/, ' ')
-    s.strip!
-    s.gsub!(' ', '-')
-    s.gsub!('&', 'and')
-    s.gsub!(/[^\w-]/u, '')
-    s.mb_chars.downcase.to_s
-  end
-end
-
 def uncapitalize(s)
   if s[0].match(/\p{Upper}/) && !s[1].match(/\p{Upper}/)
     s[0].downcase + s[1..]
@@ -690,26 +678,6 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     }
 
     source_id
-  }
-end
-
-def load_i18n(project_id, url)
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM translations WHERE project_id = $1', [project_id])
-
-    i18ns = fetch_json(url)
-    puts "i18n: #{i18ns.size}"
-    i18ns.each{ |key, i18n|
-      conn.exec(
-        '
-        INSERT INTO translations(project_id, key, key_translations, values_translations)
-        VALUES (
-          $1, $2, $3, $4
-        )
-        ',
-        [project_id, key, i18n.except('values').to_json, i18n['values']&.to_json]
-      )
-    }
   }
 end
 
