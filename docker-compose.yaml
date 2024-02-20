@@ -13,8 +13,6 @@ services:
     image: postgis/postgis:16-master
     volumes:
       - pg_data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
     environment:
       <<: *common-environment
     # command: postgres -c log_statement=all -c log_destination=stderr
