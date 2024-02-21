@@ -8,8 +8,8 @@ CREATE FUNCTION id_from_slugs(slugs json) RETURNS integer AS $$
                 substr(
                     md5(
                         coalesce(
-                            slugs->>'fr',
-                            slugs->>'en'
+                            slugs->>'en',
+                            slugs->>'fr'
                         )
                     ),
                     1, 8
