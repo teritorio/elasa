@@ -1,8 +1,8 @@
 DROP FUNCTION IF EXISTS id_from_slugs;
-CREATE FUNCTION id_from_slugs(slugs json) RETURNS integer AS $$
+CREATE FUNCTION id_from_slugs(slugs json) RETURNS bigint AS $$
     SELECT
         coalesce(
-            (slugs->>'original_id')::integer,
+            (slugs->>'original_id')::bigint,
             (
                 'x' ||
                 substr(
@@ -14,7 +14,7 @@ CREATE FUNCTION id_from_slugs(slugs json) RETURNS integer AS $$
                     ),
                     1, 8
                 )
-            )::bit(32)::integer
+            )::bit(32)::bigint
         )
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
@@ -513,7 +513,7 @@ CREATE OR REPLACE FUNCTION pois(
     _project_slug text,
     _theme_slug text,
     _category_id integer,
-    _poi_ids integer[],
+    _poi_ids bigint[],
     _geometry_as text,
     _short_description boolean,
     _start_date text,
