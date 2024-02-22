@@ -70,7 +70,7 @@ CREATE OR REPLACE FUNCTION project(
     WHERE
         projects.slug = _project_slug
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS filter_values;
@@ -150,7 +150,7 @@ CREATE OR REPLACE FUNCTION filter_values(
         values_uniq
         LEFT JOIN translation ON true
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS menu;
@@ -285,7 +285,7 @@ CREATE OR REPLACE FUNCTION menu(
     WHERE
         projects.slug = _project_slug
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS fields;
@@ -409,7 +409,7 @@ CREATE OR REPLACE FUNCTION fields(
     FROM
         d
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 -- Function inspired by https://stackoverflow.com/questions/45585462/recursively-flatten-a-nested-jsonb-in-postgres-without-unknown-depth-and-unknown
@@ -505,7 +505,7 @@ BEGIN
         END LOOP;
     END LOOP;
 END;
-$$ LANGUAGE plpgsql PARALLEL SAFE;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS pois;
@@ -633,7 +633,7 @@ CREATE OR REPLACE FUNCTION pois(
             pois.id
     ) AS t
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS attribute_translations;
@@ -698,4 +698,4 @@ CREATE OR REPLACE FUNCTION attribute_translations(
         SELECT * FROM translations_local
     ) AS translations
     ;
-$$ LANGUAGE sql PARALLEL SAFE;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
