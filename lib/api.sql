@@ -578,9 +578,9 @@ CREATE OR REPLACE FUNCTION pois(
                                 END
                         ),
                         'editorial', jsonb_build_object(
-                            'popup_fields', fields(menu_items.popup_fields_id)->'fields',
-                            'details_fields', fields(menu_items.details_fields_id)->'fields',
-                            'list_fields', fields(menu_items.list_fields_id)->'fields',
+                            'popup_fields', menu_items.popup_fields,
+                            'details_fields', menu_items.details_fields,
+                            'list_fields', menu_items.list_fields,
                             'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
                             'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
                             'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr'),
@@ -606,7 +606,15 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN themes ON
                 themes.project_id = projects.id AND
                 themes.slug = _theme_slug
-            JOIN menu_items ON
+            JOIN (
+                SELECT
+                    *,
+                    fields(menu_items.popup_fields_id)->'fields' AS popup_fields,
+                    fields(menu_items.details_fields_id)->'fields' AS details_fields,
+                    fields(menu_items.list_fields_id)->'fields' AS list_fields
+                FROM
+                    menu_items
+            ) AS menu_items ON
                 menu_items.theme_id = themes.id AND
                 (_category_id IS NULL OR id_from_slugs(menu_items.slugs) = _category_id)
             JOIN menu_items_sources ON
