@@ -512,7 +512,7 @@ DROP FUNCTION IF EXISTS pois;
 CREATE OR REPLACE FUNCTION pois(
     _project_slug text,
     _theme_slug text,
-    _category_id integer,
+    _category_id bigint,
     _poi_ids bigint[],
     _geometry_as text,
     _short_description boolean,
