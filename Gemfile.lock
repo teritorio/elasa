@@ -76,6 +76,8 @@ GEM
       highline (~> 2.0.0)
     concurrent-ruby (1.2.3)
     crass (1.0.6)
+    css_parser (1.16.0)
+      addressable
     date (3.3.4)
     debug (1.9.1)
       irb (~> 1.10)
@@ -287,6 +289,7 @@ PLATFORMS
 
 DEPENDENCIES
   bootsnap
+  css_parser
   debug
   hash_diff
   http

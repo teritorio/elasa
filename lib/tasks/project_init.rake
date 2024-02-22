@@ -4,6 +4,8 @@
 require 'rake'
 require 'json'
 require 'http'
+require 'css_parser'
+include CssParser
 
 require_relative 'sources_load'
 
@@ -15,7 +17,7 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
-def new_project(slug, osm_id, theme)
+def new_project(slug, osm_id, theme, css)
   osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
   geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
 
@@ -38,7 +40,7 @@ def new_project(slug, osm_id, theme)
         polygons_extra = $8
       RETURNING id
     ', [
-      'https://gpv-rive-droite.appcarto.teritorio.xyz/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0',
+      css,
       geojson.to_json,
       { fr: osm_tags['name'] }.to_json,
       slug,
@@ -119,7 +121,7 @@ def insert_menu_item(conn, **args)
   }
 end
 
-def insert_menu_group(conn, theme_id, parent_id, class_path, classs, index)
+def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs, index)
   insert_menu_item(
     conn,
     theme_id: theme_id,
@@ -128,8 +130,8 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, classs, index)
     parent_id: parent_id,
     type: 'menu_group',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en'], fr: classs['label']['fr'] || classs['label']['en'] }.compact.to_json,
-    icon: 'teritorio teritorio-' + class_path[-1],
+    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
+    icon: 'teritorio teritorio-' + (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]),
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
     style_class_string: class_path.join(','),
@@ -137,7 +139,7 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, classs, index)
   )
 end
 
-def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, classs, index, popup_fields_id, details_fields_id, list_fields_id)
+def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id)
   category_id = insert_menu_item(
     conn,
     theme_id: theme_id,
@@ -146,8 +148,8 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, clas
     parent_id: parent_id,
     type: 'category',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en'], fr: classs['label']['fr'] || classs['label']['en'] }.compact.to_json,
-    icon: 'teritorio teritorio-' + class_path[-1],
+    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
+    icon: 'teritorio teritorio-' + (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]),
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
     style_class_string: class_path.join(','),
@@ -215,7 +217,7 @@ def insert_fields(conn, project_id, ontology)
 
   popup_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_flat_root', 'standard']
+    [project_id, 'group', 'group_popup', 'standard']
   ) { |result|
     result.first['id'].to_i
   }
@@ -229,7 +231,7 @@ def insert_fields(conn, project_id, ontology)
 
   details_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_root', 'standard']
+    [project_id, 'group', 'group_details', 'standard']
   ) { |result|
     result.first['id'].to_i
   }
@@ -243,7 +245,7 @@ def insert_fields(conn, project_id, ontology)
 
   list_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_flat_root', 'standard']
+    [project_id, 'group', 'group_list', 'standard']
   ) { |result|
     result.first['id'].to_i
   }
@@ -267,8 +269,11 @@ def insert_fields(conn, project_id, ontology)
   [popup_fields_id, details_fields_id, list_fields_id]
 end
 
-def new_menu(project_id, theme_id, theme)
+def new_menu(project_id, theme_id, theme, css)
   ontology = fetch_json("https://vecto.teritorio.xyz/data/teritorio-#{theme}-ontology-latest.json")
+
+  css_parser = CssParser::Parser.new
+  css_parser.load_uri!(css)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
@@ -337,23 +342,23 @@ def new_menu(project_id, theme_id, theme)
     ontology['superclass'].each_with_index{ |id_superclass, superclass_index|
       superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
-      superclass_menu_id = insert_menu_group(conn, theme_id, poi_menu_id, [superclass_id], superclass, superclass_index)
+      superclass_menu_id = insert_menu_group(conn, theme_id, poi_menu_id, [superclass_id], css_parser, superclass, superclass_index)
       superclass['class'].each_with_index{ |id_class, class_index|
         class_id, classs = id_class
         classs['color_fill'] = superclass['color_fill']
         classs['color_line'] = superclass['color_line']
         classs['display_mode'] = 'large'
         if classs.key?('subclass')
-          class_menu_id = insert_menu_group(conn, theme_id, superclass_menu_id, [superclass_id, class_id], classs, class_index)
+          class_menu_id = insert_menu_group(conn, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index)
           classs['subclass'].each_with_index{ |id_subclass, subclass_index|
             subclass_id, subclass = id_subclass
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
-            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id)
+            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id)
           }
         else
-          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], classs, class_index, popup_fields_id, details_fields_id, list_fields_id)
+          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, popup_fields_id, details_fields_id, list_fields_id)
         end
       }
     }
@@ -367,10 +372,11 @@ namespace :project do
     slug, osm_id, theme = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
-    project_id, theme_id = new_project(slug, osm_id, theme)
+    css = 'https://gpv-rive-droite.appcarto.teritorio.xyz/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0'
+    project_id, theme_id = new_project(slug, osm_id, theme, css)
     load_from_source("#{datasource_url}/data", slug, slug)
     load_i18n(project_id, "#{datasource_url}/data/#{slug}/i18n.json")
-    new_menu(project_id, theme_id, theme)
+    new_menu(project_id, theme_id, theme, css)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end

@@ -52,4 +52,5 @@ group :development do
   # gem "spring"
 
   gem 'hash_diff'
+  gem 'css_parser'
 end
