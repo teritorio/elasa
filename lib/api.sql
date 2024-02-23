@@ -1,20 +1,9 @@
 DROP FUNCTION IF EXISTS id_from_slugs;
-CREATE FUNCTION id_from_slugs(slugs json) RETURNS bigint AS $$
+CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
     SELECT
         coalesce(
             (slugs->>'original_id')::bigint,
-            (
-                'x' ||
-                substr(
-                    md5(
-                        coalesce(
-                            slugs->>'en',
-                            slugs->>'fr'
-                        )
-                    ),
-                    1, 8
-                )
-            )::bit(32)::bigint
+            id
         )
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
@@ -185,8 +174,8 @@ CREATE OR REPLACE FUNCTION menu(
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
-                'id', id_from_slugs(menu_items.slugs),
-                'parent_id', id_from_slugs(parent_menu_items.slugs),
+                'id', id_from_slugs(menu_items.slugs, menu_items.id),
+                'parent_id', id_from_slugs(parent_menu_items.slugs, parent_menu_items.id),
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
@@ -562,9 +551,9 @@ CREATE OR REPLACE FUNCTION pois(
                             ELSE pois.properties->'tags'->'description'->>'fr'
                             END,
                         'metadata', jsonb_build_object(
-                            'id', id_from_slugs(pois.slugs), -- use slug as original POI id
+                            'id', id_from_slugs(pois.slugs, pois.id), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array[id_from_slugs(menu_items.slugs)], -- FIXME Should be all menu_items.id
+                            'category_ids', array[id_from_slugs(menu_items.slugs, menu_items.id)], -- FIXME Should be all menu_items.id
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -587,7 +576,7 @@ CREATE OR REPLACE FUNCTION pois(
                             'website:details', CASE WHEN menu_items.use_details_link THEN
                                 coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
-                                    themes.site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs) || '/details' -- use slug as original POI id
+                                    themes.site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs, pois.id) || '/details' -- use slug as original POI id
                                 )
                             END
                             -- 'unavoidable', menu_items.unavoidable -- TODO -------
@@ -616,7 +605,7 @@ CREATE OR REPLACE FUNCTION pois(
                     menu_items
             ) AS menu_items ON
                 menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR id_from_slugs(menu_items.slugs) = _category_id)
+                (_category_id IS NULL OR id_from_slugs(menu_items.slugs, menu_items.id) = _category_id)
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
@@ -631,7 +620,7 @@ CREATE OR REPLACE FUNCTION pois(
         WHERE
             projects.slug = _project_slug AND
             (_poi_ids IS NULL OR (
-                id_from_slugs(pois.slugs) = ANY(_poi_ids) OR
+                id_from_slugs(pois.slugs, pois.id) = ANY(_poi_ids) OR
                 (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
             )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
