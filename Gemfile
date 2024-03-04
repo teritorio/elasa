@@ -51,6 +51,6 @@ group :development do
   # Speed up commands on slow machines / big apps [https://github.com/rails/spring]
   # gem "spring"
 
-  gem 'hash_diff'
   gem 'css_parser'
+  gem 'hash_diff'
 end
