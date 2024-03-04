@@ -110,11 +110,11 @@ def insert_menu_item(conn, **args)
       id
     ', [
      args[:theme_id],
-     args[:slugs], args[:index_order], args[:hidden] || false, args[:parent_id], args[:selected_by_default] || false,
+     args[:slugs], args[:index_order], args[:hidden].nil? ? false : args[:hidden], args[:parent_id], args[:selected_by_default].nil? ? false : args[:selected_by_default],
      args[:type],
      args[:name], args[:name_singular], args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
-     args[:search_indexed] || true, args[:style_merge] || true, args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
-     args[:href], args[:use_details_link],
+     args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
+     args[:href], args[:use_details_link].nil? ? true : args[:use_details_link],
     ]
   ) { |result|
     result.first['id']
