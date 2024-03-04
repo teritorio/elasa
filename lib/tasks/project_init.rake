@@ -17,7 +17,7 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
-def new_project(slug, osm_id, theme, css)
+def new_project(slug, osm_id, theme, css, website)
   osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
   geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
 
@@ -79,8 +79,8 @@ def new_project(slug, osm_id, theme, css)
       'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # logo
       'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # favico
       nil, # root menu
-      { fr: 'https://www.teritorio.fr' }.to_json, # self URL
-      { fr: 'https://www.teritorio.fr' }.to_json, # main web site URL
+      { fr: website }.to_json,
+      { fr: website }.to_json,
       nil, # keyword
       true, # favorite
       true # explorer
@@ -369,11 +369,11 @@ end
 namespace :project do
   desc 'Create a new project'
   task :new, [] => :environment do
-    slug, osm_id, theme = ARGV[2..]
+    slug, osm_id, theme, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = 'https://gpv-rive-droite.appcarto.teritorio.xyz/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0'
-    project_id, theme_id = new_project(slug, osm_id, theme, css)
+    project_id, theme_id = new_project(slug, osm_id, theme, css, website)
     load_from_source("#{datasource_url}/data", slug, slug)
     load_i18n(project_id, "#{datasource_url}/data/#{slug}/i18n.json")
     new_menu(project_id, theme_id, theme, css)

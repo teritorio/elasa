@@ -16,7 +16,7 @@ cat lib/api.sql | docker-compose exec -T -u postgres postgres psql
 ## Create new project
 
 ```
-docker-compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city
+docker-compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city https://city-demo-bordeaux.beta.appcarto.teritorio.xyz
 ```
 
 ## Import from remote API
