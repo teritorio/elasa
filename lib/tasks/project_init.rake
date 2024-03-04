@@ -139,7 +139,40 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs,
   )
 end
 
-def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id)
+def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, group_fields_ids)
+  group_ids = classs['osm_tags_extra'].collect{ |group|
+    begin
+      group_fields_ids[group].first
+    rescue StandardError
+      puts "Reference non existing group field #{group}"
+      raise
+    end
+  }
+  field_ids = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last }.flatten
+
+  popup_fields_id = conn.exec(
+    'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
+    [project_id, 'group', 'group_popup', 'standard']
+  ) { |result| result.first['id'].to_i }
+  field_ids.each_with_index{ |field_id, field_index|
+    conn.exec(
+      'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
+      [popup_fields_id, field_id, field_index]
+    )
+  }
+
+  # Details
+  details_fields_id = conn.exec(
+    'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
+    [project_id, 'group', 'group_details', 'standard']
+  ) { |result| result.first['id'].to_i }
+  group_ids.each_with_index{ |group_id, group_index|
+    conn.exec(
+      'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
+      [details_fields_id, group_id, group_index]
+    )
+  }
+
   category_id = insert_menu_item(
     conn,
     theme_id: theme_id,
@@ -157,7 +190,7 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
     zoom: classs['zoom'],
     popup_fields_id: popup_fields_id,
     details_fields_id: details_fields_id,
-    list_fields_id: list_fields_id,
+    list_fields_id: popup_fields_id,
   )
 
   source_slug = class_path.join('-')
@@ -184,18 +217,17 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
   puts "[ERROR] Fails link source to menu_item: (#{source_slug})"
 end
 
-def insert_fields(conn, project_id, ontology)
+def insert_group_fields(conn, project_id, ontology)
   osm_tags_extra = ontology['osm_tags_extra']
-  field_ids = []
-  group_ids = osm_tags_extra.collect{ |group_id, fields|
-    group_id = conn.exec(
+  osm_tags_extra.to_h{ |group_id, fields|
+    group_field_id = conn.exec(
       'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
       [project_id, 'group', group_id, 'standard']
     ) { |result|
       result.first['id'].to_i
     }
 
-    field_ids += fields.each_with_index.collect{ |field, index|
+    field_ids = fields.each_with_index.collect{ |field, index|
       field = field[0]
       field_id = conn.exec(
         'INSERT INTO fields(project_id, type, field) VALUES ($1, $2, $3) RETURNING id',
@@ -206,67 +238,14 @@ def insert_fields(conn, project_id, ontology)
 
       conn.exec(
         'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
-        [group_id, field_id, index,]
+        [group_field_id, field_id, index]
       )
 
       field_id
     }
 
-    group_id
+    [group_id, [group_field_id, field_ids]]
   }
-
-  popup_fields_id = conn.exec(
-    'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_popup', 'standard']
-  ) { |result|
-    result.first['id'].to_i
-  }
-
-  field_ids.each_with_index{ |field_id, index|
-    conn.exec(
-      'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
-      [popup_fields_id, field_id, index]
-    )
-  }
-
-  details_fields_id = conn.exec(
-    'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_details', 'standard']
-  ) { |result|
-    result.first['id'].to_i
-  }
-
-  group_ids.each_with_index{ |group_id, index|
-    conn.exec(
-      'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
-      [details_fields_id, group_id, index]
-    )
-  }
-
-  list_fields_id = conn.exec(
-    'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_list', 'standard']
-  ) { |result|
-    result.first['id'].to_i
-  }
-
-  field_ids = %w[name contact addr].collect{ |field|
-    conn.exec(
-      'INSERT INTO fields(project_id, type, field) VALUES ($1, $2, $3) RETURNING id',
-      [project_id, 'field', field]
-    ) { |result|
-      result.first['id'].to_i
-    }
-  }
-
-  field_ids.each_with_index{ |field_id, index|
-    conn.exec(
-      'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
-      [list_fields_id, field_id, index]
-    )
-  }
-
-  [popup_fields_id, details_fields_id, list_fields_id]
 end
 
 def new_menu(project_id, theme_id, theme, css)
@@ -337,7 +316,7 @@ def new_menu(project_id, theme_id, theme, css)
       color_line:	'#ff0000',
     )
 
-    popup_fields_id, details_fields_id, list_fields_id = insert_fields(conn, project_id, ontology)
+    group_fields_ids = insert_group_fields(conn, project_id, ontology)
 
     ontology['superclass'].each_with_index{ |id_superclass, superclass_index|
       superclass_id, superclass = id_superclass
@@ -355,10 +334,10 @@ def new_menu(project_id, theme_id, theme, css)
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
-            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id)
+            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids)
           }
         else
-          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, popup_fields_id, details_fields_id, list_fields_id)
+          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids)
         end
       }
     }
