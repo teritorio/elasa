@@ -139,7 +139,7 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs,
   )
 end
 
-def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, group_fields_ids)
+def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, group_fields_ids, filters)
   group_ids = classs['osm_tags_extra'].collect{ |group|
     begin
       group_fields_ids[group].first
@@ -147,8 +147,9 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
       puts "Reference non existing group field #{group}"
       raise
     end
-  }
-  field_ids = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last }.flatten
+  }.compact
+  fields = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last.keys }.compact.flatten
+  field_ids = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last.values }.compact.flatten
 
   popup_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
@@ -193,6 +194,16 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
     list_fields_id: popup_fields_id,
   )
 
+  fields.each{ |field|
+    filter_id = filters[field]
+    if filter_id
+      conn.exec(
+        'INSERT INTO menu_items_filters(menu_items_id, filters_id) VALUES ($1, $2) RETURNING id',
+        [category_id, filter_id]
+      )
+    end
+  }
+
   source_slug = class_path.join('-')
   id = conn.exec(
     '
@@ -227,7 +238,7 @@ def insert_group_fields(conn, project_id, ontology)
       result.first['id'].to_i
     }
 
-    field_ids = fields.each_with_index.collect{ |field, index|
+    field_ids = fields.each_with_index.to_h{ |field, index|
       field = field[0]
       field_id = conn.exec(
         'INSERT INTO fields(project_id, type, field) VALUES ($1, $2, $3) RETURNING id',
@@ -241,14 +252,14 @@ def insert_group_fields(conn, project_id, ontology)
         [group_field_id, field_id, index]
       )
 
-      field_id
+      [field, field_id]
     }
 
     [group_id, [group_field_id, field_ids]]
   }
 end
 
-def new_menu(project_id, theme_id, theme, css)
+def new_menu(project_id, theme_id, theme, css, filters)
   ontology = fetch_json("https://vecto.teritorio.xyz/data/teritorio-#{theme}-ontology-latest.json")
 
   css_parser = CssParser::Parser.new
@@ -256,7 +267,6 @@ def new_menu(project_id, theme_id, theme, css)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
-    conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
 
     root_menu_id = insert_menu_item(
@@ -334,16 +344,53 @@ def new_menu(project_id, theme_id, theme, css)
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
-            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids)
+            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids, filters)
           }
         else
-          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids)
+          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids, filters)
         end
       }
     }
   }
 end
 
+def new_filter(project_id, schema_url, i18ns)
+  schema = fetch_json(schema_url)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
+
+    schema['properties'].transform_values{ |spec|
+      if spec['type'] == 'array'
+        spec['items']['enum']
+      else
+        spec['enum']
+      end
+    }.compact.except('tactile_paving', 'pastry', 'mobile_phone:repair', 'computer:repair', 'sport', 'access', 'dispensing').collect{ |key, enum|
+      name = i18ns.dig(key, '@default')&.to_json
+      filter_id = (
+        if [%w[yes no], %w[no yes]].include?(enum)
+          conn.exec(
+            'INSERT INTO filters(project_id, type, name, boolean_property) VALUES ($1, $2, $3, $4) RETURNING id',
+            [project_id, 'boolean', name, key]
+          ) { |result| result.first['id'].to_i }
+        elsif enum.size <= 1
+          next
+        elsif enum.size <= 5
+          conn.exec(
+            'INSERT INTO filters(project_id, type, name, checkboxes_list_property) VALUES ($1, $2, $3, $4) RETURNING id',
+            [project_id, 'checkboxes_list', name, key]
+          ) { |result| result.first['id'].to_i }
+        else
+          conn.exec(
+            'INSERT INTO filters(project_id, type, name, multiselection_property) VALUES ($1, $2, $3, $4) RETURNING id',
+            [project_id, 'multiselection', name, key]
+          ) { |result| result.first['id'].to_i }
+        end
+      )
+      [key, filter_id]
+    }.compact.to_h
+  }
+end
 
 namespace :project do
   desc 'Create a new project'
@@ -354,8 +401,10 @@ namespace :project do
     css = 'https://gpv-rive-droite.appcarto.teritorio.xyz/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0'
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
     load_from_source("#{datasource_url}/data", slug, slug)
-    load_i18n(project_id, "#{datasource_url}/data/#{slug}/i18n.json")
-    new_menu(project_id, theme_id, theme, css)
+    i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
+    load_i18n(project_id, i18ns)
+    filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
+    new_menu(project_id, theme_id, theme, css, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
