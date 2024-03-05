@@ -80,6 +80,21 @@ CREATE OR REPLACE FUNCTION filter_values(
             key = _property
         LIMIT 1
     ),
+    sources AS (
+        SELECT
+            sources.id AS id
+        FROM
+            menu_items_sources
+            JOIN sources ON
+                sources.id = menu_items_sources.sources_id
+        WHERE
+            menu_items_sources.menu_items_id = _menu_items_id
+    ),
+    pois AS (
+        SELECT pois.* FROM pois JOIN sources ON sources.id = pois.source_id
+        UNION ALL
+        SELECT * FROM pois_local(_project_slug, (SELECT array_agg(id) FROM sources))
+    ),
     properties AS (
         SELECT
             coalesce(
@@ -87,17 +102,7 @@ CREATE OR REPLACE FUNCTION filter_values(
                 jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"'  END)::jsonpath)
             ) AS property
         FROM
-            menu_items_sources
-            JOIN sources ON
-                sources.id = menu_items_sources.sources_id
-            JOIN (
-                SELECT * FROM pois
-                UNION ALL
-                SELECT * FROM pois_local(_project_slug)
-            ) AS pois ON
-                pois.source_id = sources.id
-        WHERE
-            menu_items_sources.menu_items_id = _menu_items_id
+            pois
     ),
     values AS (
         SELECT
@@ -447,7 +452,8 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS pois_local;
 CREATE OR REPLACE FUNCTION pois_local(
-    _project_slug text
+    _project_slug text,
+    _source_ids integer[]
 ) RETURNS TABLE (
     id integer,
     geom geometry(Geometry,4326),
@@ -466,6 +472,7 @@ BEGIN
         FROM
             information_schema.tables
             JOIN sources ON
+                (_source_ids IS NULL OR source_id = ANY (_source_ids)) AND
                 table_name = 'local-' || _project_slug || '-' || sources.slug
         WHERE
             table_type = 'BASE TABLE' AND
@@ -614,7 +621,7 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT * FROM pois_local(_project_slug)
+                SELECT * FROM pois_local(_project_slug, NULL)
             ) AS pois ON
                 pois.source_id = sources.id
         WHERE
