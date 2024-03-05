@@ -762,6 +762,13 @@ CREATE INDEX fields_fields_idx_fields_id ON public.fields_fields USING btree (fi
 
 
 --
+-- Name: menu_items_filters_idx_menu_items_id; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX menu_items_filters_idx_menu_items_id ON public.menu_items_filters USING btree (menu_items_id);
+
+
+--
 -- Name: pois_idx_slug_original_id_integer; Type: INDEX; Schema: public; Owner: postgres
 --
 
