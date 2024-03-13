@@ -527,12 +527,17 @@ CREATE OR REPLACE FUNCTION pois(
         SELECT DISTINCT ON (menu_items.id, pois.id)
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
-                'geometry',
+                'geometry', ST_AsGeoJSON(
                     CASE _geometry_as
-                    WHEN 'point' THEN ST_AsGeoJSON(ST_PointOnSurface(pois.geom))::jsonb
-                    WHEN 'bbox' THEN ST_AsGeoJSON(ST_Envelope(pois.geom))::jsonb
-                    ELSE ST_AsGeoJSON(pois.geom)::jsonb
-                    END,
+                    WHEN 'point' THEN
+                        CASE ST_Dimension(pois.geom)
+                        WHEN 0 THEN pois.geom
+                        ELSE ST_PointOnSurface(pois.geom)
+                        END
+                    WHEN 'bbox' THEN ST_Envelope(pois.geom)
+                    ELSE pois.geom
+                    END
+                )::jsonb,
                 'properties',
                     (pois.properties->'tags')
                         - 'name' - 'description' - 'website:details' - 'colour'
