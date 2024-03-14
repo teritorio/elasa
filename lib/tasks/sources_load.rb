@@ -179,7 +179,7 @@ def load_from_source(datasource_url, project_slug, datasource_project)
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
       load_source(conn, project_slug, metadatas)
 
-      metadatas.each{ |source_slug, _metadata|
+      metadatas.each_key{ |source_slug|
         pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
         load_pois(conn, project_slug, source_slug, pois['features'])
         puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"

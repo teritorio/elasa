@@ -5,7 +5,6 @@ require 'rake'
 require 'json'
 require 'http'
 require 'css_parser'
-include CssParser
 
 require_relative 'sources_load'
 
@@ -122,6 +121,7 @@ def insert_menu_item(conn, **args)
 end
 
 def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs, index)
+  icon = css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]
   insert_menu_item(
     conn,
     theme_id: theme_id,
@@ -131,7 +131,7 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs,
     type: 'menu_group',
     ###### TODO recup trad fr
     name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
-    icon: 'teritorio teritorio-' + (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]),
+    icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
     style_class_string: class_path.join(','),
@@ -174,6 +174,7 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
     )
   }
 
+  icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
   category_id = insert_menu_item(
     conn,
     theme_id: theme_id,
@@ -183,7 +184,7 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
     type: 'category',
     ###### TODO recup trad fr
     name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
-    icon: 'teritorio teritorio-' + (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]),
+    icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
     style_class_string: class_path.join(','),

@@ -46,9 +46,9 @@ def compare_settings(url_old, url_new)
     hash['themes'].each{ |theme|
       theme.delete('id')
       theme.delete('slug') # Ignore
-      theme['site_url'].each{ |lang, url|
-        if url[-1] == '/'
-          theme['site_url'][lang] = url[..-2]
+      theme['site_url'].each{ |lang, site_url|
+        if site_url[-1] == '/'
+          theme['site_url'][lang] = site_url[..-2]
         end
       }
     }
@@ -119,7 +119,7 @@ def compare_menu(url_old, url_new)
   puts JSON.dump(diff.diff) if !diff.diff.empty?
 
   hashes.collect{ |menu|
-    menu.select{ |entry| entry['category'] }.collect{ |entry| entry['id'] }
+    menu.select{ |entry| entry['category'] }.pluck('id')
   }
 end
 

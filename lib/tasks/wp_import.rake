@@ -10,11 +10,11 @@ require 'cgi'
 require_relative 'sources_load'
 
 
-def uncapitalize(s)
-  if s[0].match(/\p{Upper}/) && !s[1].match(/\p{Upper}/)
-    s[0].downcase + s[1..]
+def uncapitalize(string)
+  if string[0].match(/\p{Upper}/) && !string[1].match(/\p{Upper}/)
+    string[0].downcase + string[1..]
   else
-    s
+    string
   end
 end
 
@@ -91,7 +91,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         theme_slug,
         theme['title'].to_json,
         theme['description'].to_json,
-        theme['site_url'].transform_values{ |url| url.end_with?('/') ? url[0..-2] : url }.transform_values{ |url| url.start_with?('http') ? url : "https://#{url}" }.to_json,
+        theme['site_url'].transform_values{ |site_url| site_url.end_with?('/') ? site_url[0..-2] : site_url }.transform_values{ |site_url| site_url.start_with?('http') ? site_url : "https://#{site_url}" }.to_json,
         theme['main_url'].to_json,
         theme['logo_url'],
         theme['favicon_url'],
@@ -569,7 +569,8 @@ end
 def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
-    source_name = category_local['id'].to_s + '_' + ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
+    category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
+    source_name = "#{category_local['id']}_#{category_slug}"
     table = "local-#{project_slug}-#{source_name}"
     ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
     # puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
@@ -601,10 +602,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
       (stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10 ? { nil => stats.size } : stats
     }
     fields = value_stats.sort_by{ |_key, stats| -stats.values.sum }.collect{ |key, stats|
-      i = if stats&.keys&.include?(Array)
-            f = ->(i) { i&.to_json }
-            "\"#{key}\" json"
-          elsif stats&.keys&.include?(hash)
+      i = if stats&.keys&.include?(Array) || stats&.keys&.include?(hash)
             f = ->(i) { i&.to_json }
             "\"#{key}\" json"
           elsif %w[name description].include?(key)
