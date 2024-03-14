@@ -9,8 +9,8 @@ Rails.application.routes.draw do
     get 'menu', controller: 'api01'
     get 'poi/:id', controller: 'api01', action: :poi
     get 'poi/:id/deps', controller: 'api01', action: :poi, defaults: { deps: 'true' }
-    get 'pois', controller: 'api01'
-    get 'pois/category/:category_id', controller: 'api01', action: :pois_category
+    get 'pois(.:format)', controller: 'api01', action: :pois
+    get 'pois/category/:category_id(.:format)', controller: 'api01', action: :pois_category
     get 'attribute_translations/:lang.json', controller: 'api01', action: :attribute_translations
   end
 end

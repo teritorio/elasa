@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 # typed: true
 
+require 'csv'
+
+
 class Api01Controller < ApplicationController
   def settings
     project_slug, = project_theme_params
@@ -62,7 +65,26 @@ class Api01Controller < ApplicationController
       params[:end_date],
       nil,
     ])
-    render json: pois
+
+    respond_to do |format|
+      format.geojson { render json: pois }
+      format.csv {
+        features = pois['features']
+        pois_hash_path = features.collect{ |poi| hash_path(poi['properties'].except('display', 'editorial')) }.flatten(1).uniq.sort
+
+        # UTF-8 BOM + CSV content
+        csv_string = "\xEF\xBB\xBF"
+        csv_string += CSV.generate(col_sep: ';') { |csv|
+          csv << pois_hash_path.collect{ |path| path.join(':') } + %w[lon lat]
+          features.each{ |poi|
+            csv << pois_hash_path.collect{ |path| poi['properties'].dig(*path) }.collect{ |value|
+              value.is_a?(Array) ? value.join(';') : value
+            } + (poi['geometry']['type'] == 'Point' ? poi['geometry']['coordinates'] : [nil, nil])
+          }
+        }
+        send_data(csv_string, filename: "#{project_slug}-#{theme_slug}-#{category_id || ''}-#{DateTime.now.strftime('%Y%m%d')}.csv")
+      }
+    end
   end
 
   def pois_category
@@ -92,5 +114,15 @@ class Api01Controller < ApplicationController
 
   def project_theme_params
     params.require(%i[project theme])
+  end
+
+  def hash_path(hash, path = [])
+    hash.collect{ |key, value|
+      if value.is_a?(Hash)
+        hash_path(value, path + [key])
+      else
+        [path + [key]]
+      end
+    }.flatten(1)
   end
 end
