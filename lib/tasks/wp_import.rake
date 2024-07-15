@@ -628,21 +628,30 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     enco = PG::BinaryEncoder::CopyRow.new
     conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
       ps.each{ |p|
-        values = fields.collect{ |field, t, _|
-          if field == 'id'
-            p['properties']['metadata']['id']
-          elsif field == 'geom'
-            if p['geometry']['type'] == 'Feature'
-              p['geometry'] = p['geometry']['geometry']
+        begin
+          values = fields.collect{ |field, t, _|
+            begin
+              if field == 'id'
+                p['properties']['metadata']['id']
+              elsif field == 'geom'
+                if p['geometry']['type'] == 'Feature'
+                  p['geometry'] = p['geometry']['geometry']
+                end
+                p['geometry'].to_json
+              else
+                r = t.call(p['properties'][field])
+                r = r.strip if r.is_a?(String)
+                r
+              end
+            rescue StandardError => e
+              puts p.inspect
+              puts "ERROR: getting value for field \"#{field}\", #{e.message}"
+              raise
             end
-            p['geometry'].to_json
-          else
-            r = t.call(p['properties'][field])
-            r = r.strip if r.is_a?(String)
-            r
-          end
-        }
-        conn.put_copy_data(values)
+          }
+          conn.put_copy_data(values)
+        rescue StandardError
+        end
       }
     }
 
@@ -670,7 +679,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
         INSERT INTO directus_fields(collection, field, translations) VALUES ($1, $2, $3)
       ', [
         table[..63],
-        key,
+        key[..63],
         [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       ])
     }
