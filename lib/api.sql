@@ -62,6 +62,60 @@ CREATE OR REPLACE FUNCTION project(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS pois_local;
+CREATE OR REPLACE FUNCTION pois_local(
+    _project_slug text,
+    _source_ids integer[]
+) RETURNS TABLE (
+    id integer,
+    geom geometry(Geometry,4326),
+    properties jsonb,
+    source_id integer,
+    slugs json
+) AS $$
+DECLARE
+    source record;
+    poi record;
+BEGIN
+    FOR source IN
+        SELECT
+            sources.id,
+            table_name
+        FROM
+            information_schema.tables
+            JOIN sources ON
+                (_source_ids IS NULL OR source_id = ANY (_source_ids)) AND
+                table_name = 'local-' || _project_slug || '-' || sources.slug
+        WHERE
+            table_type = 'BASE TABLE' AND
+            table_schema = 'public'
+    LOOP
+        FOR poi IN EXECUTE '
+            SELECT
+                id,
+                geom,
+                jsonb_build_object(
+                    ''id'', id,
+                    ''source'', NULL,
+                    ''updated_at'', NULL,
+                    ''tags'', row_to_json(t.*)::jsonb - ''id'' - ''geom''
+                ) AS properties
+            FROM
+                "' || source.table_name || '" AS t
+        '
+        LOOP
+            id := poi.id;
+            geom := poi.geom;
+            properties := poi.properties;
+            source_id := source.id;
+            slugs := jsonb_build_object('original_id', poi.id);
+            RETURN NEXT;
+        END LOOP;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS filter_values;
 CREATE OR REPLACE FUNCTION filter_values(
     _project_slug text,
@@ -448,60 +502,6 @@ CREATE OR REPLACE FUNCTION json_flat(
         END
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
-
-
-DROP FUNCTION IF EXISTS pois_local;
-CREATE OR REPLACE FUNCTION pois_local(
-    _project_slug text,
-    _source_ids integer[]
-) RETURNS TABLE (
-    id integer,
-    geom geometry(Geometry,4326),
-    properties jsonb,
-    source_id integer,
-    slugs json
-) AS $$
-DECLARE
-    source record;
-    poi record;
-BEGIN
-    FOR source IN
-        SELECT
-            sources.id,
-            table_name
-        FROM
-            information_schema.tables
-            JOIN sources ON
-                (_source_ids IS NULL OR source_id = ANY (_source_ids)) AND
-                table_name = 'local-' || _project_slug || '-' || sources.slug
-        WHERE
-            table_type = 'BASE TABLE' AND
-            table_schema = 'public'
-    LOOP
-        FOR poi IN EXECUTE '
-            SELECT
-                id,
-                geom,
-                jsonb_build_object(
-                    ''id'', id,
-                    ''source'', NULL,
-                    ''updated_at'', NULL,
-                    ''tags'', row_to_json(t.*)::jsonb - ''id'' - ''geom''
-                ) AS properties
-            FROM
-                "' || source.table_name || '" AS t
-        '
-        LOOP
-            id := poi.id;
-            geom := poi.geom;
-            properties := poi.properties;
-            source_id := source.id;
-            slugs := jsonb_build_object('original_id', poi.id);
-            RETURN NEXT;
-        END LOOP;
-    END LOOP;
-END;
-$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS pois;
