@@ -68,7 +68,7 @@ COPY public.directus_dashboards (id, name, icon, note, date_created, user_create
 -- Data for Name: directus_extensions; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_extensions (name, enabled) FROM stdin;
+COPY public.directus_extensions (enabled, id, folder, source, bundle) FROM stdin;
 \.
 
 
@@ -216,7 +216,7 @@ COPY public.directus_folders (id, name, parent) FROM stdin;
 -- Data for Name: directus_files; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_files (id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, uploaded_on, modified_by, modified_on, charset, filesize, width, height, duration, embed, description, location, tags, metadata) FROM stdin;
+COPY public.directus_files (id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, uploaded_on, modified_by, modified_on, charset, filesize, width, height, duration, embed, description, location, tags, metadata, focal_point_x, focal_point_y, tus_id, tus_data) FROM stdin;
 \.
 
 
@@ -304,6 +304,14 @@ COPY public.directus_migrations (version, name, "timestamp") FROM stdin;
 20231009A	Update CSV Fields to Text	2024-02-02 09:09:59.986484+00
 20231009B	Update Panel Options	2024-02-02 09:09:59.989722+00
 20231010A	Add Extensions	2024-02-02 09:09:59.994272+00
+20231215A	Add Focalpoints	2024-07-15 12:22:59.27761+00
+20240122A	Add Report URL Fields	2024-07-15 12:22:59.280282+00
+20240204A	Marketplace	2024-07-15 12:22:59.300739+00
+20240305A	Change Useragent Type	2024-07-15 12:22:59.307229+00
+20240311A	Deprecate Webhooks	2024-07-15 12:22:59.317068+00
+20240422A	Public Registration	2024-07-15 12:22:59.320243+00
+20240515A	Add Session Window	2024-07-15 12:22:59.321949+00
+20240701A	Add Tus Data	2024-07-15 12:22:59.323603+00
 \.
 
 
@@ -434,8 +442,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 -- Data for Name: directus_settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides) FROM stdin;
-1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N
+COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides, report_error_url, report_bug_url, report_feature_url, public_registration, public_registration_verify_email, public_registration_role, public_registration_email_filter) FROM stdin;
+1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N	\N	\N	\N	f	t	\N	\N
 \.
 
 
@@ -467,7 +475,7 @@ COPY public.directus_versions (id, key, name, collection, item, hash, date_creat
 -- Data for Name: directus_webhooks; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_webhooks (id, name, method, url, status, data, actions, collections, headers) FROM stdin;
+COPY public.directus_webhooks (id, name, method, url, status, data, actions, collections, headers, was_active_before_deprecation, migrated_flow) FROM stdin;
 \.
 
 

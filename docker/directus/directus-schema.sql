@@ -30,7 +30,7 @@ CREATE TABLE public.directus_activity (
     "user" uuid,
     "timestamp" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     ip character varying(50),
-    user_agent character varying(255),
+    user_agent text,
     collection character varying(64) NOT NULL,
     item character varying(255) NOT NULL,
     comment text,
@@ -114,8 +114,11 @@ ALTER TABLE public.directus_dashboards OWNER TO postgres;
 --
 
 CREATE TABLE public.directus_extensions (
-    name character varying(255) NOT NULL,
-    enabled boolean DEFAULT true NOT NULL
+    enabled boolean DEFAULT true NOT NULL,
+    id uuid NOT NULL,
+    folder character varying(255) NOT NULL,
+    source character varying(255) NOT NULL,
+    bundle uuid
 );
 
 
@@ -197,7 +200,11 @@ CREATE TABLE public.directus_files (
     description text,
     location text,
     tags text,
-    metadata json
+    metadata json,
+    focal_point_x integer,
+    focal_point_y integer,
+    tus_id character varying(64),
+    tus_data json
 );
 
 
@@ -533,9 +540,10 @@ CREATE TABLE public.directus_sessions (
     "user" uuid,
     expires timestamp with time zone NOT NULL,
     ip character varying(255),
-    user_agent character varying(255),
+    user_agent text,
     share uuid,
-    origin character varying(255)
+    origin character varying(255),
+    next_token character varying(64)
 );
 
 
@@ -571,7 +579,14 @@ CREATE TABLE public.directus_settings (
     default_theme_light character varying(255),
     theme_light_overrides json,
     default_theme_dark character varying(255),
-    theme_dark_overrides json
+    theme_dark_overrides json,
+    report_error_url character varying(255),
+    report_bug_url character varying(255),
+    report_feature_url character varying(255),
+    public_registration boolean DEFAULT false NOT NULL,
+    public_registration_verify_email boolean DEFAULT true NOT NULL,
+    public_registration_role uuid,
+    public_registration_email_filter json
 );
 
 
@@ -705,7 +720,9 @@ CREATE TABLE public.directus_webhooks (
     data boolean DEFAULT true NOT NULL,
     actions character varying(100) NOT NULL,
     collections character varying(255) NOT NULL,
-    headers json
+    headers json,
+    was_active_before_deprecation boolean DEFAULT false NOT NULL,
+    migrated_flow uuid
 );
 
 
@@ -825,7 +842,7 @@ ALTER TABLE ONLY public.directus_dashboards
 --
 
 ALTER TABLE ONLY public.directus_extensions
-    ADD CONSTRAINT directus_extensions_pkey PRIMARY KEY (name);
+    ADD CONSTRAINT directus_extensions_pkey PRIMARY KEY (id);
 
 
 --
@@ -1253,6 +1270,14 @@ ALTER TABLE ONLY public.directus_settings
 
 
 --
+-- Name: directus_settings directus_settings_public_registration_role_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_settings
+    ADD CONSTRAINT directus_settings_public_registration_role_foreign FOREIGN KEY (public_registration_role) REFERENCES public.directus_roles(id) ON DELETE SET NULL;
+
+
+--
 -- Name: directus_settings directus_settings_storage_default_folder_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1322,6 +1347,14 @@ ALTER TABLE ONLY public.directus_versions
 
 ALTER TABLE ONLY public.directus_versions
     ADD CONSTRAINT directus_versions_user_updated_foreign FOREIGN KEY (user_updated) REFERENCES public.directus_users(id);
+
+
+--
+-- Name: directus_webhooks directus_webhooks_migrated_flow_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_webhooks
+    ADD CONSTRAINT directus_webhooks_migrated_flow_foreign FOREIGN KEY (migrated_flow) REFERENCES public.directus_flows(id) ON DELETE SET NULL;
 
 
 --
