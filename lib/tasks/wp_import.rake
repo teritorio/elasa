@@ -690,7 +690,7 @@ namespace :wp do
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
     load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns)
-    i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
+    i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
     load_i18n(project_id, i18ns) if !loaded_from_datasource.empty?
     exit 0 # Beacause of manually deal with rake command line arguments
   end
