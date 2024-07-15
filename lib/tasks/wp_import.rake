@@ -538,7 +538,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     )
 
     # Categories not linked to datasource
-    categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id']) }
+    categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id'].to_s) }.compact
     source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
