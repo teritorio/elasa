@@ -2,9 +2,9 @@ AllCops:
   NewCops: enable
   TargetRubyVersion: 3.0
   Exclude:
-    - 'bin/*'
+    - bin/*
     - '**/Rakefile.rb'
-    - 'db/schema.rb'
+    - db/schema.rb
     - 'vendor/**/*'
     - assert_migration.rb
 
@@ -78,6 +78,9 @@ Metrics/ClassLength:
 Metrics/ParameterLists:
   Max: 10
 
+Metrics/BlockNesting:
+  Max: 5
+
 Style/Next:
   Enabled: false
 
@@ -106,4 +109,7 @@ Style/NestedTernaryOperator:
   Enabled: false
 
 Rails/Output:
+  Enabled: false
+
+Style/MultilineTernaryOperator:
   Enabled: false
