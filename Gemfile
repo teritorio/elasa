@@ -26,7 +26,6 @@ gem 'json-schema'
 gem 'optparse'
 gem 'pg', '~> 1.1'
 gem 'sorbet-runtime'
-gem 'webcache'
 
 group :development do
   gem 'rake'
