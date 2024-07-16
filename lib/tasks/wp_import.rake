@@ -33,23 +33,21 @@ def load_settings(project_slug, theme_slug, url, url_articles)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec(
       '
-      INSERT INTO projects(slug, name, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO projects(slug, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (slug)
       DO UPDATE SET
-        name = $2,
-        icon_font_css_url = $3,
-        polygon = $4,
-        polygons_extra = $5,
-        articles = $6,
-        default_country = $7,
-        default_country_state_opening_hours = $8
+        icon_font_css_url = $2,
+        polygon = $3,
+        polygons_extra = $4,
+        articles = $5,
+        default_country = $6,
+        default_country_state_opening_hours = $7
       RETURNING
         id
       ',
       [
         project_slug,
-        { fr: settings['name'] }.to_json,
         settings['icon_font_css_url'],
         settings['polygon']['data'].to_json,
         settings['polygons_extra'].to_json,
@@ -66,43 +64,64 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       result.first['id'].to_i
     }
 
+    if project_id
+      conn.exec(
+        '
+        INSERT INTO projects_translations(projects_id, languages_code, name)
+        VALUES ($1, $2, $3)
+        ',
+        [
+          project_id,
+          'fr-FR',
+          settings['name'],
+        ]
+      )
+    end
+
+
     theme = settings['themes'].first
     theme_id = conn.exec(
       '
-      INSERT INTO themes(project_id, slug, name, description, site_url, main_url, logo_url, favicon_url, keywords, favorites_mode, explorer_mode)
-      VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-      )
+      INSERT INTO themes(project_id, slug, logo_url, favicon_url, favorites_mode, explorer_mode)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (project_id, slug)
       DO UPDATE SET
-        name = $3,
-        description = $4,
-        site_url = $5,
-        main_url = $6,
-        logo_url = $7,
-        favicon_url = $8,
-        keywords = $9,
-        favorites_mode = $10,
-        explorer_mode = $11
+        logo_url = $3,
+        favicon_url = $4,
+        favorites_mode = $5,
+        explorer_mode = $6
       RETURNING
         id
-        ',
+      ',
       [
         project_id,
         theme_slug,
-        theme['title'].to_json,
-        theme['description'].to_json,
-        theme['site_url'].transform_values{ |site_url| site_url.end_with?('/') ? site_url[0..-2] : site_url }.transform_values{ |site_url| site_url.start_with?('http') ? site_url : "https://#{site_url}" }.to_json,
-        theme['main_url'].to_json,
         theme['logo_url'],
         theme['favicon_url'],
-        { fr: theme['keywords'] || '' }.to_json,
         theme['favorites_mode'] != false,
         theme['explorer_mode'] != false,
       ]
     ) { |result|
       result.first['id'].to_i
     }
+
+    if theme_id
+      conn.exec(
+        '
+        INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ',
+        [
+          theme_id,
+          'fr-FR',
+          theme['title']['fr'],
+          theme['description']['fr'],
+          theme['site_url'].transform_values{ |site_url| site_url.end_with?('/') ? site_url[0..-2] : site_url }.transform_values{ |site_url| site_url.start_with?('http') ? site_url : "https://#{site_url}" }['fr'],
+          theme['main_url']['fr'],
+          theme['keywords'] || '',
+        ]
+      )
+    end
 
     [project_id, theme_id]
   }
@@ -326,31 +345,28 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
       end
 
       fields_id = fields_ids[menu['id']]
-      conn.exec(
+      menu_item_id = conn.exec(
         '
         INSERT INTO menu_items(
           theme_id,
-          slugs, index_order, hidden, parent_id, selected_by_default,
+          index_order, hidden, parent_id, selected_by_default,
           type,
-          name, name_singular, icon, color_fill, color_line, style_class_string, display_mode,
+          icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
           href, use_details_link
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
         )
         RETURNING
           id
         ', [
           theme_id,
-          { original_id: menu['id'] }.to_json, # Use original id as slug
           menu['index_order'],
           menu['hidden'],
           catorgry_ids_map[menu['parent_id']],
           menu['selected_by_default'],
           menu_type(menu),
-          menu_dig_all(menu, 'name').to_json,
-          labels[menu['id']]&.to_json,
           menu_dig_all(menu, 'icon').presence || icon[menu['id']] || 'teritorio teritorio-services',
           menu_dig_all(menu, 'color_fill').presence || color_fill[menu['id']] || '#ff0000',
           menu_dig_all(menu, 'color_line').presence || color_line[menu['id']] || '#ff0000',
@@ -368,6 +384,21 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
       ) { |result|
         catorgry_ids_map[menu['id']] = result.first['id']
       }
+
+      if menu_item_id
+        conn.exec(
+          '
+          INSERT INTO menu_items_translations(menu_items_id, languages_code, slug, name, name_singular)
+          VALUES ($1, $2, $3, $4, $5)
+          ', [
+            menu_item_id,
+            'fr-FR',
+            menu['id'],
+            menu_dig_all(menu, 'name')&.dig('fr'),
+            labels[menu['id']]&.dig('fr'),
+          ]
+        )
+      end
     end
 
     menu_sources.each{ |menu_id, sources|
@@ -414,7 +445,6 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         INSERT INTO filters(
           project_id,
           type,
-          name,
           -- date_range
           property_begin,
           property_end,
@@ -429,15 +459,12 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
           -- boolean
           boolean_property
         )
-        VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
           id
         ', [
           project_id,
           filter['type'],
-          filter['name'].to_json,
           # date_range
           filter['property_begin'],
           filter['property_end'],
@@ -455,6 +482,20 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
       ) { |result|
         result.first['id']
       }
+
+      if filter_id
+        conn.exec(
+          '
+          INSERT INTO filters_translations(filters_id, languages_code, name)
+          VALUES ($1, $2, $3)
+          ', [
+            filter_id,
+            'fr-FR',
+            filter['name']['fr'],
+          ]
+        )
+      end
+
 
       category_ids.each{ |category_id|
         conn.exec(
@@ -545,14 +586,18 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
       id = conn.exec(
         '
         INSERT INTO menu_items_sources(menu_items_id, sources_id)
-        SELECT
+        SELECT DISTINCT ON(menu_items.id)
           menu_items.id,
           $3
         FROM
           menu_items
+          JOIN menu_items_translations ON
+            menu_items_translations.menu_items_id = menu_items.id
         WHERE
           menu_items.theme_id = $1 AND
-          menu_items.slugs->>\'original_id\' = $2
+          menu_items_translations.slug = $2
+        ORDER BY
+          menu_items.id
         RETURNING
           id
         ',
@@ -579,13 +624,32 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     next if ps.empty?
 
     conn.exec('DELETE FROM sources WHERE project_id = $1 AND slug = $2', [project_id, source_name])
-    source_id = conn.exec('INSERT INTO sources(project_id, slug, name, attribution) VALUES ($1, $2, $3, NULL) RETURNING id', [
-      project_id,
-      source_name,
-      category_local['category']['name'].to_json,
-    ]) { |result|
+    source_id = conn.exec(
+      '
+      INSERT INTO sources(project_id, slug, attribution)
+      VALUES ($1, $2, NULL)
+      RETURNING id
+      ', [
+        project_id,
+        category_local['category']['name'].to_json,
+        ]
+    ) { |result|
       result.first['id']
     }
+
+    if source_id
+      conn.exec(
+        '
+        INSERT INTO sources_translations(sources_id, languages_code, name)
+        VALUES ($1, $2, $3)
+        RETURNING id
+        ', [
+          source_id,
+          'fr-FR',
+          source_name,
+          ]
+      )
+    end
 
     value_stats = ps.collect{ |p|
       p['properties'].compact.except('metadata', 'display', 'editorial', 'classe').collect{ |k, v|
@@ -689,9 +753,17 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
   }
 end
 
+def set_default_languages
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('INSERT INTO languages(code, name, direction) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', %w[fr-FR French ltr])
+    conn.exec('INSERT INTO languages(code, name, direction) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', %w[en-US English ltr])
+  }
+end
+
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
+    set_default_languages
     url, project_slug, theme_slug, datasource_url, datasource_project = ARGV[2..]
     datasource_project ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"

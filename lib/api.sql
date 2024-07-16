@@ -1,3 +1,62 @@
+DROP VIEW IF EXISTS projects_join;
+CREATE VIEW projects_join AS
+SELECT
+    projects.*,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+FROM
+    projects
+    JOIN projects_translations AS trans ON
+        trans.projects_id = projects.id
+GROUP BY
+    projects.id
+;
+
+DROP VIEW IF EXISTS themes_join;
+CREATE VIEW themes_join AS
+SELECT
+    themes.*,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description) AS description,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) AS site_url,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) AS main_url,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords
+FROM
+    themes
+    JOIN themes_translations AS trans ON
+        trans.themes_id = themes.id
+GROUP BY
+    themes.id
+;
+
+DROP VIEW IF EXISTS menu_items_join;
+CREATE VIEW menu_items_join AS
+SELECT
+    menu_items.*,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular) AS name_singular,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug
+FROM
+    menu_items
+    JOIN menu_items_translations AS trans ON
+        trans.menu_items_id = menu_items.id
+GROUP BY
+    menu_items.id
+;
+
+DROP VIEW IF EXISTS filters_join;
+CREATE VIEW filters_join AS
+SELECT
+    filters.*,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+FROM
+    filters
+    JOIN filters_translations AS trans ON
+        trans.filters_id = filters.id
+GROUP BY
+    filters.id
+;
+
+
 DROP FUNCTION IF EXISTS id_from_slugs;
 CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
     SELECT
@@ -7,6 +66,18 @@ CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
         )
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS id_from_slugs_menu_item;
+CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint AS $$
+    SELECT
+        coalesce(
+            (slugs->>'fr')::bigint,
+            id
+        )
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
 
 DROP FUNCTION IF EXISTS project;
 CREATE OR REPLACE FUNCTION project(
@@ -48,14 +119,14 @@ CREATE OR REPLACE FUNCTION project(
                             )
                         )
                     FROM
-                        themes
+                        themes_join AS themes
                     WHERE
                         themes.project_id = projects.id
                 )
             )
         ) AS project
     FROM
-        projects
+        projects_join AS projects
     WHERE
         projects.slug = _project_slug
     ;
@@ -216,7 +287,7 @@ CREATE OR REPLACE FUNCTION menu(
             JOIN themes ON
                 themes.project_id = projects.id AND
                 themes.slug = _theme_slug
-            JOIN menu_items ON
+            JOIN menu_items_join AS menu_items ON
                 menu_items.id = themes.root_menu_item_id
         WHERE
             projects.slug = _project_slug
@@ -227,20 +298,20 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.*
         FROM
             theme_menu_items
-            JOIN menu_items ON
+            JOIN menu_items_join AS menu_items ON
                 menu_items.parent_id = theme_menu_items.id
     )
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
-                'id', id_from_slugs(menu_items.slugs, menu_items.id),
-                'parent_id', id_from_slugs(parent_menu_items.slugs, parent_menu_items.id),
+                'id', id_from_slugs_menu_item(menu_items.slug, menu_items.id),
+                'parent_id', id_from_slugs_menu_item(parent_menu_items.slug, parent_menu_items.id),
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'fr',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
@@ -250,7 +321,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'fr',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
@@ -297,7 +368,7 @@ CREATE OR REPLACE FUNCTION menu(
                                 )
                             FROM
                                 menu_items_filters
-                                JOIN filters ON
+                                JOIN filters_join AS filters ON
                                     filters.id = menu_items_filters.filters_id
                             WHERE
                                 menu_items_filters.menu_items_id = menu_items.id AND
@@ -308,7 +379,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slugs->'fr',
+                        'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
@@ -565,7 +636,7 @@ CREATE OR REPLACE FUNCTION pois(
                         'metadata', jsonb_build_object(
                             'id', id_from_slugs(pois.slugs, pois.id), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array[id_from_slugs(menu_items.slugs, menu_items.id)], -- FIXME Should be all menu_items.id
+                            'category_ids', array[id_from_slugs_menu_item(menu_items.slug, menu_items.id)], -- FIXME Should be all menu_items.id
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -604,7 +675,7 @@ CREATE OR REPLACE FUNCTION pois(
         FROM
             -- TODO only for not hidden menu_items, recursively from theme
             projects
-            JOIN themes ON
+            JOIN themes_join AS themes ON
                 themes.project_id = projects.id AND
                 themes.slug = _theme_slug
             JOIN (
@@ -614,10 +685,10 @@ CREATE OR REPLACE FUNCTION pois(
                     fields(menu_items.details_fields_id)->'fields' AS details_fields,
                     fields(menu_items.list_fields_id)->'fields' AS list_fields
                 FROM
-                    menu_items
+                    menu_items_join AS menu_items
             ) AS menu_items ON
                 menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR id_from_slugs(menu_items.slugs, menu_items.id) = _category_id)
+                (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON

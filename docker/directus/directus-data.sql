@@ -21,19 +21,25 @@ SET row_security = off;
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url, versioning) FROM stdin;
-fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
+fields	rectangle	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
 fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N	f
-filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+filters	filter_alt	\N	{{type}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
+filters_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	filters	open	\N	f
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
-menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
+languages	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	7	\N	open	\N	f
+menu_items	menu	\N	{{type}}{{slug}}{{name}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	themes	open	\N	f
 menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
 menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N	f
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
-pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
+menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
+pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	{{slug}}	f
-sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
-themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
-translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
+projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
+sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
+sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
+themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
+translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	projects	open	\N	f
 \.
 
 
@@ -81,24 +87,21 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 3	junction_directus_roles_undefined	directus_roles_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 4	junction_directus_roles_undefined	item	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 5	junction_directus_roles_undefined	collection	\N	\N	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
-6	projects	polygon	\N	\N	\N	formatted-json-value	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+6	projects	polygon	\N	\N	\N	formatted-json-value	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 7	themes	project_id	\N	select-dropdown-m2o	\N	related-values	{"template":"{{slug}}"}	t	f	2	full	\N	\N	\N	f	\N	\N	\N
-8	themes	slug	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
-9	themes	name	cast-json	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-10	themes	description	cast-json	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-13	themes	logo_url	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-14	themes	favicon_url	\N	\N	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+8	themes	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+13	themes	logo_url	\N	\N	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+14	themes	favicon_url	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 15	themes	id	\N	\N	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
-16	projects	themes	o2m	list-o2m	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+16	projects	themes	o2m	list-o2m	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 17	projects	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 20	projects	attributions	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-22	projects	bbox_line	\N	\N	\N	\N	\N	f	t	7	full	\N	\N	\N	f	\N	\N	\N
+21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+22	projects	bbox_line	\N	\N	\N	\N	\N	f	t	8	full	\N	\N	\N	f	\N	\N	\N
 23	sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 24	sources	project_id	\N	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
-25	sources	slug	\N	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
-26	sources	name	cast-json	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-27	sources	attribution	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+25	sources	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+27	sources	attribution	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 29	directus_users	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
 35	menu_items_childrens	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 36	menu_items_childrens	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
@@ -107,16 +110,15 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 40	menu_items	menu_item_parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 41	menu_items	id	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":"{{type}}{{slug}}{{name}}"}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
-47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	6	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{slug}}{{name}}"}	related-values	{"template":"{{type}}{{slug}}{{name}}"}	f	f	10	full	\N	\N	\N	f	\N	\N	\N
-53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	5	full	\N	\N	\N	t	\N	\N	\N
+47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	7	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{slug}}{{name}}"}	related-values	{"template":"{{type}}{{slug}}{{name}}"}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	6	full	\N	\N	\N	t	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
 56	menu_items	selected_by_default	\N	\N	\N	\N	\N	f	f	2	half	\N	\N	\N	f	behavior	\N	\N
-61	menu_items	name	cast-json	input-code	\N	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
 62	menu_items	icon	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	t	UI	\N	\N
-65	menu_items	UI	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-66	menu_items	behavior	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+65	menu_items	UI	alias,no-data,group	group-detail	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+66	menu_items	behavior	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 67	menu_items	display_mode	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	UI	\N	\N
 68	menu_items	category	alias,no-data,group	group-detail	\N	\N	\N	f	f	2	full	\N	\N	\N	f	accordion-xkp6bl	\N	\N
 69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
@@ -131,22 +133,21 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 80	menu_items	link	alias,no-data,group	group-detail	\N	\N	\N	f	f	3	full	\N	\N	\N	f	accordion-xkp6bl	\N	\N
 81	menu_items	href	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	link	\N	\N
 82	filters	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
-83	filters	type	\N	select-dropdown	{"choices":[{"text":"multiselection","value":"multiselection"},{"text":"checkboxes_list","value":"checkboxes_list"},{"text":"boolean","value":"boolean"},{"text":"date_range","value":"date_range"},{"text":"number_range","value":"number_range"}]}	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
-85	filters	name	cast-json	input-code	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
+83	filters	type	\N	select-dropdown	{"choices":[{"text":"multiselection","value":"multiselection"},{"text":"checkboxes_list","value":"checkboxes_list"},{"text":"boolean","value":"boolean"},{"text":"date_range","value":"date_range"},{"text":"number_range","value":"number_range"}]}	\N	\N	f	f	5	full	\N	\N	\N	t	\N	\N	\N
 86	filters	property_end	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	date_range	\N	\N
 87	filters	property_begin	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
 88	filters	date_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	4	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 89	filters	number_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	5	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 90	filters	min	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	number_range	\N	\N
 91	filters	max	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	number_range	\N	\N
-98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
 107	menu_items	filters	m2m	list-m2m	\N	\N	\N	f	f	8	full	\N	\N	\N	f	category	\N	\N
 108	menu_items_filters	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 109	menu_items_filters	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 110	menu_items_filters	filters_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-111	menu_items	accordion-xkp6bl	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+111	menu_items	accordion-xkp6bl	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
 112	menu_items	menu_group	alias,no-data,group	group-detail	\N	\N	\N	f	f	1	full	\N	\N	\N	f	accordion-xkp6bl	\N	\N
-113	filters	accordion-ysehx-	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+113	filters	accordion-ysehx-	alias,no-data,group	group-accordion	{"start":"first"}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 114	filters	multiselection	alias,no-data,group	group-detail	\N	\N	\N	f	f	1	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 115	filters	checkboxes_list	alias,no-data,group	group-detail	\N	\N	\N	f	f	2	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
 116	filters	boolean	alias,no-data,group	group-detail	\N	\N	\N	f	f	3	full	\N	\N	\N	f	accordion-ysehx-	\N	\N
@@ -158,12 +159,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 123	pois	geom	geometry	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 124	pois	properties	cast-json	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 125	pois	source_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	2	full	\N	\N	\N	f	\N	\N	\N
-126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 127	menu_items	style_class_string	\N	input	\N	\N	\N	f	f	5	half	\N	\N	\N	f	category	\N	\N
 128	menu_items	style_class	\N	\N	\N	\N	\N	f	t	7	full	\N	\N	\N	f	category	\N	\N
-129	projects	name	cast-json	input-code	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
-131	projects	slug	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	t	\N	\N	\N
-132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	9	full	\N	\N	\N	t	\N	\N	\N
+131	projects	slug	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	10	full	\N	\N	\N	t	\N	\N	\N
 133	fields	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 134	fields	type	\N	select-dropdown	{"choices":[{"text":"field","value":"field"},{"text":"group","value":"group"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
 135	fields	accordion-9juoos	alias,no-data,group	group-accordion	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
@@ -180,27 +180,56 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	9	half	\N	\N	\N	f	category	\N	\N
 150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	10	half	\N	\N	\N	f	category	\N	\N
 151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}"}	\N	\N	f	f	11	half	\N	\N	\N	f	category	\N	\N
-152	projects	articles	cast-json	list	{"fields":[{"field":"title","name":"title","type":"json","meta":{"field":"title","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}},{"field":"url","name":"url","type":"json","meta":{"field":"url","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}}]}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-153	themes	site_url	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
-155	themes	main_url	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
-159	themes	keywords	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	16	full	\N	\N	\N	f	\N	\N	\N
-160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	17	full	\N	\N	\N	f	\N	\N	\N
-161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	18	full	\N	\N	\N	f	\N	\N	\N
-162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+152	projects	articles	cast-json	list	{"fields":[{"field":"title","name":"title","type":"json","meta":{"field":"title","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}},{"field":"url","name":"url","type":"json","meta":{"field":"url","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}}]}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
+161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	14	full	\N	\N	\N	f	\N	\N	\N
+162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
 166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-167	menu_items	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
-168	projects	polygons_extra	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
+168	projects	polygons_extra	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
 169	translations	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 171	translations	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 172	translations	key	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 173	translations	key_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 174	translations	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	12	full	\N	\N	\N	f	\N	\N	\N
-176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
-177	menu_items	name_singular	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	category	\N	\N
+175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
+176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	14	full	\N	\N	\N	f	\N	\N	\N
 178	fields	label	cast-boolean	boolean	\N	\N	\N	f	f	5	full	\N	\N	\N	f	group_block	\N	\N
 179	menu_items	use_details_link	cast-boolean	boolean	\N	\N	\N	f	f	12	full	\N	\N	\N	f	category	\N	\N
+228	projects	project_translations	translations	translations	{"languageField":"name","defaultLanguage":"en-US","defaultOpenSplitView":true,"userLanguage":true}	translations	{"template":"{{name}}","languageField":"name","defaultLanguage":null,"userLanguage":true}	f	f	2	full	\N	\N	\N	f	\N	\N	\N
+229	projects_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+230	languages	code	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
+231	languages	name	\N	\N	\N	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
+232	languages	direction	\N	select-dropdown	{"choices":[{"text":"$t:left_to_right","value":"ltr"},{"text":"$t:right_to_left","value":"rtl"}]}	labels	{"choices":[{"text":"$t:left_to_right","value":"ltr"},{"text":"$t:right_to_left","value":"rtl"}],"format":false}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+233	projects_translations	projects_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+234	projects_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+235	projects_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+236	themes	theme_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true,"languageField":"name"}	translations	{"template":"{{name}}","languageField":"name"}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+237	themes_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+238	themes_translations	themes_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+239	themes_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+240	themes_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+241	themes_translations	description	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+242	themes_translations	site_url	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+243	themes_translations	main_url	\N	input	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+244	themes_translations	keywords	\N	input	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+245	menu_items	menu_items_translations	translations	translations	{"userLanguage":true,"defaultLanguage":"en-US","defaultOpenSplitView":true,"languageField":"name"}	translations	{"template":"{{name}}","languageField":"name"}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+246	menu_items_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+247	menu_items_translations	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+248	menu_items_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+249	menu_items_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+250	menu_items_translations	slug	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+251	menu_items_translations	name_singular	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+252	sources	sources_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	translations	{"template":"{{name}}","languageField":"name"}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+253	sources_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+254	sources_translations	sources_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+255	sources_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+256	sources_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+257	filters	filters_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true,"languageField":"name"}	translations	{"template":"{{name}}","languageField":"name"}	f	f	2	full	\N	\N	\N	f	\N	\N	\N
+258	filters_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+259	filters_translations	filters_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+260	filters_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+261	filters_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -435,6 +464,16 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
 34	translations	project_id	projects	translations	\N	\N	\N	\N	nullify
 35	sources	project_id	projects	sources	\N	\N	\N	\N	nullify
+36	projects_translations	languages_code	languages	\N	\N	\N	projects_id	\N	nullify
+37	projects_translations	projects_id	projects	project_translations	\N	\N	languages_code	\N	nullify
+38	themes_translations	languages_code	languages	\N	\N	\N	themes_id	\N	nullify
+39	themes_translations	themes_id	themes	theme_translations	\N	\N	languages_code	\N	nullify
+40	menu_items_translations	languages_code	languages	\N	\N	\N	menu_items_id	\N	nullify
+41	menu_items_translations	menu_items_id	menu_items	menu_items_translations	\N	\N	languages_code	\N	nullify
+42	sources_translations	languages_code	languages	\N	\N	\N	sources_id	\N	nullify
+43	sources_translations	sources_id	sources	sources_translations	\N	\N	languages_code	\N	nullify
+44	filters_translations	languages_code	languages	\N	\N	\N	filters_id	\N	nullify
+45	filters_translations	filters_id	filters	filters_translations	\N	\N	languages_code	\N	nullify
 \.
 
 
@@ -490,7 +529,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 179, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 312, true);
 
 
 --
@@ -518,7 +557,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 35, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 47, true);
 
 
 --

@@ -24,7 +24,7 @@ end
 
 def load_source(conn, project_slug, metadatas)
   conn.exec("
-    CREATE TEMP TABLE sources_import(
+    CREATE TEMP TABLE sources_import_raw(
       slug varchar NOT NULL,
       name json NOT NULL, -- Tanslation Object.
       attribution text
@@ -32,44 +32,76 @@ def load_source(conn, project_slug, metadatas)
   ")
 
   enco = PG::BinaryEncoder::CopyRow.new
-  conn.copy_data('COPY sources_import FROM STDIN (FORMAT binary)', enco) {
+  conn.copy_data('COPY sources_import_raw FROM STDIN (FORMAT binary)', enco) {
     metadatas.each{ |id, metadata|
-      conn.put_copy_data([id, metadata['name'].to_json, metadata['attribution']])
+      conn.put_copy_data([
+        id,
+        metadata['name'].transform_keys{ |k| { 'fr' => 'fr-FR', 'en' => 'en-US' }[k] }.to_json,
+        metadata['attribution']
+      ])
     }
   }
-  conn.exec_params(
-    "
-    WITH sources_import AS (
+  conn.exec_params("
+    CREATE TEMP TABLE sources_import AS (
       SELECT
         projects.id AS project_id,
-        sources_import.*
+        sources_import_raw.*
       FROM
-        sources_import
+        sources_import_raw
         JOIN projects ON
           projects.slug = $1
     )
+  ", [project_slug])
+
+  conn.exec_params("
     MERGE INTO
       sources
     USING
-      sources_import
+      (SELECT DISTINCT project_id, slug, attribution FROM sources_import) AS sources_import
     ON
       sources.project_id = sources_import.project_id AND
       sources.slug = sources_import.slug
     WHEN MATCHED THEN
       UPDATE SET
-        name = sources_import.name,
         attribution = sources_import.attribution
     WHEN NOT MATCHED THEN
-      INSERT (project_id, slug, name, attribution)
+      INSERT (project_id, slug, attribution)
       VALUES (
         sources_import.project_id,
         sources_import.slug,
-        sources_import.name,
         sources_import.attribution
       )
-    ",
-    [project_slug]
-  )
+  ")
+
+  conn.exec_params("
+    MERGE INTO
+      sources_translations
+    USING (
+      SELECT
+        sources.id AS sources_id,
+        sources.slug,
+        (json_each_text(name)).key AS lang,
+        (json_each_text(name)).value AS name
+      FROM
+        sources
+        JOIN sources_import ON
+          sources.project_id = sources_import.project_id AND
+          sources.slug = sources_import.slug
+    ) AS sources_import
+    ON
+      sources_translations.sources_id = sources_import.sources_id AND
+      sources_translations.languages_code = sources_import.lang
+    WHEN MATCHED THEN
+      UPDATE SET
+        name = sources_import.name
+    WHEN NOT MATCHED THEN
+      INSERT (sources_id, languages_code, name)
+      VALUES (
+        sources_id,
+        sources_import.lang,
+        sources_import.name
+      )
+  ")
 
   conn.exec_params(
     "
