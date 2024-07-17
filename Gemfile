@@ -29,6 +29,7 @@ gem 'pg', '~> 1.1'
 gem 'sorbet-runtime'
 
 group :development do
+  gem 'damerau-levenshtein'
   gem 'rake'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false

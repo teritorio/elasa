@@ -5,6 +5,7 @@ require 'rake'
 require 'json'
 require 'http'
 require 'hash_diff'
+require 'damerau-levenshtein'
 
 
 def fetch_json(url)
@@ -194,6 +195,17 @@ def compare_pois(url_old, url_new, category_ids)
 
   common_ids = Set.new(ids[0] & ids[1])
   hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
+
+  # Ignore few changes on names
+  hashes[0].zip(hashes[1]).each{ |h|
+    a, b = h.collect{ |poi| poi.dig('properties', 'name') }
+    if a.presence && b.presence && a.size > 5 && b.size > 5
+      d = DamerauLevenshtein.distance(a, b)
+      if d <= 3
+        h[0]['properties']['name'] = h[1]['properties']['name']
+      end
+    end
+  }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   puts JSON.dump(diff.diff) if !diff.diff.empty?
