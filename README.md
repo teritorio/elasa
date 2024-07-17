@@ -13,6 +13,25 @@ cat docker/directus/directus-data.sql | docker compose exec -T -u postgres postg
 cat lib/api-01.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 ```
 
+If required entrer to Postgres shell with
+```
+docker compose exec -u postgres postgres psql
+```
+
+## Run
+
+Run all the containers using
+```
+docker compose up -d
+```
+
+The Directus Back Office is available at
+```
+http://localhost:8055
+```
+
+Default addmin acces to be changed: admin@example.com / d1r3ctu5
+
 ## Create new project
 
 ```
@@ -23,7 +42,7 @@ docker compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682
 
 Import from WP and load from Datasource
 ```
-docker compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism https://datasources-dev.teritorio.xyz/0.1
+docker compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism https://datasources.teritorio.xyz/0.1
 ```
 
 Update datasource only
@@ -33,7 +52,7 @@ docker compose run --rm api bundle exec rake sources:load -- https://datasources
 
 Compare original and new API results.
 ```
-docker compose run --rm api bundle exec rake api:diff -- https://dev.appcarto.teritorio.xyz/content/api.teritorio/geodata/v0.1/dev/tourism http://192.168.231.162:12000/api/0.1/dev/tourism
+docker compose run --rm api bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
 
 ## Test
