@@ -125,8 +125,8 @@ end
 
 def compare_pois(url_old, url_new, category_ids)
   hashes = [
-    "#{url_old}/pois.json",
-    "#{url_new}/pois.json",
+    "#{url_old}/pois.geojson",
+    "#{url_new}/pois.geojson",
   ].each_with_index.collect{ |url, index|
     array = fetch_json(url)['features']&.compact_blank_deep&.select{ |poi|
               !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty?
