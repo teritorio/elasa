@@ -198,6 +198,9 @@ def compare_pois(url_old, url_new, category_ids)
 
   # Ignore few changes on names
   hashes[0].zip(hashes[1]).each{ |h|
+    h.each{ |poi|
+      poi['properties']['metadata'].delete('cartocode')
+    }
     a, b = h.collect{ |poi| poi.dig('properties', 'name') }
     if a.presence && b.presence && a.size > 5 && b.size > 5
       d = DamerauLevenshtein.distance(a, b)
