@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS api01;
+SET search_path TO api01,public;
+
 DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
 SELECT
