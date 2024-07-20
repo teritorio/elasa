@@ -15,7 +15,7 @@ class Api01Controller < ApplicationController
   def articles
     project_slug, = project_theme_params
 
-    project = query('project($1)', [project_slug])
+    project = query('project($1)', [project_slug]) || { article: [] }
     render json: project['articles'].collect{ |article|
       {
         url: article['url']['fr'],
@@ -27,7 +27,7 @@ class Api01Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('menu($1, $2)', [project_slug, theme_slug])
+    menu_items = query('menu($1, $2)', [project_slug, theme_slug]) || {}
     render json: menu_items
   end
 
@@ -45,7 +45,7 @@ class Api01Controller < ApplicationController
       nil,
       nil,
       params[:deps] == 'true',
-    ])
+    ]) || {}
     render json: params[:deps] == 'true' ? pois : pois['features'][0]
   end
 
@@ -64,7 +64,7 @@ class Api01Controller < ApplicationController
       params[:start_date],
       params[:end_date],
       nil,
-    ])
+    ]) || {}
 
     respond_to do |format|
       format.geojson { render json: pois }
@@ -97,7 +97,7 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     lang = params[:lang]
 
-    attribute_translations = query('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang])
+    attribute_translations = query('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || {}
     render json: attribute_translations
   end
 
