@@ -616,13 +616,13 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
   create_table = fields.collect(&:last).join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
-  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})")
+  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' integer', 'text'))
 
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
     ps.each{ |p|
       begin
-        values = fields.collect{ |field, t, _|
+        values = fields.collect{ |field, t, _, _|
           begin
             if ['id', "#{source_name}_id"].include?(field)
               p['properties']['metadata']['id']
@@ -660,8 +660,8 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
   conn.exec("
     INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\")
     SELECT
-    " + fields.collect(&:first).collect{ |field|
-      if ['id', "#{source_name}_id"].include?(field)
+    " + fields.collect { |field, _, _, type|
+      if ['id', "#{source_name}_id"].include?(field) || type.include?(' integer')
         "\"#{field}\"::integer"
       elsif field == 'geom'
         'ST_GeomFromGeoJSON(geom)'
@@ -674,6 +674,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
   ")
   conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
 
+  conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..63]])
   conn.exec('
     INSERT INTO directus_collections(collection, translations, hidden) VALUES ($1, $2, $3)
     ON CONFLICT (collection)
@@ -684,17 +685,19 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
     [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
     table.end_with?('_t'),
   ])
-  fields.each{ |key, _, _|
+  conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..63]])
+  fields.each{ |key, _, interface, _|
     # TODO: It does not support other types of labels like label_details
     name = i18ns.dig(key, 'label', 'fr')
 
     conn.exec('
-      INSERT INTO directus_fields(collection, field, translations, hidden) VALUES ($1, $2, $3, $4)
+      INSERT INTO directus_fields(collection, field, translations, hidden, interface) VALUES ($1, $2, $3, $4, $5)
     ', [
       table[..63],
       key[..63],
       nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       table.end_with?('_t') && ['id', "#{source_name}_id", 'languages_code'].include?(key),
+      interface,
     ])
   }
 end
@@ -744,6 +747,10 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
           [k, Array]
         elsif v.is_a?(Hash)
           [k, Hash]
+        elsif v.to_i.to_s == v
+          [k, Integer]
+        elsif v.is_a?(String) && v.include?('</')
+          [k, 'html']
         else
           [k, v.is_a?(String) ? v.size <= 15 ? v : v.size >= 255 ? '...' : nil : v]
         end
@@ -756,12 +763,21 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     fields = []
     fields_translations = []
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
+      interface = nil
       i = if %w[name description].include?(key)
             f = ->(i) { i }
+            interface = 'input-rich-text-html' if stats&.keys&.include?('html')
             "\"#{key}\" text"
           elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
             f = ->(i) { i&.to_json }
             "\"#{key}\" json"
+          elsif stats&.keys&.size == 1 && stats&.keys&.include?(Integer)
+            f = ->(i) { i&.to_i }
+            "\"#{key}\" integer"
+          elsif stats&.keys&.include?('html')
+            f = ->(i) { i }
+            interface = 'input-rich-text-html'
+            "\"#{key}\" text"
           elsif stats&.keys&.include?('...')
             f = ->(i) { i }
             "\"#{key}\" text"
@@ -773,19 +789,20 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
         i += ' NOT NULL'
       end
       if %w[name description].include?(key)
-        fields_translations << [key, f, i]
+        fields_translations << [key, f, interface, i]
       else
-        fields << [key, f, i]
+        fields << [key, f, interface, i]
       end
     }
 
-    fields += [['id', nil, 'id varchar'], ['geom', nil, 'geom json NOT NULL']]
+    fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
     load_local_table(conn, source_name, name, table, fields, ps, i18ns)
 
     if !fields_translations.empty?
-      fields_translations += [['id', nil, 'id varchar'], ["#{source_name}_id", nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, ' languages_code varchar(255)']]
+      fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id", nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
       load_local_table(conn, source_name, name, "#{table}_t", fields_translations, ps, i18ns)
       conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"])
       conn.exec('
         INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
