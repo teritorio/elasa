@@ -612,6 +612,93 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
   }
 end
 
+def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
+  create_table = fields.collect(&:last).join(",\n")
+  conn.exec('SET client_min_messages TO WARNING')
+  conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
+  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})")
+
+  enco = PG::BinaryEncoder::CopyRow.new
+  conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
+    ps.each{ |p|
+      begin
+        values = fields.collect{ |field, t, _|
+          begin
+            if ['id', "#{source_name}_id"].include?(field)
+              p['properties']['metadata']['id']
+            elsif field == 'geom'
+              if p['geometry']['type'] == 'Feature'
+                p['geometry'] = p['geometry']['geometry']
+              end
+              p['geometry'].to_json
+            elsif field == 'languages_code'
+              'fr-FR'
+            else
+              r = t.call(p['properties'][field])
+              r = r.strip if r.is_a?(String)
+              r
+            end
+          rescue StandardError => e
+            puts p.inspect
+            puts "ERROR: getting value for field \"#{field}\", #{e.message}"
+            raise
+          end
+        }
+        conn.put_copy_data(values)
+      rescue StandardError
+      end
+    }
+  }
+
+  create_table = create_table
+                 .gsub('id varchar', 'id SERIAL PRIMARY KEY')
+                 .gsub("\"#{source_name}_id\" varchar", "\"#{source_name}_id\" SERIAL")
+                 .gsub('geom json', 'geom geometry(Geometry,4326)')
+                 .gsub(' json', ' jsonb')
+  conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
+  conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
+  conn.exec("
+    INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\")
+    SELECT
+    " + fields.collect(&:first).collect{ |field|
+      if ['id', "#{source_name}_id"].include?(field)
+        "\"#{field}\"::integer"
+      elsif field == 'geom'
+        'ST_GeomFromGeoJSON(geom)'
+      else
+        "\"#{field}\""
+      end
+    }.join(', ') + "
+    FROM
+      \"t_#{table}\"
+  ")
+  conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
+
+  conn.exec('
+    INSERT INTO directus_collections(collection, translations, hidden) VALUES ($1, $2, $3)
+    ON CONFLICT (collection)
+    DO UPDATE SET
+      translations = $2
+  ', [
+    table[..63],
+    [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+    table.end_with?('_t'),
+  ])
+  fields.each{ |key, _, _|
+    # TODO: It does not support other types of labels like label_details
+    name = i18ns.dig(key, 'label', 'fr')
+
+    conn.exec('
+      INSERT INTO directus_fields(collection, field, translations, hidden) VALUES ($1, $2, $3, $4)
+    ', [
+      table[..63],
+      key[..63],
+      nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+      table.end_with?('_t') && ['id', "#{source_name}_id", 'languages_code'].include?(key),
+    ])
+  }
+end
+
 def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
@@ -666,12 +753,14 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     }.transform_values{ |stats|
       (stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10 ? { nil => stats.size } : stats
     }
-    fields = value_stats.sort_by{ |_key, stats| -stats.values.sum }.collect{ |key, stats|
-      i = if stats&.keys&.include?(Array) || stats&.keys&.include?(hash)
+    fields = []
+    fields_translations = []
+    value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
+      i = if %w[name description].include?(key)
+            f = ->(i) { i }
+            "\"#{key}\" text"
+          elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
             f = ->(i) { i&.to_json }
-            "\"#{key}\" json"
-          elsif %w[name description].include?(key)
-            f = ->(i) { { 'fr' => i }.to_json }
             "\"#{key}\" json"
           elsif stats&.keys&.include?('...')
             f = ->(i) { i }
@@ -683,71 +772,51 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
       if !stats.keys.include?(nil) && stats.keys.size == ps.size
         i += ' NOT NULL'
       end
-      [key, f, i]
-    } + [['id', nil, 'id varchar'], ['geom', nil, 'geom json NOT NULL']]
-    create_table = fields.collect(&:last).join(",\n")
-    conn.exec('SET client_min_messages TO WARNING')
-    conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
-    conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})")
-
-    enco = PG::BinaryEncoder::CopyRow.new
-    conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
-      ps.each{ |p|
-        begin
-          values = fields.collect{ |field, t, _|
-            begin
-              if field == 'id'
-                p['properties']['metadata']['id']
-              elsif field == 'geom'
-                if p['geometry']['type'] == 'Feature'
-                  p['geometry'] = p['geometry']['geometry']
-                end
-                p['geometry'].to_json
-              else
-                r = t.call(p['properties'][field])
-                r = r.strip if r.is_a?(String)
-                r
-              end
-            rescue StandardError => e
-              puts p.inspect
-              puts "ERROR: getting value for field \"#{field}\", #{e.message}"
-              raise
-            end
-          }
-          conn.put_copy_data(values)
-        rescue StandardError
-        end
-      }
+      if %w[name description].include?(key)
+        fields_translations << [key, f, i]
+      else
+        fields << [key, f, i]
+      end
     }
 
-    create_table = create_table.gsub('id varchar', 'id SERIAL PRIMARY KEY').gsub('geom json', 'geom geometry(Geometry,4326)').gsub(' json', ' jsonb')
-    conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
-    conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
-    conn.exec("INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\") SELECT \"#{fields[..-3].collect(&:first).join('", "')}\", id::integer, ST_GeomFromGeoJSON(geom) FROM \"t_#{table}\"")
-    conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
+    fields += [['id', nil, 'id varchar'], ['geom', nil, 'geom json NOT NULL']]
+    load_local_table(conn, source_name, name, table, fields, ps, i18ns)
 
-    conn.exec('
-      INSERT INTO directus_collections(collection, translations) VALUES ($1, $2)
-      ON CONFLICT (collection)
-      DO UPDATE SET
-        translations = $2
-    ', [
-      table[..63],
-      [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
-    ])
-    fields.each{ |key, _, _|
-      # TODO: It does not support other types of labels like label_details
-      name = i18ns.dig(key, 'label', 'fr')
-      next if name.nil?
-
+    if !fields_translations.empty?
+      fields_translations += [['id', nil, 'id varchar'], ["#{source_name}_id", nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, ' languages_code varchar(255)']]
+      load_local_table(conn, source_name, name, "#{table}_t", fields_translations, ps, i18ns)
+      conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
       conn.exec('
-        INSERT INTO directus_fields(collection, field, translations) VALUES ($1, $2, $3)
+        INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
         table[..63],
-        key[..63],
-        [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+        "#{source_name}_translations",
+        'translations',
+        'translations',
+        '{"languageField":"name","defaultLanguage":"en-US","defaultOpenSplitView":true,"userLanguage":true}',
+        'translations',
       ])
-    }
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
+      ', [
+        "#{table}_t",
+        'languages_code',
+        'languages',
+        nil,
+        "#{source_name}_id",
+        'nullify',
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
+      ', [
+        "#{table}_t",
+        "#{source_name}_id",
+        table,
+        "#{source_name}_translations",
+        'languages_code',
+        'nullify',
+      ])
+    end
 
     source_id
   }
