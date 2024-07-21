@@ -747,12 +747,12 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
           [k, Array]
         elsif v.is_a?(Hash)
           [k, Hash]
-        elsif v.to_i.to_s == v
+        elsif v.is_a?(Integer) || v.to_i.to_s == v
           [k, Integer]
         elsif v.is_a?(String) && v.include?('</')
           [k, :html]
         else
-          [k, v.is_a?(String) ? v.size <= 15 ? v : v.size >= 255 ? '...' : nil : v]
+          [k, v.is_a?(String) ? v.size <= 15 ? v : v.size >= 255 ? '...' : nil : v.presence]
         end
       }
     }.flatten(1).group_by(&:first).transform_values{ |key_values|
