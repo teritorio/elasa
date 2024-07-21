@@ -370,7 +370,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
           menu_dig_all(menu, 'icon').presence || icon[menu['id']] || 'teritorio teritorio-services',
           menu_dig_all(menu, 'color_fill').presence || color_fill[menu['id']] || '#ff0000',
           menu_dig_all(menu, 'color_line').presence || color_line[menu['id']] || '#ff0000',
-          (menu_dig_all(menu, 'style_class')&.compact_blank || style_class[menu['id']])&.join(','),
+          menu_dig_all(menu, 'style_class')&.compact_blank&.join(','),
           menu_dig_all(menu, 'display_mode') || 'compact',
           menu.dig('category', 'search_indexed'),
           menu.dig('category', 'style_merge'),
