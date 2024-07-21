@@ -721,8 +721,8 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
       RETURNING id
       ', [
         project_id,
-        category_local['category']['name'].to_json,
-        ]
+        source_name,
+      ]
     ) { |result|
       result.first['id']
     }
@@ -736,8 +736,8 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
         ', [
           source_id,
           'fr-FR',
-          source_name,
-          ]
+          name,
+        ]
       )
     end
 
