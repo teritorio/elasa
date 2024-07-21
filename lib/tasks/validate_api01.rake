@@ -21,7 +21,7 @@ def validate(url_base)
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/settings.json"), fragment: schema_for('settings.json')) and puts 'settings.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/articles.json"), fragment: schema_for('articles.json')) and puts 'articles.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/menu.json"), fragment: schema_for('menu.json')) and puts 'menu.json [valid]'
-  JSON::Validator.validate!(schema, fetch_json("#{url_base}/pois.json"), fragment: schema_for('pois.{format}')) and puts 'pois.egosjon [valid]'
+  JSON::Validator.validate!(schema, fetch_json("#{url_base}/pois.geojson"), fragment: schema_for('pois.{format}')) and puts 'pois.egosjon [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/attribute_translations/fr.json"), fragment: schema_for('attribute_translations/{lang}.json')) and puts 'attribute_translations/fr.json [valid]'
 end
 
