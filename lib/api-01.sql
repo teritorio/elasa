@@ -158,7 +158,7 @@ BEGIN
         FROM
             information_schema.tables
             JOIN sources ON
-                (_source_ids IS NULL OR source_id = ANY (_source_ids)) AND
+                (_source_ids IS NULL OR sources.id = ANY (_source_ids)) AND
                 table_name = 'local-' || _project_slug || '-' || sources.slug
         WHERE
             table_type = 'BASE TABLE' AND
