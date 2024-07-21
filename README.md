@@ -57,6 +57,14 @@ docker compose run --rm api bundle exec rake api:diff -- https://carte.seignanx.
 
 ## Test
 
-docker compose run --rm api bundle exec rake test
+```
+docker compose exec -u postgres postgres psql -c "CREATE DATABASE test"
+```
 
-docker compose run --rm api bundle exec rake api:validate -- http://172.29.0.1:12000/api/0.1/seignanx/tourism
+```
+docker compose run --rm api bundle exec rake test
+```
+
+```
+docker compose run --rm api bundle exec rake api:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
+```
