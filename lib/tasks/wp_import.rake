@@ -750,7 +750,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
         elsif v.to_i.to_s == v
           [k, Integer]
         elsif v.is_a?(String) && v.include?('</')
-          [k, 'html']
+          [k, :html]
         else
           [k, v.is_a?(String) ? v.size <= 15 ? v : v.size >= 255 ? '...' : nil : v]
         end
@@ -766,7 +766,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
       interface = nil
       i = if %w[name description].include?(key)
             f = ->(i) { i }
-            interface = 'input-rich-text-html' if stats&.keys&.include?('html')
+            interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
             "\"#{key}\" text"
           elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
             f = ->(i) { i&.to_json }
@@ -774,7 +774,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
           elsif stats&.keys&.size == 1 && stats&.keys&.include?(Integer)
             f = ->(i) { i&.to_i }
             "\"#{key}\" integer"
-          elsif stats&.keys&.include?('html')
+          elsif stats&.keys&.include?(:html)
             f = ->(i) { i }
             interface = 'input-rich-text-html'
             "\"#{key}\" text"
