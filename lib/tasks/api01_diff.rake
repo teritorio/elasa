@@ -91,6 +91,9 @@ def compare_menu(url_old, url_new)
     }.collect{ |menu|
       menu['menu_group']&.delete('id')
       menu['menu_group']&.delete('style_class')
+      menu['menu_group']&.delete('icon') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
+      menu['menu_group']&.delete('color_fill') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
+      menu['menu_group']&.delete('color_line') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
       menu['category']&.delete('id')
       menu['link']&.delete('id')
 
@@ -121,7 +124,14 @@ def compare_menu(url_old, url_new)
   }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
-  puts JSON.dump(diff.diff) if !diff.diff.empty?
+  if !diff.diff.empty?
+    puts JSON.dump(diff.diff)
+    if diff.diff.size < 10
+      diff.diff.keys.collect(&:to_i).each{ |i|
+        puts JSON.dump(hashes[1][i])
+      }
+    end
+  end
 
   hashes.collect{ |menu|
     menu.select{ |entry| entry['category'] }.pluck('id')
