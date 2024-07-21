@@ -846,6 +846,24 @@ def set_default_languages
   }
 end
 
+def create_user(project_id, project_slug)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('
+      INSERT INTO directus_users(id, email, password, language, status, role, project_id)
+      VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
+      ON CONFLICT DO NOTHING
+    ', [
+      "#{project_slug}@example.com",
+      # Default password: d1r3ctu5
+      '$argon2id$v=19$m=65536,t=3,p=4$troFBS21lcZamhZNWx0i5A$sPrhE4NWiMx96ck92mXjGVDYt1xzIw1ujXIo1YI3F0E',
+      'fr-FR',
+      'active', # draft
+      '5979e2ac-a34f-4c70-bf9d-de48b3900a8f',
+      project_id,
+    ])
+  }
+end
+
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
@@ -860,6 +878,7 @@ namespace :wp do
     load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
     load_i18n(project_id, i18ns) if !loaded_from_datasource.empty?
+    create_user(project_id, project_slug)
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
