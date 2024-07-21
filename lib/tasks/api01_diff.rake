@@ -101,6 +101,10 @@ def compare_menu(url_old, url_new)
       if menu.dig('category', 'filters')
         menu['category']['filters'] = menu['category']['filters'].sort_by{ |filter| filter['property'] || filter['property_begin'] }
         menu['category']['filters'] = menu['category']['filters'].collect{ |filter|
+          if filter['type'] != 'multiselect' # WP, static values on WP side.
+            # Empty values, as compled automatically
+            filter['values'] = []
+          end
           if filter['values']
             filter['values'] = filter['values'].sort_by{ |value| value['value'] }
             filter['values'] = filter['values'].collect{ |value|
