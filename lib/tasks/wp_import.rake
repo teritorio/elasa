@@ -286,7 +286,7 @@ def load_color_line(pois)
   }
 end
 
-def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns)
+def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -580,7 +580,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
 
     # Categories not linked to datasource
     categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id'].to_s) }.compact
-    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
+    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -612,7 +612,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
   }
 end
 
-def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
+def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uuid)
   create_table = fields.collect(&:last).join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
@@ -700,9 +700,23 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns)
       interface,
     ])
   }
+
+  conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table[..63]])
+  %w[create read update delete].each{ |action|
+    conn.exec('
+      INSERT INTO directus_permissions(role, collection, action, permissions, fields)
+      VALUES ($1, $2, $3, $4, $5)
+    ', [
+      role_uuid,
+      table[..63],
+      action,
+      {}.to_json,
+      '*'
+    ])
+  }
 end
 
-def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns)
+def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid)
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
     category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
@@ -796,11 +810,11 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     }
 
     fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
-    load_local_table(conn, source_name, name, table, fields, ps, i18ns)
+    load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uuid)
 
     if !fields_translations.empty?
       fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id", nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
-      load_local_table(conn, source_name, name, "#{table}_t", fields_translations, ps, i18ns)
+      load_local_table(conn, source_name, name, "#{table}_t", fields_translations, ps, i18ns, role_uuid)
       conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"])
       conn.exec('
@@ -846,21 +860,65 @@ def set_default_languages
   }
 end
 
-def create_user(project_id, project_slug)
+def create_user(project_id, project_slug, role_uuid)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    email = "#{project_slug}@example.com"
+    conn.exec('DELETE FROM directus_users WHERE email = $1', [email])
     conn.exec('
       INSERT INTO directus_users(id, email, password, language, status, role, project_id)
       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
-      ON CONFLICT DO NOTHING
     ', [
-      "#{project_slug}@example.com",
+      email,
       # Default password: d1r3ctu5
       '$argon2id$v=19$m=65536,t=3,p=4$troFBS21lcZamhZNWx0i5A$sPrhE4NWiMx96ck92mXjGVDYt1xzIw1ujXIo1YI3F0E',
       'fr-FR',
       'active', # draft
-      '5979e2ac-a34f-4c70-bf9d-de48b3900a8f',
+      role_uuid,
       project_id,
     ])
+  }
+end
+
+def create_role(project_slug)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    role_name = "Local Admin - #{project_slug}"
+    conn.exec('DELETE FROM directus_roles WHERE name = $1', [role_name])
+    role_uuid = conn.exec('
+      INSERT INTO directus_roles(id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access)
+      SELECT
+        gen_random_uuid(),
+        $1,
+        icon,
+        description,
+        ip_access,
+        enforce_tfa,
+        admin_access,
+        app_access
+      FROM
+        directus_roles
+      WHERE
+        id = \'5979e2ac-a34f-4c70-bf9d-de48b3900a8f\' -- Local Admin
+      RETURNING
+        id
+    ', [role_name]) { |result|
+      result.first['id']
+    }
+    conn.exec('
+      INSERT INTO directus_permissions(role, collection, action, permissions, validation, presets, fields)
+      SELECT
+        $1,
+        collection,
+        action,
+        permissions,
+        validation,
+        presets,
+        fields
+      FROM
+        directus_permissions
+      WHERE
+        role = \'5979e2ac-a34f-4c70-bf9d-de48b3900a8f\'
+    ', [role_uuid])
+    role_uuid
   }
 end
 
@@ -868,17 +926,23 @@ namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
     set_default_languages
+
     url, project_slug, theme_slug, datasource_url, datasource_project = ARGV[2..]
     datasource_project ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+
+    role_uuid = create_role(project_slug)
+    create_user(project_id, project_slug, role_uuid)
+
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
-    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns)
+    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
+
     load_i18n(project_id, i18ns) if !loaded_from_datasource.empty?
-    create_user(project_id, project_slug)
+
     exit 0 # Beacause of manually deal with rake command line arguments
   end
 end
