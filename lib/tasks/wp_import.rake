@@ -193,7 +193,9 @@ def load_field_group(conn, project_id, group)
   end
 end
 
-def load_fields(conn, project_id, pois)
+def load_fields(conn, project_id, pois, menu_items)
+  menu_items = menu_items.index_by{ |menu| menu['id'] }
+
   fields = pois.collect{ |poi|
     [
       poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 }, # 0 from buggy WP
@@ -218,9 +220,9 @@ def load_fields(conn, project_id, pois)
   fields.select{ |field|
     !multiple_config.include?(field[0])
   }.collect{ |field|
-    [field[0]] + field[1..].collect{ |f|
+    [field[0]] + %w[popup details list].zip(field[1..]).collect{ |mode, f|
       load_field_group(conn, project_id, {
-        'group' => '',
+        'group' => "#{menu_items[field[0]]&.dig('category', 'name', 'fr')} #{mode}",
         'fields' => f,
       })
     }
@@ -292,10 +294,6 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
 
-    pois = fetch_json(url_pois)['features']
-    fields = load_fields(conn, project_id, pois)
-    fields_ids = fields.index_by(&:first)
-
     menu_sources = fetch_json(url_menu_sources)
     if menu_sources.empty?
       menu_sources = {} # Buggy WP, replace empty [] by {}
@@ -326,6 +324,10 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         'display_mode' => 'compact'
       },
     })
+
+    pois = fetch_json(url_pois)['features']
+    fields = load_fields(conn, project_id, pois, menu_items)
+    fields_ids = fields.index_by(&:first)
 
     labels = load_class_labels(pois)
     use_details_link = load_use_details_link(pois)
