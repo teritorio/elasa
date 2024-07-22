@@ -142,7 +142,7 @@ def load_pois(conn, project_slug, source_slug, pois)
   conn.exec_params(
     "
     WITH pois_import AS (
-      SELECT
+      SELECT DISTINCT ON (sources.id, pois_import.properties->>'id')
         sources.id AS source_id,
         pois_import.*,
         ST_GeomFromGeoJSON(geometry)::geometry(Geometry, 4326) AS geom
@@ -153,6 +153,9 @@ def load_pois(conn, project_slug, source_slug, pois)
         JOIN sources ON
           sources.project_id = projects.id AND
           sources.slug = $2
+      ORDER BY
+        sources.id,
+        pois_import.properties->>'id'
     )
     MERGE INTO
       pois
