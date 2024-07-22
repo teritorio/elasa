@@ -400,13 +400,13 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 25	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 31	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	create	{}	{}	\N	*
 33	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
-34	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country,polygons_extra
-35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode
+34	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country,polygons_extra,project_translations
+35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations
 41	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 42	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	create	{}	{}	\N	*
-43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	project_id,theme_id,index_order,selected_by_default,id,parent_id,hidden,category_id,items,menu_group_id,slug,name,UI,color,icon,behavior,display_mode,category,style_merge,zoom,style_class,search_indexed,sources,link,href,filters,color_line,color_fill,accordion-xkp6bl,menu_group,style_class_string,type,popup_fields_id,list_fields_id,details_fields_id,slugs,name_singular,use_details_link
+43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 44	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	update	{}	{}	\N	*
-45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
+45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois
 58	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	create	{}	{}	\N	*
 59	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id
@@ -417,9 +417,9 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 64	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	update	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
 65	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	delete	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
 66	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	create	{}	{}	\N	*
-67	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,type,name,property_begin,date_range,property,property_end,number_range,min,project_id,max,accordion-ysehx-,multiselection,checkboxes_list,multiselection_property,checkboxes_list_property,boolean,boolean_property,number_range_property
-68	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,type,name,property_begin,date_range,property,property_end,number_range,min,project_id,max,multiselection,accordion-ysehx-,multiselection_property,checkboxes_list,checkboxes_list_property,boolean_property,boolean,number_range_property
-69	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
+67	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
+68	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
+69	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 73	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	create	{}	{}	\N	*
 74	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
 75	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
@@ -435,6 +435,26 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 91	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 92	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	translations	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,key,values_translations,project_id,key_translations
 93	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	languages	read	{}	{}	\N	*
+94	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects_translations	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,projects_id,languages_code,name
+96	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources_translations	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,sources_id,languages_code,name
+97	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects_translations	update	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,projects_id,languages_code,name
+98	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources_translations	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,sources_id,languages_code,name
+99	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects_translations	create	{}	{}	\N	*
+100	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources_translations	create	{}	{}	\N	*
+101	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes_translations	read	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,themes_id,languages_code,site_url,description,name,main_url,keywords
+102	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes_translations	update	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,themes_id,languages_code,site_url,description,name,main_url,keywords
+103	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes_translations	create	{}	{}	\N	*
+104	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes_translations	delete	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
+105	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources_translations	delete	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
+106	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects_translations	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
+107	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	create	{}	{}	\N	*
+108	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	read	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
+109	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	update	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
+110	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	delete	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
+112	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	create	{}	{}	\N	*
+113	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
+114	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
+115	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 \.
 
 
@@ -544,7 +564,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 93, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 115, true);
 
 
 --
