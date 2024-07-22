@@ -720,7 +720,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
     category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
-    source_name = "#{category_local['id']}_#{category_slug}"
+    source_name = category_slug
     table = "local-#{project_slug}-#{source_name}"
     ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
     # puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
