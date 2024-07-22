@@ -614,7 +614,7 @@ CREATE OR REPLACE FUNCTION pois(
                 )::jsonb,
                 'properties',
                     (pois.properties->'tags')
-                        - 'name' - 'official_name' - 'loc_name'
+                        - 'name' - 'official_name' - 'loc_name' - 'alt_name'
                         - 'description' - 'website:details' - 'colour'
                         - 'addr' - 'ref' - 'route' - 'source' ||
                     coalesce(json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
@@ -633,6 +633,7 @@ CREATE OR REPLACE FUNCTION pois(
                         ),
                         'official_name', pois.properties->'tags'->'official_name'->>'fr',
                         'loc_name', pois.properties->'tags'->'loc_name'->>'fr',
+                        'alt_name', pois.properties->'tags'->'alt_name'->>'fr',
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
