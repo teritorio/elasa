@@ -112,7 +112,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":"{{type}} {{menu_items_translations.name}} "}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	7	full	\N	\N	\N	f	\N	\N	\N
 49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{slug}}{{name}}"}	related-values	{"template":"{{type}}{{slug}}{{name}}"}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	6	full	\N	\N	\N	t	\N	\N	\N
+53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	6	full	\N	\N	\N	t	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
 56	menu_items	selected_by_default	\N	\N	\N	\N	\N	f	f	2	half	\N	\N	\N	f	behavior	\N	\N
