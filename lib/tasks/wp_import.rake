@@ -624,7 +624,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
       begin
         values = fields.collect{ |field, t, _, _|
           begin
-            if ['id', "#{source_name}_id"[..63]].include?(field)
+            if ['id', "#{source_name}_id"[..62]].include?(field)
               p['properties']['metadata']['id']
             elsif field == 'geom'
               if p['geometry']['type'] == 'Feature'
@@ -661,7 +661,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
     INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\")
     SELECT
     " + fields.collect { |field, _, _, type|
-      if ['id', "#{source_name}_id"[..63]].include?(field) || type.include?(' bigint')
+      if ['id', "#{source_name}_id"[..62]].include?(field) || type.include?(' bigint')
         "\"#{field}\"::bigint"
       elsif field == 'geom'
         'ST_GeomFromGeoJSON(geom)'
@@ -674,18 +674,18 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
   ")
   conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
 
-  conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..63]])
+  conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..62]])
   conn.exec('
     INSERT INTO directus_collections(collection, translations, hidden) VALUES ($1, $2, $3)
     ON CONFLICT (collection)
     DO UPDATE SET
       translations = $2
   ', [
-    table[..63],
+    table[..62],
     [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
     table.end_with?('_t'),
   ])
-  conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..63]])
+  conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..62]])
   fields.each{ |key, _, interface, _|
     # TODO: It does not support other types of labels like label_details
     name = i18ns.dig(key, 'label', 'fr')
@@ -693,22 +693,22 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
     conn.exec('
       INSERT INTO directus_fields(collection, field, translations, hidden, interface) VALUES ($1, $2, $3, $4, $5)
     ', [
-      table[..63],
-      key[..63],
+      table[..62],
+      key[..62],
       nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
-      table.end_with?('_t') && ['id', "#{source_name}_id"[..63], 'languages_code'].include?(key),
+      table.end_with?('_t') && ['id', "#{source_name}_id"[..62], 'languages_code'].include?(key),
       interface,
     ])
   }
 
-  conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table[..63]])
+  conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table[..62]])
   %w[create read update delete].each{ |action|
     conn.exec('
       INSERT INTO directus_permissions(role, collection, action, permissions, fields)
       VALUES ($1, $2, $3, $4, $5)
     ', [
       role_uuid,
-      table[..63],
+      table[..62],
       action,
       {}.to_json,
       '*'
@@ -813,15 +813,15 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uuid)
 
     if !fields_translations.empty?
-      fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id"[..63], nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
-      load_local_table(conn, source_name, name, "#{table}_t"[..63], fields_translations, ps, i18ns, role_uuid)
+      fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id"[..62], nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
+      load_local_table(conn, source_name, name, "#{table}_t"[..62], fields_translations, ps, i18ns, role_uuid)
       conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
-      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..63]])
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
       conn.exec('
         INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
-        table[..63],
-        "#{source_name}_translations"[..63],
+        table[..62],
+        "#{source_name}_translations"[..62],
         'translations',
         'translations',
         '{"languageField":"name","defaultLanguage":"en-US","defaultOpenSplitView":true,"userLanguage":true}',
@@ -830,20 +830,20 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
-        "#{table}_t"[..63],
+        "#{table}_t"[..62],
         'languages_code',
         'languages',
         nil,
-        "#{source_name}_id"[..63],
+        "#{source_name}_id"[..62],
         'nullify',
       ])
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
-        "#{table}_t"[..63],
-        "#{source_name}_id"[..63],
-        table[..63],
-        "#{source_name}_translations"[..63],
+        "#{table}_t"[..62],
+        "#{source_name}_id"[..62],
+        table[..62],
+        "#{source_name}_translations"[..62],
         'languages_code',
         'nullify',
       ])
