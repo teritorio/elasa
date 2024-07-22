@@ -172,7 +172,7 @@ BEGIN
                     ''id'', id,
                     ''source'', NULL,
                     ''updated_at'', NULL,
-                    ''tags'', row_to_json(t.*)::jsonb - ''id'' - ''geom''
+                    ''natives'', row_to_json(t.*)::jsonb - ''id'' - ''geom''
                 ) AS properties
             FROM
                 "' || source.table_name || '" AS t
@@ -227,7 +227,7 @@ CREATE OR REPLACE FUNCTION filter_values(
         SELECT
             coalesce(
                 jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"' END)::jsonpath),
-                jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"'  END)::jsonpath)
+                jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || '"' || _property || '"')::jsonpath)
             ) AS property
         FROM
             pois
@@ -613,7 +613,7 @@ CREATE OR REPLACE FUNCTION pois(
                     END
                 )::jsonb,
                 'properties',
-                    (pois.properties->'tags')
+                    coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
                         - 'description' - 'website:details' - 'colour'
                         - 'addr' - 'ref' - 'route' - 'source' ||
