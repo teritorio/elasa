@@ -719,6 +719,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
 end
 
 def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid)
+  slugs = []
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
     category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
@@ -726,6 +727,13 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     table = "local-#{project_slug}-#{source_name}"
     ps = pois.select{ |poi| poi['properties']['metadata']['category_ids'].include?(category_local['id']) }
     # puts [category_local['category']['name']['fr'], table, category_local['id'], ps.size].inspect
+
+    if slugs.include?(source_name)
+      puts "[ERROR] Duplicate local table slug: #{source_name} (#{name})"
+      next
+    else
+      slugs << source_name
+    end
 
     next if ps.empty?
 
