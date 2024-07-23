@@ -146,7 +146,6 @@ def compare_pois(url_old, url_new, category_ids)
     array = fetch_json(url)['features']&.compact_blank_deep&.select{ |poi|
               !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty?
             }&.collect{ |poi|
-      poi['properties'].delete('classe')
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
           poi['properties'][r] = poi['properties'][r].to_f.round(4)
@@ -216,9 +215,6 @@ def compare_pois(url_old, url_new, category_ids)
 
   # Ignore few changes on names
   hashes[0].zip(hashes[1]).each{ |h|
-    h.each{ |poi|
-      poi['properties']['metadata'].delete('cartocode')
-    }
     a, b = h.collect{ |poi| poi.dig('properties', 'name') }
     if a.presence && b.presence && a.size > 5 && b.size > 5
       d = DamerauLevenshtein.distance(a, b)
@@ -226,6 +222,17 @@ def compare_pois(url_old, url_new, category_ids)
         h[0]['properties']['name'] = h[1]['properties']['name']
       end
     end
+
+    # No name, filled by API with diffrent rule from WP
+    if a.presence && b.presence && (a == h[0]['properties']['classe'])
+      h[0]['properties'].delete('name')
+      h[1]['properties'].delete('name')
+    end
+
+    h.each{ |poi|
+      poi['properties']['metadata'].delete('cartocode')
+      poi['properties'].delete('classe')
+    }
   }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
