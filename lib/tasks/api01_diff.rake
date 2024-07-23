@@ -185,6 +185,10 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['metadata']&.delete('osm_type')
       poi['properties']['metadata']&.delete('source')
 
+      poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
+      poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
+      poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
+
       poi
     } || []
     array.collect{ |poi|
