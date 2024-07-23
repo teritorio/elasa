@@ -544,17 +544,18 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         puts "nil ref/id on #{JSON.dump(poi)}"
         nil
       else
-        [id, ref]
+        [id, ref, poi.dig('properties', 'metadata', 'category_ids').sort[0]]
       end
-    }.compact_blank.collect{ |id, ref|
-      [project_id, ref, { original_id: id.to_s }.to_json]
+    }.compact_blank.collect{ |id, ref, category_id|
+      [project_id, ref, { original_id: id.to_s }.to_json, category_id]
     }
 
     conn.exec("
       CREATE TEMP TABLE pois_slug_import(
         project_id varchar NOT NULL,
         ref varchar NOT NULL,
-        original_id json NOT NULL
+        original_id json NOT NULL,
+        category_id varchar NOT NULL
       )
     ")
     enco = PG::BinaryEncoder::CopyRow.new
@@ -572,9 +573,17 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         slugs = (coalesce(slugs::jsonb, '{}'::jsonb) || pois_slug_import.original_id::jsonb)::json
       FROM
         sources,
+        menu_items_sources,
+        menu_items,
+        menu_items_translations,
         pois_slug_import
       WHERE
         sources.project_id = pois_slug_import.project_id::integer AND
+        menu_items_sources.sources_id = sources.id AND
+        menu_items.id = menu_items_sources.menu_items_id AND
+        menu_items_translations.menu_items_id = menu_items.id AND
+        menu_items_translations.languages_code = 'fr-FR' AND
+        menu_items_translations.slug = category_id AND
         pois.source_id = sources.id AND
         pois.properties->>'id' = pois_slug_import.ref
       "
