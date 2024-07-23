@@ -154,7 +154,8 @@ BEGIN
     FOR source IN
         SELECT
             sources.id,
-            table_name
+            table_name,
+            regexp_replace(table_name, 'local-[a-z]+-', '') || '_id' AS local_id
         FROM
             information_schema.tables
             JOIN sources ON
@@ -165,17 +166,51 @@ BEGIN
             table_schema = 'public'
     LOOP
         FOR poi IN EXECUTE '
+            WITH
+            j AS (
+                SELECT
+                    "' || source.local_id || '" AS id,
+                    substring(languages_code, 1, 2) AS languages_code,
+                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).key,
+                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).value
+                FROM
+                    "' || source.table_name || '_t" AS t
+            ),
+            jj AS (
+                SELECT
+                    id,
+                    key,
+                    json_objectagg(
+                        languages_code: value
+                    ) AS values
+                FROM
+                    j
+                GROUP BY
+                    id,
+                    key
+            ),
+            trans AS (
+                SELECT
+                    id,
+                    json_objectagg(key: values)::jsonb AS jsonb
+                FROM
+                    jj
+                GROUP BY
+                    id
+            )
             SELECT
-                id,
+                t.id,
                 geom,
                 jsonb_build_object(
-                    ''id'', id,
+                    ''id'', t.id,
                     ''source'', NULL,
                     ''updated_at'', NULL,
-                    ''natives'', row_to_json(t.*)::jsonb - ''id'' - ''geom''
+                    ''natives'', row_to_json(t.*)::jsonb - ''id'' - ''geom'' || trans.jsonb
                 ) AS properties
             FROM
                 "' || source.table_name || '" AS t
+                JOIN trans ON
+                    trans.id = t.id
         '
         LOOP
             id := poi.id;
@@ -625,10 +660,11 @@ CREATE OR REPLACE FUNCTION pois(
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
-                    coalesce(pois.properties->'natives', '{}'::jsonb) ||
+                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description') ||
                     jsonb_build_object(
                         'name', coalesce(
                             pois.properties->'tags'->'name'->>'fr',
+                            pois.properties->'natives'->'name'->>'fr',
                             menu_items.name_singular->>'fr'
                         ),
                         'official_name', pois.properties->'tags'->'official_name'->>'fr',
@@ -637,8 +673,14 @@ CREATE OR REPLACE FUNCTION pois(
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
-                            WHEN 'true' THEN substr(pois.properties->'tags'->'description'->>'fr', 1, 20)
-                            ELSE pois.properties->'tags'->'description'->>'fr'
+                            WHEN 'true' THEN substr(coalesce(
+                                pois.properties->'tags'->'description'->>'fr',
+                                pois.properties->'natives'->'description'->>'fr'
+                            ), 1, 20)
+                            ELSE coalesce(
+                                pois.properties->'tags'->'description'->>'fr',
+                                pois.properties->'natives'->'description'->>'fr'
+                            )
                             END,
                         'metadata', jsonb_build_object(
                             'id', id_from_slugs(pois.slugs, pois.id), -- use slug as original POI id
