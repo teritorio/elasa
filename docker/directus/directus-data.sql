@@ -389,9 +389,9 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 14	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	read	{}	\N	\N	*
 15	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	update	{}	\N	\N	*
 16	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	delete	{}	\N	\N	\N
-17	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_users	read	{}	\N	\N	*
+17	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_users	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.id"}}]}	\N	\N	*
 18	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_users	update	{"id":{"_eq":"$CURRENT_USER"}}	\N	\N	first_name,last_name,email,password,location,title,description,avatar,language,theme,tfa_secret
-19	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_roles	read	{}	\N	\N	*
+19	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_roles	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.role.id"}}]}	\N	\N	*
 20	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_shares	read	{"_or":[{"role":{"_eq":"$CURRENT_ROLE"}},{"role":{"_null":true}}]}	\N	\N	*
 21	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_shares	create	{}	\N	\N	*
 22	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_shares	update	{"user_created":{"_eq":"$CURRENT_USER"}}	\N	\N	*
