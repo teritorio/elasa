@@ -288,6 +288,48 @@ def load_color_line(pois)
   }
 end
 
+# From WP pois.geojson, pois in multiple categories are missing.
+# Use menu_sources.json to get missing categories fields.
+def add_missing_pois(menu_sources, pois)
+  menu_sources_multi = menu_sources.collect{ |menu_id, sources|
+    sources.collect{ |source| [menu_id, source] }
+  }.flatten(1).group_by(&:last).select{ |_source, source_menu_ids|
+    source_menu_ids.size > 1
+  }.transform_values{ |source_menu_ids|
+    source_menu_ids.collect(&:first).collect(&:to_i)
+  }
+
+  poi_by_category = pois.collect{ |poi|
+    [poi.dig('properties', 'metadata', 'category_ids'), poi]
+  }.collect{ |category_ids, poi|
+    category_ids.collect{ |category_id| [category_id, poi] }
+  }.flatten(1).group_by(&:first).transform_values{ |category_ids_poi|
+    category_ids_poi.first.last
+  }.to_h
+
+  category_ids_all = pois.collect{ |poi|
+    poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
+  }.flatten.uniq
+
+  missing_category_ids = menu_sources_multi.values.flatten - category_ids_all
+  puts "missing_category_ids: #{missing_category_ids.inspect}"
+  equiv_pois = menu_sources_multi.collect{ |_source, menu_ids|
+    equiv = menu_ids - missing_category_ids
+    (menu_ids & missing_category_ids).collect{ |menu_id| [menu_id, equiv] }
+  }.flatten(1).collect{ |menu_id, equiv|
+    if equiv.empty?
+      puts "[ERROR] Missing POI from category #{menu_id} without equivalence - IGNORED"
+    else
+      puts "Missing POI from WP. Fields configuration equivalence for category #{menu_id} from #{equiv[0]}."
+      equiv_poi = poi_by_category[equiv[0]]
+      equiv_poi['properties']['metadata']['category_ids'] = [menu_id]
+      equiv_poi
+    end
+  }
+
+  pois + equiv_pois
+end
+
 def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
@@ -326,6 +368,9 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     })
 
     pois = fetch_json(url_pois)['features']
+    # Missing poi from buggy WP pois.geojson
+    pois = add_missing_pois(menu_sources, pois)
+
     fields = load_fields(conn, project_id, pois, menu_items)
     fields_ids = fields.index_by(&:first)
 
