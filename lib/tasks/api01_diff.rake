@@ -263,7 +263,7 @@ def compare_pois(url_old, url_new, category_ids)
       'level' => '0',
       'duration' => 'unlimited',
       'capacity:disabled' => '0',
-      'capacity:rooms' => '0',
+      'capacity:rooms' => 0,
     }.each{ |k, v|
       if h[1]['properties'][k] == v
         h[0]['properties'][k] = v # Buggy WP
