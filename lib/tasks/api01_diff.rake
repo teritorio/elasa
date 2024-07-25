@@ -227,7 +227,7 @@ def compare_pois(url_old, url_new, category_ids)
   # From WP pois.geojson, pois in multiple categories are missing.
   # Use menu_sources.json to get missing categories fields.
   remove_category_ids = missing_category_ids(fetch_json("#{url_old}/menu_sources.json"), hashes[0])
-  hashes[1] = hashes[1].select{ |poi| (remove_category_ids & poi['properties']['metadata']['category_ids']).empty? }
+  # hashes[1] = hashes[1].select{ |poi| (remove_category_ids & poi['properties']['metadata']['category_ids']).empty? }
 
   puts "Diff size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
 
@@ -236,8 +236,10 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['metadata']['id']
     }
   }
-  diff = HashDiff::Comparison.new(ids[0], ids[1])
-  puts "Diff ids\n#{JSON.dump(diff.diff)}" if !diff.diff.empty?
+  only_in_0 = ids[0] - ids[1]
+  only_in_1 = ids[1] - ids[0]
+  puts "Ids only on 0\n#{only_in_0.inspect}" if !only_in_0.empty?
+  puts "Ids only on 1\n#{only_in_1.inspect}" if !only_in_1.empty?
 
   common_ids = Set.new(ids[0] & ids[1])
   hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
