@@ -589,7 +589,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         puts "nil ref/id on #{JSON.dump(poi)}"
         nil
       else
-        [id, ref, poi.dig('properties', 'metadata', 'category_ids').sort[0]]
+        [id, ref, poi.dig('properties', 'metadata', 'category_ids').min]
       end
     }.compact_blank.collect{ |id, ref, category_id|
       [project_id, ref, { original_id: id.to_s }.to_json, category_id]
