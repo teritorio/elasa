@@ -189,6 +189,12 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['editorial']&.delete('class_label_popup')
       poi['properties']['editorial']&.delete('class_label_details')
 
+      poi['properties']['editorial']&.delete('label')
+      poi['properties']['editorial']&.delete('label_fiche')
+      poi['properties']['editorial']&.delete('label_infobulle')
+      poi['properties']['editorial']&.delete('PopupListField')
+      poi['properties']['editorial']&.delete('ficheBlocs')
+
       poi['properties']['metadata']&.delete('natives') # Buggy WP
       poi['properties'].delete('description:de') # Buggy WP
       poi['properties'].delete('description:es') # Buggy WP
