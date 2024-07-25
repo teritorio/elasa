@@ -138,6 +138,24 @@ def compare_menu(url_old, url_new)
   }
 end
 
+# From WP pois.geojson, pois in multiple categories are missing.
+# Use menu_sources.json to get missing categories fields.
+def missing_category_ids(menu_sources, pois)
+  menu_sources_multi = menu_sources.collect{ |menu_id, sources|
+    sources.collect{ |source| [menu_id, source] }
+  }.flatten(1).group_by(&:last).select{ |_source, source_menu_ids|
+    source_menu_ids.size > 1
+  }.transform_values{ |source_menu_ids|
+    source_menu_ids.collect(&:first).collect(&:to_i)
+  }
+
+  category_ids_all = pois.collect{ |poi|
+    poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
+  }.flatten.uniq
+
+  menu_sources_multi.values.flatten - category_ids_all
+end
+
 def compare_pois(url_old, url_new, category_ids)
   hashes = [
     "#{url_old}/pois.geojson",
@@ -199,6 +217,11 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['metadata']['id']
     }
   }
+
+  # From WP pois.geojson, pois in multiple categories are missing.
+  # Use menu_sources.json to get missing categories fields.
+  remove_category_ids = missing_category_ids(fetch_json("#{url_old}/menu_sources.json"), hashes[0])
+  hashes[1] = hashes[1].select{ |poi| (remove_category_ids & poi['properties']['metadata']['category_ids']).empty? }
 
   puts "Diff size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
 
