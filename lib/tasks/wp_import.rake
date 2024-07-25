@@ -123,7 +123,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       )
     end
 
-    [project_id, theme_id]
+    [project_id, theme_id, theme['site_url']['fr']]
   }
 end
 
@@ -330,7 +330,7 @@ def add_missing_pois(menu_sources, pois)
   pois + equiv_pois
 end
 
-def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid)
+def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -636,7 +636,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
 
     # Categories not linked to datasource
     categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id'].to_s) }.compact
-    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid)
+    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -690,7 +690,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
             elsif field == 'languages_code'
               'fr-FR'
             else
-              r = t.call(p['properties'][field])
+              r = t.call(p['properties'][field], p['properties'])
               r = r.strip if r.is_a?(String)
               r
             end
@@ -772,7 +772,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
   }
 end
 
-def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid)
+def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid, url_base)
   slugs = []
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
@@ -820,6 +820,11 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     end
 
     value_stats = ps.collect{ |p|
+      website_details = p.dig('properties', 'editorial', 'website:details')
+      if website_details && !website_details.start_with?(url_base)
+        p['properties']['website:details'] = website_details
+      end
+
       p['properties'].compact.except('metadata', 'display', 'editorial', 'classe').collect{ |k, v|
         if v.is_a?(Array)
           [k, Array]
@@ -843,24 +848,27 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
       i = if %w[name description].include?(key)
-            f = ->(i) { i }
+            f = ->(i, _j) { i }
             interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
             "\"#{key}\" text"
+          elsif key == 'website:details'
+            f = ->(_i, j) { j['editorial']['website:details'] }
+            "\"#{key}\" varchar"
           elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
-            f = ->(i) { i&.to_json }
+            f = ->(i, _j) { i&.to_json }
             "\"#{key}\" json"
           elsif stats&.keys&.size == 1 && stats&.keys&.include?(Integer)
-            f = ->(i) { i&.to_i }
+            f = ->(i, _j) { i&.to_i }
             "\"#{key}\" bigint"
           elsif stats&.keys&.include?(:html)
-            f = ->(i) { i }
+            f = ->(i, _j) { i }
             interface = 'input-rich-text-html'
             "\"#{key}\" text"
           elsif stats&.keys&.include?('...')
-            f = ->(i) { i }
+            f = ->(i, _j) { i }
             "\"#{key}\" text"
           else
-            f = ->(i) { i }
+            f = ->(i, _j) { i }
             "\"#{key}\" varchar"
           end
       if !stats.keys.include?(nil) && stats.keys.size == ps.size
@@ -995,14 +1003,14 @@ namespace :wp do
     datasource_project ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    project_id, theme_id = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    project_id, theme_id, url_base = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
 
     role_uuid = create_role(project_slug)
     create_user(project_id, project_slug, role_uuid)
 
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
-    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid)
+    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid, url_base)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
 
     load_i18n(project_id, i18ns) if !loaded_from_datasource.empty?

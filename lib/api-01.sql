@@ -660,7 +660,7 @@ CREATE OR REPLACE FUNCTION pois(
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
-                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description') ||
+                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details') ||
                     jsonb_build_object(
                         'name', coalesce(
                             pois.properties->'tags'->'name'->>'fr',
@@ -708,6 +708,7 @@ CREATE OR REPLACE FUNCTION pois(
                             'website:details', CASE WHEN menu_items.use_details_link THEN
                                 coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
+                                    pois.properties->'natives'->>'website:details',
                                     themes.site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs, pois.id) || '/details' -- use slug as original POI id
                                 )
                             END
