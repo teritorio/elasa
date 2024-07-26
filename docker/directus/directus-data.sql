@@ -101,7 +101,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 23	sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 24	sources	project_id	\N	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 25	sources	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-27	sources	attribution	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+27	sources	attribution	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 29	directus_users	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
 35	menu_items_childrens	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 36	menu_items_childrens	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
@@ -230,6 +230,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 259	filters_translations	filters_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 260	filters_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 261	filters_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -471,7 +472,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 10	menu_items	parent_id	menu_items	items	\N	\N	\N	index_order	nullify
 11	themes	root_menu_item_id	menu_items	\N	\N	\N	\N	\N	nullify
 14	menu_items	theme_id	themes	\N	\N	\N	\N	\N	nullify
-16	menu_items_sources	sources_id	sources	\N	\N	\N	menu_items_id	\N	nullify
+16	menu_items_sources	sources_id	sources	menu_items	\N	\N	menu_items_id	\N	nullify
 17	menu_items_sources	menu_items_id	menu_items	sources	\N	\N	sources_id	\N	nullify
 19	filters	project_id	projects	\N	\N	\N	\N	\N	nullify
 24	menu_items_filters	filters_id	filters	\N	\N	\N	menu_items_id	\N	nullify
@@ -550,7 +551,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 359, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 469, true);
 
 
 --
