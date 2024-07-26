@@ -60,6 +60,15 @@ GROUP BY
 ;
 
 
+DROP FUNCTION IF EXISTS capitalize;
+CREATE FUNCTION capitalize(str text) RETURNS text AS $$
+    SELECT
+        upper(substring(str from 1 for 1)) ||
+        substring(str from 2 for length(str))
+    ;
+$$ LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS id_from_slugs;
 CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
     SELECT
@@ -806,14 +815,14 @@ CREATE OR REPLACE FUNCTION attribute_translations(
         jsonb_strip_nulls(jsonb_object_agg(
             key, jsonb_build_object(
                 'label', jsonb_build_object(
-                    'fr', key_translations->'@default'->_lang
+                    'fr', capitalize(key_translations->'@default'->>_lang)
                 ),
                 'values', (
                     SELECT
                         jsonb_object_agg(
                             key, jsonb_build_object(
                                 'label', jsonb_build_object(
-                                    'fr', value->'@default:full'->_lang
+                                    'fr', capitalize(value->'@default:full'->>_lang)
                                 )
                             )
                         )
