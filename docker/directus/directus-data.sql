@@ -407,7 +407,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 44	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	update	{}	{}	\N	*
 45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
-52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois
+52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois,sources_translations
 58	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	create	{}	{}	\N	*
 59	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id
 60	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id
