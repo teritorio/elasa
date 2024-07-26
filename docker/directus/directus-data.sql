@@ -27,6 +27,7 @@ filters	filter_alt	\N	{{filters_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\
 filters_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	filters	open	\N	f
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
 languages	\N	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	7	\N	open	\N	f
+local_sources	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	sources	open	\N	f
 menu_items	menu	\N	{{menu_items_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	themes	open	\N	f
 menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
 menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N	f

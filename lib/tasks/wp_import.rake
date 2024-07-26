@@ -732,7 +732,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
 
   conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..62]])
   conn.exec('
-    INSERT INTO directus_collections(collection, translations, hidden) VALUES ($1, $2, $3)
+    INSERT INTO directus_collections(collection, translations, hidden, icon, "group") VALUES ($1, $2, $3, $4, $5)
     ON CONFLICT (collection)
     DO UPDATE SET
       translations = $2
@@ -740,6 +740,8 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
     table[..62],
     [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
     table.end_with?('_t'),
+    'pin_drop',
+    'local_sources',
   ])
   conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..62]])
   fields.each{ |key, _, interface, _|
