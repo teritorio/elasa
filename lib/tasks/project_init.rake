@@ -199,6 +199,8 @@ end
 
 def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, group_fields_ids, filters)
   group_ids = classs['osm_tags_extra'].collect{ |group|
+    next if group.include?('i18n')
+
     begin
       group_fields_ids[group].first
     rescue StandardError
@@ -319,7 +321,7 @@ def insert_group_fields(conn, project_id, ontology)
 end
 
 def new_menu(project_id, theme_id, theme, css, filters)
-  ontology = fetch_json("https://vecto.teritorio.xyz/data/teritorio-#{theme}-ontology-latest.json")
+  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json")
 
   css_parser = CssParser::Parser.new
   css_parser.load_uri!(css)
