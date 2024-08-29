@@ -16,32 +16,46 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
+LANGS = {
+  'fr' => 'fr-FR',
+  'en' => 'en-US',
+  'es' => 'es-ES',
+}
+
 def new_project(slug, osm_id, theme, css, website)
   osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
   geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('
+      INSERT INTO languages(code, name, direction)
+      VALUES ($1, $2, $3), ($4, $5, $6), ($7, $8, $9)
+      ON CONFLICT DO NOTHING
+    ', %w[
+      fr-FR French ltr
+      en-US English ltr
+      es-ES Spanish ltr
+    ])
+
     project_id = conn.exec('
-      INSERT INTO projects(icon_font_css_url, polygon, name, slug, articles, default_country, default_country_state_opening_hours, polygons_extra)
+      INSERT INTO projects(icon_font_css_url, polygon, slug, articles, default_country, default_country_state_opening_hours, polygons_extra)
       VALUES (
         $1,
         ST_GeomFromGeoJSON($2),
-        $3, $4, $5, $6, $7, $8
+        $3, $4, $5, $6, $7
       )
       ON CONFLICT (slug)
       DO UPDATE SET
         icon_font_css_url = $1,
         polygon = ST_GeomFromGeoJSON($2),
-        name = $3,
-        articles = $5,
-        default_country = $6,
-        default_country_state_opening_hours = $7,
-        polygons_extra = $8
+        articles = $4,
+        default_country = $5,
+        default_country_state_opening_hours = $6,
+        polygons_extra = $7
       RETURNING id
     ', [
       css,
       geojson.to_json,
-      { fr: osm_tags['name'] }.to_json,
       slug,
       [].to_json,
       'fr',
@@ -51,73 +65,117 @@ def new_project(slug, osm_id, theme, css, website)
       result.first['id'].to_i
     }
 
-    theme_id = conn.exec('
-      INSERT INTO themes(project_id, slug, name, description, logo_url, favicon_url, root_menu_item_id, site_url, main_url, keywords, favorites_mode, explorer_mode)
+    conn.exec('
+      INSERT INTO projects_translations(projects_id, languages_code, name)
       VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+        $1,
+        $2,
+        $3
+      )
+      ON CONFLICT (projects_id, languages_code)
+      DO UPDATE SET
+        name = $2
+    ', [
+      project_id,
+      'fr-FR',
+      osm_tags['name'],
+    ])
+
+    theme_id = conn.exec('
+      INSERT INTO themes(project_id, slug, logo_url, favicon_url, root_menu_item_id, favorites_mode, explorer_mode)
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7
       )
       ON CONFLICT (project_id, slug)
       DO UPDATE SET
-        name = $3,
-        description = $4,
-        logo_url = $5,
-        favicon_url = $6,
-        root_menu_item_id = $7,
-        site_url = $8,
-        main_url = $9,
-        keywords = $10,
-        favorites_mode = $11,
-        explorer_mode = $12
+        logo_url = $3,
+        favicon_url = $4,
+        root_menu_item_id = $5,
+        favorites_mode = $6,
+        explorer_mode = $7
       RETURNING
         id
     ', [
       project_id,
       theme,
-      { fr: osm_tags['name'] }.to_json,
-      { fr: osm_tags['name'] }.to_json,
       'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # logo
       'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # favico
       nil, # root menu
-      { fr: website }.to_json,
-      { fr: website }.to_json,
-      nil, # keyword
       true, # favorite
       true # explorer
     ]) { |result|
       result.first['id'].to_i
     }
 
+    conn.exec('
+      INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
+      VALUES (
+        $1, $2, $3, $4, $5, $6, $7
+      )
+      ON CONFLICT (themes_id, languages_code)
+      DO UPDATE SET
+        name = $3,
+        description = $4,
+        site_url = $5,
+        main_url = $6,
+        keywords = $7
+    ', [
+      theme_id,
+      'fr-FR',
+      osm_tags['name'],
+      osm_tags['name'],
+      website,
+      website,
+      nil, # keyword
+    ])
+
     [project_id, theme_id]
   }
 end
 
 def insert_menu_item(conn, **args)
-  conn.exec(
+  menu_item_id = conn.exec(
     '
     INSERT INTO menu_items(
       theme_id,
-      slugs, index_order, hidden, parent_id, selected_by_default,
+      index_order, hidden, parent_id, selected_by_default,
       type,
-      name, name_singular, icon, color_fill, color_line, style_class_string, display_mode,
+      icon, color_fill, color_line, style_class_string, display_mode,
       search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
       href, use_details_link
     )
     VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
     )
     RETURNING
       id
     ', [
-     args[:theme_id],
-     args[:slugs], args[:index_order], args[:hidden].nil? ? false : args[:hidden], args[:parent_id], args[:selected_by_default].nil? ? false : args[:selected_by_default],
-     args[:type],
-     args[:name], args[:name_singular], args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
-     args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
-     args[:href], args[:use_details_link].nil? ? true : args[:use_details_link],
+      args[:theme_id],
+      args[:index_order], args[:hidden].nil? ? false : args[:hidden], args[:parent_id], args[:selected_by_default].nil? ? false : args[:selected_by_default],
+      args[:type],
+      args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
+      args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
+      args[:href], args[:use_details_link].nil? ? true : args[:use_details_link],
     ]
   ) { |result|
     result.first['id']
   }
+
+  [args[:slugs]&.keys, args[:name]&.keys, args[:name_singular]&.keys].compact.flatten.uniq.each{ |lang|
+    conn.exec(
+      '
+      INSERT INTO menu_items_translations(menu_items_id, languages_code, slug, name, name_singular)
+      VALUES ($1, $2, $3, $4, $5)
+      ', [
+        menu_item_id,
+        LANGS[lang.to_s],
+        args.dig(:slugs, lang),
+        args.dig(:name, lang),
+        args.dig(:name_singular, lang),
+      ]
+    )
+  }
+  menu_item_id
 end
 
 def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs, index)
@@ -125,12 +183,12 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs,
   insert_menu_item(
     conn,
     theme_id: theme_id,
-    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact.to_json,
+    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
     index_order: index,
     parent_id: parent_id,
     type: 'menu_group',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
+    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact,
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
@@ -178,12 +236,12 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
   category_id = insert_menu_item(
     conn,
     theme_id: theme_id,
-    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact.to_json,
+    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
     index_order: index,
     parent_id: parent_id,
     type: 'category',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact.to_json,
+    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact,
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
@@ -273,10 +331,10 @@ def new_menu(project_id, theme_id, theme, css, filters)
     root_menu_id = insert_menu_item(
       conn,
       theme_id: theme_id,
-      slugs: { en: 'root', fr: 'racine', es: 'raiz' }.to_json,
+      slugs: { en: 'root', fr: 'racine', es: 'raiz' },
       index_order: 1,
       type: 'menu_group',
-      name: { en: 'Root Menu', fr: 'Menu racine', es: 'Menú raíz' }.compact.to_json,
+      name: { en: 'Root Menu', fr: 'Menu racine', es: 'Menú raíz' }.compact,
       display_mode: 'compact',
     )
 
@@ -300,11 +358,11 @@ def new_menu(project_id, theme_id, theme, css, filters)
     insert_menu_item(
       conn,
       theme_id: theme_id,
-      slugs: { en: 'search', fr: 'search', es: 'búsqueda' }.to_json,
+      slugs: { en: 'search', fr: 'search', es: 'búsqueda' },
       parent_id: root_menu_id,
       index_order: 1,
       type: 'menu_group',
-      name: { en: 'Search', fr: 'Recherche', es: 'Búsqueda' }.compact.to_json,
+      name: { en: 'Search', fr: 'Recherche', es: 'Búsqueda' }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-services',
@@ -315,11 +373,11 @@ def new_menu(project_id, theme_id, theme, css, filters)
     poi_menu_id = insert_menu_item(
       conn,
       theme_id: theme_id,
-      slugs: { en: 'pois', fr: 'poi', es: 'poi' }.to_json,
+      slugs: { en: 'pois', fr: 'poi', es: 'poi' },
       parent_id: root_menu_id,
       index_order: 2,
       type: 'menu_group',
-      name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact.to_json,
+      name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-services',
@@ -367,27 +425,33 @@ def new_filter(project_id, schema_url, i18ns)
         spec['enum']
       end
     }.compact.except('tactile_paving', 'pastry', 'mobile_phone:repair', 'computer:repair', 'sport', 'access', 'dispensing').collect{ |key, enum|
-      name = i18ns.dig(key, '@default')&.to_json
+      name = i18ns.dig(key, '@default') || {}
       filter_id = (
         if [%w[yes no], %w[no yes]].include?(enum)
           conn.exec(
-            'INSERT INTO filters(project_id, type, name, boolean_property) VALUES ($1, $2, $3, $4) RETURNING id',
-            [project_id, 'boolean', name, key]
+            'INSERT INTO filters(project_id, type, boolean_property) VALUES ($1, $2, $3) RETURNING id',
+            [project_id, 'boolean', key]
           ) { |result| result.first['id'].to_i }
         elsif enum.size <= 1
           next
         elsif enum.size <= 5
           conn.exec(
-            'INSERT INTO filters(project_id, type, name, checkboxes_list_property) VALUES ($1, $2, $3, $4) RETURNING id',
-            [project_id, 'checkboxes_list', name, key]
+            'INSERT INTO filters(project_id, type, checkboxes_list_property) VALUES ($1, $2, $3) RETURNING id',
+            [project_id, 'checkboxes_list', key]
           ) { |result| result.first['id'].to_i }
         else
           conn.exec(
-            'INSERT INTO filters(project_id, type, name, multiselection_property) VALUES ($1, $2, $3, $4) RETURNING id',
-            [project_id, 'multiselection', name, key]
+            'INSERT INTO filters(project_id, type, multiselection_property) VALUES ($1, $2, $3) RETURNING id',
+            [project_id, 'multiselection', key]
           ) { |result| result.first['id'].to_i }
         end
       )
+      name.keys.each{ |lang|
+        conn.exec(
+          'INSERT INTO filters_translations(filters_id, languages_code, name) VALUES ($1, $2, $3)',
+          [filter_id, LANGS[lang], name[lang]]
+        )
+      }
       [key, filter_id]
     }.compact.to_h
   }
@@ -399,7 +463,7 @@ namespace :project do
     slug, osm_id, theme, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
-    css = 'https://gpv-rive-droite.appcarto.teritorio.xyz/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.7.0'
+    css = 'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.8.0'
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
     load_from_source("#{datasource_url}/data", slug, slug)
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
