@@ -84,7 +84,7 @@ DROP FUNCTION IF EXISTS id_from_slugs_menu_item;
 CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint AS $$
     SELECT
         coalesce(
-            (slugs->>'fr')::bigint,
+            CASE WHEN slugs->>'fr' ~ E'^\\d+$' THEN (slugs->>'fr')::bigint END,
             id
         )
     ;
