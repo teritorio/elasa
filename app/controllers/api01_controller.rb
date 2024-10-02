@@ -16,7 +16,7 @@ class Api01Controller < ApplicationController
     project_slug, = project_theme_params
 
     project = query('project($1)', [project_slug]) || { article: [] }
-    render json: project['articles'].collect{ |article|
+    render json: (project['articles'] || []).collect{ |article|
       {
         url: article['url']['fr'],
         title: article['title']['fr'],
