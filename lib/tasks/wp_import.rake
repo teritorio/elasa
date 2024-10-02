@@ -69,6 +69,9 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         '
         INSERT INTO projects_translations(projects_id, languages_code, name)
         VALUES ($1, $2, $3)
+        ON CONFLICT (projects_id, languages_code)
+        DO UPDATE SET
+          name = $3
         ',
         [
           project_id,
@@ -110,6 +113,13 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         '
         INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (themes_id, languages_code)
+        DO UPDATE SET
+          name = $3,
+          description = $4,
+          site_url = $5,
+          main_url = $6,
+          keywords = $7
         ',
         [
           theme_id,
