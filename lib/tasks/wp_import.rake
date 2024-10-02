@@ -1025,7 +1025,7 @@ namespace :wp do
     load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid, url_base)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
 
-    load_i18n(project_id, i18ns) if !loaded_from_datasource.empty?
+    load_i18n(project_slug, i18ns) if !loaded_from_datasource.empty?
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end

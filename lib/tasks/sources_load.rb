@@ -7,7 +7,10 @@ require 'pg'
 
 
 def fetch_json(url)
-  JSON.parse(HTTP.follow.get(url))
+  response = HTTP.follow.get(url)
+  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
+
+  JSON.parse(response)
 end
 
 # Back port from active_support
@@ -225,9 +228,9 @@ def load_from_source(datasource_url, project_slug, datasource_project)
   }
 end
 
-def load_i18n(project_id, i18ns)
+def load_i18n(project_slug, i18ns)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM translations WHERE project_id = $1', [project_id])
+    conn.exec('DELETE FROM translations WHERE project_id = (SELECT id FROM projects WHERE slug=$1)', [project_slug])
 
     puts "i18n: #{i18ns.size}"
     i18ns.each{ |key, i18n|
@@ -235,10 +238,10 @@ def load_i18n(project_id, i18ns)
         '
         INSERT INTO translations(project_id, key, key_translations, values_translations)
         VALUES (
-          $1, $2, $3, $4
+          (SELECT id FROM projects WHERE slug=$1), $2, $3, $4
         )
         ',
-        [project_id, key, i18n.except('values').to_json, i18n['values']&.to_json]
+        [project_slug, key, i18n.except('values').to_json, i18n['values']&.to_json]
       )
     }
   }

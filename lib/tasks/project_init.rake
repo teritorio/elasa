@@ -9,13 +9,6 @@ require 'css_parser'
 require_relative 'sources_load'
 
 
-def fetch_json(url)
-  response = HTTP.follow.get(url)
-  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
-
-  JSON.parse(response)
-end
-
 LANGS = {
   'fr' => 'fr-FR',
   'en' => 'en-US',
@@ -469,7 +462,7 @@ namespace :project do
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
     load_from_source("#{datasource_url}/data", slug, slug)
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
-    load_i18n(project_id, i18ns)
+    load_i18n(slug, i18ns)
     filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
     new_menu(project_id, theme_id, theme, css, filters)
 
