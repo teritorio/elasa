@@ -229,6 +229,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 260	filters_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 261	filters_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -478,7 +479,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 26	pois	source_id	sources	pois	\N	\N	\N	\N	nullify
 28	fields_fields	related_fields_id	fields	\N	\N	\N	fields_id	\N	nullify
 29	fields_fields	fields_id	fields	fields	\N	\N	related_fields_id	index	nullify
-30	fields	project_id	projects	\N	\N	\N	\N	\N	nullify
+30	fields	project_id	projects	fields	\N	\N	\N	\N	nullify
 31	menu_items	popup_fields_id	fields	\N	\N	\N	\N	\N	nullify
 32	menu_items	details_fields_id	fields	\N	\N	\N	\N	\N	nullify
 33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
@@ -549,7 +550,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 469, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 470, true);
 
 
 --
