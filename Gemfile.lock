@@ -132,7 +132,7 @@ GEM
     net-imap (0.4.14)
       date
       net-protocol
-    net-pop (0.1.2)
+    net-pop (0.1.0)
       net-protocol
     net-protocol (0.2.2)
       timeout
