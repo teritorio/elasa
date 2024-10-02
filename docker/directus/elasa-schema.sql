@@ -270,7 +270,7 @@ ALTER TABLE public.languages OWNER TO postgres;
 
 CREATE TABLE public.menu_items (
     id integer NOT NULL,
-    index_order smallint NOT NULL,
+    index_order smallint DEFAULT 0 NOT NULL,
     hidden boolean DEFAULT false NOT NULL,
     selected_by_default boolean DEFAULT false NOT NULL,
     parent_id integer,
