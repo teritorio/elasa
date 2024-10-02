@@ -190,8 +190,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 172	translations	key	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 173	translations	key_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 174	translations	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	13	full	\N	\N	\N	f	\N	\N	\N
-176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	t	14	full	\N	\N	\N	f	\N	\N	\N
+175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
+176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	14	full	\N	\N	\N	f	\N	\N	\N
 178	fields	label	cast-boolean	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	group_block	\N	\N
 179	menu_items	use_details_link	cast-boolean	boolean	\N	\N	\N	f	f	12	full	\N	\N	\N	f	category	\N	\N
 228	projects	project_translations	translations	translations	{"languageField":"name","defaultLanguage":"en-US","defaultOpenSplitView":true,"userLanguage":true}	translations	{"template":"{{name}}","languageField":"name","defaultLanguage":null,"userLanguage":true}	f	f	2	full	\N	\N	\N	f	\N	\N	\N
