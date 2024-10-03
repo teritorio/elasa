@@ -112,7 +112,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	5	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null}	related-values	{"template":null}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}}	related-values	{"template":null}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
