@@ -4,14 +4,8 @@
 require 'json'
 require 'http'
 require 'pg'
+require_relative 'commons'
 
-
-def fetch_json(url)
-  response = HTTP.follow.get(url)
-  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
-
-  JSON.parse(response)
-end
 
 # Back port from active_support
 class String

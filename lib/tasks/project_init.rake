@@ -6,6 +6,7 @@ require 'json'
 require 'http'
 require 'css_parser'
 
+require_relative 'commons'
 require_relative 'sources_load'
 
 
@@ -20,16 +21,6 @@ def new_project(slug, osm_id, theme, css, website)
   geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('
-      INSERT INTO languages(code, name, direction)
-      VALUES ($1, $2, $3), ($4, $5, $6), ($7, $8, $9)
-      ON CONFLICT DO NOTHING
-    ', %w[
-      fr-FR French ltr
-      en-US English ltr
-      es-ES Spanish ltr
-    ])
-
     project_id = conn.exec('
       INSERT INTO projects(icon_font_css_url, polygon, slug, articles, default_country, default_country_state_opening_hours, polygons_extra)
       VALUES (
@@ -67,7 +58,7 @@ def new_project(slug, osm_id, theme, css, website)
       )
       ON CONFLICT (projects_id, languages_code)
       DO UPDATE SET
-        name = $2
+        name = $3
     ', [
       project_id,
       'fr-FR',
@@ -314,7 +305,7 @@ def insert_group_fields(conn, project_id, ontology)
 end
 
 def new_menu(project_id, theme_id, theme, css, filters)
-  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json")
+  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json") if %w[tourism city].include?(theme)
 
   css_parser = CssParser::Parser.new
   css_parser.load_uri!(css)
@@ -379,6 +370,8 @@ def new_menu(project_id, theme_id, theme, css, filters)
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
+
+    return if ontology.nil?
 
     group_fields_ids = insert_group_fields(conn, project_id, ontology)
 
@@ -455,11 +448,17 @@ end
 namespace :project do
   desc 'Create a new project'
   task :new, [] => :environment do
+    set_default_languages
+
     slug, osm_id, theme, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = 'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.8.0'
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
+
+    role_uuid = create_role(slug)
+    create_user(project_id, slug, role_uuid)
+
     load_from_source("#{datasource_url}/data", slug, slug)
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
     load_i18n(slug, i18ns)
