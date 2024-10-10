@@ -481,7 +481,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        'slug', menu_items.slug->'fr',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
