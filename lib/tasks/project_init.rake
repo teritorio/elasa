@@ -25,13 +25,13 @@ def new_project(slug, osm_id, theme, css, website)
       INSERT INTO projects(icon_font_css_url, polygon, slug, articles, default_country, default_country_state_opening_hours, polygons_extra)
       VALUES (
         $1,
-        ST_GeomFromGeoJSON($2),
+        ST_Force2D(ST_GeomFromGeoJSON($2)),
         $3, $4, $5, $6, $7
       )
       ON CONFLICT (slug)
       DO UPDATE SET
         icon_font_css_url = $1,
-        polygon = ST_GeomFromGeoJSON($2),
+        polygon = ST_Force2D(ST_GeomFromGeoJSON($2)),
         articles = $4,
         default_country = $5,
         default_country_state_opening_hours = $6,

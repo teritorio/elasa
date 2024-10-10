@@ -730,7 +730,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
       if ['id', "#{source_name}_id"[..62]].include?(field) || type.include?(' bigint')
         "\"#{field}\"::bigint"
       elsif field == 'geom'
-        'ST_GeomFromGeoJSON(geom)'
+        'ST_Force2D(ST_GeomFromGeoJSON(geom))'
       else
         "\"#{field}\""
       end
