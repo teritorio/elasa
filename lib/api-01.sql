@@ -248,7 +248,7 @@ CREATE OR REPLACE FUNCTION filter_values(
         FROM
             translations
         WHERE
-            project_id = project_id AND
+            project_id = _project_id AND
             key = _property
         LIMIT 1
     ),
@@ -326,9 +326,12 @@ CREATE OR REPLACE FUNCTION menu(
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
-    WITH RECURSIVE theme_menu_items AS (
+    WITH
+    RECURSIVE theme_menu_items AS (
         SELECT
-            menu_items.*
+            menu_items.*,
+            projects.id AS project_id,
+            NULL::bigint AS parent_slug_id
         FROM
             projects
             JOIN themes ON
@@ -342,17 +345,117 @@ CREATE OR REPLACE FUNCTION menu(
         UNION ALL
 
         SELECT
-            menu_items.*
+            menu_items.*,
+            project_id,
+            id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id) AS parent_slug_id
         FROM
             theme_menu_items
             JOIN menu_items_join AS menu_items ON
                 menu_items.parent_id = theme_menu_items.id
+    ),
+    theme_menu_items_filters AS (
+        SELECT
+            menu_items.id,
+            menu_items.index_order,
+            menu_items.hidden,
+            menu_items.selected_by_default,
+            menu_items.parent_id,
+            menu_items.theme_id,
+            menu_items.icon,
+            menu_items.display_mode,
+            menu_items.search_indexed,
+            menu_items.style_merge,
+            menu_items.zoom,
+            menu_items.color_fill,
+            menu_items.color_line,
+            menu_items.href,
+            menu_items.style_class_string,
+            menu_items.style_class,
+            menu_items.type,
+            menu_items.popup_fields_id,
+            menu_items.details_fields_id,
+            menu_items.list_fields_id,
+            menu_items.use_details_link,
+            menu_items.name,
+            menu_items.name_singular,
+            menu_items.slug,
+            menu_items.parent_slug_id,
+            jsonb_agg(
+                jsonb_build_object(
+                    'type', filters.type,
+                    'name', filters.name
+                ) ||
+                CASE filters.type
+                WHEN 'multiselection' THEN
+                    jsonb_build_object(
+                        'property', filters.multiselection_property,
+                        'values', filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property)
+                    )
+                WHEN 'checkboxes_list' THEN
+                    jsonb_build_object(
+                        'property', filters.checkboxes_list_property,
+                        'values', filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property)
+                    )
+                WHEN 'boolean' THEN
+                    jsonb_build_object(
+                        'property', filters.boolean_property
+                    )
+                WHEN 'date_range' THEN
+                    jsonb_build_object(
+                        'property_begin', filters.property_begin,
+                        'property_end', filters.property_end
+                    )
+                WHEN 'number_range' THEN
+                    jsonb_build_object(
+                        'property', filters.number_range_property,
+                        'min', filters.min,
+                        'max', filters.max
+                    )
+                END
+            ) AS filters
+        FROM
+            theme_menu_items AS menu_items
+            LEFT JOIN menu_items_filters ON
+                menu_items_filters.menu_items_id = menu_items.id
+            LEFT JOIN filters_join AS filters ON
+                filters.id = menu_items_filters.filters_id
+        WHERE
+            menu_items_filters.menu_items_id IS NULL OR (
+                (filters.type != 'multiselection' OR filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
+                (filters.type != 'checkboxes_list' OR filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
+            )
+        GROUP BY
+            menu_items.id,
+            menu_items.index_order,
+            menu_items.hidden,
+            menu_items.selected_by_default,
+            menu_items.parent_id,
+            menu_items.theme_id,
+            menu_items.icon,
+            menu_items.display_mode,
+            menu_items.search_indexed,
+            menu_items.style_merge,
+            menu_items.zoom,
+            menu_items.color_fill,
+            menu_items.color_line,
+            menu_items.href,
+            menu_items.style_class_string,
+            menu_items.style_class,
+            menu_items.type,
+            menu_items.popup_fields_id,
+            menu_items.details_fields_id,
+            menu_items.list_fields_id,
+            menu_items.use_details_link,
+            menu_items.name,
+            menu_items.name_singular,
+            menu_items.slug,
+            menu_items.parent_slug_id
     )
     SELECT
         jsonb_agg(
             jsonb_strip_nulls(jsonb_build_object(
                 'id', id_from_slugs_menu_item(menu_items.slug, menu_items.id),
-                'parent_id', id_from_slugs_menu_item(parent_menu_items.slug, parent_menu_items.id),
+                'parent_id', menu_items.parent_slug_id,
                 'index_order', menu_items.index_order,
                 'hidden', menu_items.hidden,
                 'selected_by_default', menu_items.selected_by_default,
@@ -378,50 +481,7 @@ CREATE OR REPLACE FUNCTION menu(
                         'display_mode', menu_items.display_mode,
                         'style_merge', menu_items.style_merge,
                         'zoom', coalesce(menu_items.zoom, 16),
-                        'filters', (
-                            SELECT
-                                jsonb_agg(
-                                    jsonb_build_object(
-                                        'type', filters.type,
-                                        'name', filters.name
-                                    ) ||
-                                    CASE filters.type
-                                    WHEN 'multiselection' THEN
-                                        jsonb_build_object(
-                                            'property', filters.multiselection_property,
-                                            'values', filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property)
-                                        )
-                                    WHEN 'checkboxes_list' THEN
-                                        jsonb_build_object(
-                                            'property', filters.checkboxes_list_property,
-                                            'values', filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property)
-                                        )
-                                    WHEN 'boolean' THEN
-                                        jsonb_build_object(
-                                            'property', filters.boolean_property
-                                        )
-                                    WHEN 'date_range' THEN
-                                        jsonb_build_object(
-                                            'property_begin', filters.property_begin,
-                                            'property_end', filters.property_end
-                                        )
-                                    WHEN 'number_range' THEN
-                                        jsonb_build_object(
-                                            'property', filters.number_range_property,
-                                            'min', filters.min,
-                                            'max', filters.max
-                                        )
-                                    END
-                                )
-                            FROM
-                                menu_items_filters
-                                JOIN filters_join AS filters ON
-                                    filters.id = menu_items_filters.filters_id
-                            WHERE
-                                menu_items_filters.menu_items_id = menu_items.id AND
-                                (filters.type != 'multiselection' OR filter_values(_project_slug, projects.id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
-                                (filters.type != 'checkboxes_list' OR filter_values(_project_slug, projects.id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
-                        )
+                        'filters', menu_items.filters
                     )
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
@@ -438,18 +498,9 @@ CREATE OR REPLACE FUNCTION menu(
             ))
         )
     FROM
-        projects
-        JOIN themes ON
-            themes.project_id = projects.id AND
-            themes.slug = _theme_slug
-        JOIN theme_menu_items AS menu_items ON
-            -- Excludes root menu
-            menu_items.id != themes.root_menu_item_id
-        LEFT JOIN theme_menu_items AS parent_menu_items ON
-            parent_menu_items.id = menu_items.parent_id AND
-            parent_menu_items.id != themes.root_menu_item_id -- Excludes root menu
+        theme_menu_items_filters AS menu_items
     WHERE
-        projects.slug = _project_slug
+        parent_id IS NOT NULL
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
