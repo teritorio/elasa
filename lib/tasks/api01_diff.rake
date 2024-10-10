@@ -123,6 +123,19 @@ def compare_menu(url_old, url_new)
     }
   }
 
+  ids = hashes.collect{ |h|
+    h.collect{ |poi|
+      poi['id']
+    }
+  }
+  only_in_0 = ids[0] - ids[1]
+  only_in_1 = ids[1] - ids[0]
+  puts "Ids only on 0\n#{only_in_0.inspect}" if !only_in_0.empty?
+  puts "Ids only on 1\n#{only_in_1.inspect}" if !only_in_1.empty?
+
+  common_ids = Set.new(ids[0] & ids[1])
+  hashes = hashes.collect{ |h| h.select{ |menu| common_ids.include?(menu['id']) } }
+
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   if !diff.diff.empty?
     puts JSON.dump(diff.diff)
