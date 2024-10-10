@@ -91,9 +91,10 @@ def compare_menu(url_old, url_new)
     }.collect{ |menu|
       menu['menu_group']&.delete('id')
       menu['menu_group']&.delete('style_class')
-      menu['menu_group']&.delete('icon') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
-      menu['menu_group']&.delete('color_fill') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
-      menu['menu_group']&.delete('color_line') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') == 'Recherche' # WP, ignore color on first menu level
+      menu['menu_group']&.delete('icon') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
+      menu['menu_group']&.delete('color_fill') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
+      menu['menu_group']&.delete('color_line') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
+      menu.delete('parent_id') if menu['parent_id'] == 0 # WP, not configured
       menu['category']&.delete('id')
       menu['link']&.delete('id')
 
@@ -207,6 +208,9 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['editorial']&.delete('label_infobulle')
       poi['properties']['editorial']&.delete('PopupListField')
       poi['properties']['editorial']&.delete('ficheBlocs')
+
+      poi['properties']['display']&.delete('color_fill') # Not constant Elasa/WP on POI in multiple categories
+      poi['properties']['display']&.delete('color_line') # Not constant Elasa/WP on POI in multiple categories
 
       poi['properties']['metadata']&.delete('natives') # Buggy WP
       poi['properties'].delete('description:de') # Buggy WP
