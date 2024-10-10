@@ -380,7 +380,7 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.name_singular,
             menu_items.slug,
             menu_items.parent_slug_id,
-            jsonb_agg(
+            nullif(jsonb_agg(
                 jsonb_build_object(
                     'type', filters.type,
                     'name', filters.name
@@ -389,12 +389,18 @@ CREATE OR REPLACE FUNCTION menu(
                 WHEN 'multiselection' THEN
                     jsonb_build_object(
                         'property', filters.multiselection_property,
-                        'values', filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property)
+                        'values', coalesce(
+                            filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property),
+                            '[]'::jsonb
+                        )
                     )
                 WHEN 'checkboxes_list' THEN
                     jsonb_build_object(
                         'property', filters.checkboxes_list_property,
-                        'values', filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property)
+                        'values', coalesce(
+                            filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property),
+                            '[]'::jsonb
+                        )
                     )
                 WHEN 'boolean' THEN
                     jsonb_build_object(
@@ -412,7 +418,7 @@ CREATE OR REPLACE FUNCTION menu(
                         'max', filters.max
                     )
                 END
-            ) AS filters
+            ), '[null]'::jsonb) AS filters
         FROM
             theme_menu_items AS menu_items
             LEFT JOIN menu_items_filters ON
