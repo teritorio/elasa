@@ -419,11 +419,6 @@ CREATE OR REPLACE FUNCTION menu(
                 menu_items_filters.menu_items_id = menu_items.id
             LEFT JOIN filters_join AS filters ON
                 filters.id = menu_items_filters.filters_id
-        WHERE
-            menu_items_filters.menu_items_id IS NULL OR (
-                (filters.type != 'multiselection' OR filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property) IS NOT NULL) AND
-                (filters.type != 'checkboxes_list' OR filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property) IS NOT NULL)
-            )
         GROUP BY
             menu_items.id,
             menu_items.index_order,
