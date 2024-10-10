@@ -164,7 +164,7 @@ BEGIN
         SELECT
             sources.id,
             table_name,
-            regexp_replace(table_name, 'local-[a-z]+-', '') || '_id' AS local_id
+            regexp_replace(table_name, 'local-[a-z_]+-', '') || '_id' AS local_id
         FROM
             information_schema.tables
             JOIN sources ON
