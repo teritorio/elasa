@@ -142,7 +142,7 @@ def load_pois(conn, project_slug, source_slug, pois)
       SELECT DISTINCT ON (sources.id, pois_import.properties->>'id')
         sources.id AS source_id,
         pois_import.*,
-        ST_GeomFromGeoJSON(geometry)::geometry(Geometry, 4326) AS geom
+        ST_Force2D(ST_GeomFromGeoJSON(geometry))::geometry(Geometry, 4326) AS geom
       FROM
         pois_import
         JOIN projects ON
