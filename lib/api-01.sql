@@ -653,6 +653,11 @@ CREATE OR REPLACE FUNCTION pois(
                         ELSE ST_PointOnSurface(pois.geom)
                         END
                     WHEN 'bbox' THEN ST_Envelope(pois.geom)
+                    WHEN 'point_or_bbox' THEN
+                        CASE ST_Dimension(pois.geom)
+                        WHEN 0 THEN pois.geom
+                        ELSE ST_Envelope(pois.geom)
+                        END
                     ELSE pois.geom
                     END
                 )::jsonb,

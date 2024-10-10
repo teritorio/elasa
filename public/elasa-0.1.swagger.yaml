@@ -906,8 +906,8 @@ components:
       name: geometry_as
       schema:
         type: string
-        enum: [point, bbox]
-      description: Simplifie output geometry.
+        enum: [point, bbox, point_or_bbox]
+      description: Simplifie output geometry. Default is nothing, it returns the full geometry. `point_or_bbox` returns a Point or a MultiPoint if the geometry is a Point or MultiPoint, a bbox otherwise.
 
     param_query_short_description:
       in: query
