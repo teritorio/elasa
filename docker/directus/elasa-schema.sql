@@ -56,6 +56,23 @@ CREATE TYPE public.menu_item_display_mode_type AS ENUM (
 
 ALTER TYPE public.menu_item_display_mode_type OWNER TO postgres;
 
+--
+-- Name: jsonb_pois_keys_array(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.jsonb_pois_keys_array(jsonb) RETURNS text[]
+    LANGUAGE sql IMMUTABLE
+    AS $_$
+    SELECT array_agg(jsonb_object_keys) FROM (
+        SELECT * FROM jsonb_object_keys($1->'tags')
+        UNION ALL
+        SELECT * FROM jsonb_object_keys($1->'natives')
+    ) AS t
+$_$;
+
+
+ALTER FUNCTION public.jsonb_pois_keys_array(jsonb) OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -1091,6 +1108,13 @@ CREATE INDEX pois_idx_slug_original_id_integer ON public.pois USING btree (((slu
 --
 
 CREATE INDEX pois_idx_source_id ON public.pois USING btree (source_id);
+
+
+--
+-- Name: pois_keys_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_array(properties));
 
 
 --

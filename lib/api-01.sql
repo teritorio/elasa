@@ -262,6 +262,8 @@ CREATE OR REPLACE FUNCTION filter_values(
             pois
             JOIN sources ON
                 sources.id = pois.source_id
+        WHERE
+            jsonb_pois_keys_array(properties) @> ARRAY[split_part(_property, ':', 1)]
         UNION ALL
         SELECT
             sources.project_id,
