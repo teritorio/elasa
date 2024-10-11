@@ -711,13 +711,56 @@ CREATE OR REPLACE FUNCTION pois(
 ) RETURNS TABLE (
     d jsonb
 ) AS $$
-    SELECT
-        jsonb_build_object(
-            'type', 'FeatureCollection',
-            'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
-        )
-    FROM (
-        SELECT DISTINCT ON (menu_items.id, pois.id)
+    WITH
+    menu AS (
+        SELECT
+            themes.site_url,
+            sources.id AS source_id,
+            menu_items.slug,
+            menu_items.id AS menu_id,
+            menu_items.name_singular->'fr' AS name_singular,
+            menu_items.use_details_link,
+            jsonb_build_object(
+                'popup_fields', menu_items.popup_fields,
+                'details_fields', menu_items.details_fields,
+                'list_fields', menu_items.list_fields,
+                'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
+                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                -- 'unavoidable', menu_items.unavoidable -- TODO -------
+            ) AS editorial,
+            jsonb_build_object(
+                'icon', menu_items.icon,
+                'color_fill', menu_items.color_fill,
+                'color_line', menu_items.color_line,
+                'style_class', array_to_json(menu_items.style_class)
+            ) AS display
+        FROM
+            projects
+            JOIN themes_join AS themes ON
+                themes.project_id = projects.id AND
+                themes.slug = _theme_slug
+            JOIN (
+                SELECT
+                    *,
+                    fields(menu_items.popup_fields_id)->'fields' AS popup_fields,
+                    fields(menu_items.details_fields_id)->'fields' AS details_fields,
+                    fields(menu_items.list_fields_id)->'fields' AS list_fields
+                FROM
+                    menu_items_join AS menu_items
+            ) AS menu_items ON
+                menu_items.theme_id = themes.id AND
+                (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
+            JOIN menu_items_sources ON
+                menu_items_sources.menu_items_id = menu_items.id
+            JOIN sources ON
+                sources.project_id = projects.id AND
+                sources.id = menu_items_sources.sources_id
+        WHERE
+            projects.slug = _project_slug
+    ),
+    json_pois AS (
+        SELECT DISTINCT ON (menu.menu_id, pois.id)
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(
@@ -752,13 +795,13 @@ CREATE OR REPLACE FUNCTION pois(
                     (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details') ||
                     jsonb_build_object(
                         'name', coalesce(
-                            pois.properties->'tags'->'name'->>'fr',
-                            pois.properties->'natives'->'name'->>'fr',
-                            menu_items.name_singular->>'fr'
+                            pois.properties->'tags'->'name'->'fr',
+                            pois.properties->'natives'->'name'->'fr',
+                            menu.name_singular->'fr'
                         ),
-                        'official_name', pois.properties->'tags'->'official_name'->>'fr',
-                        'loc_name', pois.properties->'tags'->'loc_name'->>'fr',
-                        'alt_name', pois.properties->'tags'->'alt_name'->>'fr',
+                        'official_name', pois.properties->'tags'->'official_name'->'fr',
+                        'loc_name', pois.properties->'tags'->'loc_name'->'fr',
+                        'alt_name', pois.properties->'tags'->'alt_name'->'fr',
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
@@ -774,7 +817,7 @@ CREATE OR REPLACE FUNCTION pois(
                         'metadata', jsonb_build_object(
                             'id', id_from_slugs(pois.slugs, pois.id), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array[id_from_slugs_menu_item(menu_items.slug, menu_items.id)], -- FIXME Should be all menu_items.id
+                            'category_ids', array[id_from_slugs_menu_item(menu.slug, menu.menu_id)], -- FIXME Should be all menu_items.id
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -787,60 +830,30 @@ CREATE OR REPLACE FUNCTION pois(
                                     END
                                 END
                         ),
-                        'editorial', jsonb_build_object(
-                            'popup_fields', menu_items.popup_fields,
-                            'details_fields', menu_items.details_fields,
-                            'list_fields', menu_items.list_fields,
-                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                            'website:details', CASE WHEN menu_items.use_details_link THEN
+                        'editorial', menu.editorial || jsonb_build_object(
+                            'website:details', CASE WHEN menu.use_details_link THEN
                                 coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
                                     pois.properties->'natives'->>'website:details',
-                                    themes.site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs, pois.id) || '/details' -- use slug as original POI id
+                                    site_url->>'fr' || '/poi/' || id_from_slugs(pois.slugs, pois.id) || '/details' -- use slug as original POI id
                                 )
                             END
-                            -- 'unavoidable', menu_items.unavoidable -- TODO -------
                         ),
-                        'display', jsonb_build_object(
-                            'icon', menu_items.icon,
-                            'color_fill', coalesce(pois.properties->'tags'->>'colour', menu_items.color_fill),
-                            'color_line', coalesce(pois.properties->'tags'->>'colour', menu_items.color_line),
-                            'style_class', array_to_json(menu_items.style_class)
+                        'display', menu.display || jsonb_build_object(
+                            'color_fill', coalesce(pois.properties->'tags'->'colour', menu.display->'color_fill'),
+                            'color_line', coalesce(pois.properties->'tags'->'colour', menu.display->'color_line')
                         )
                     )
             )) AS feature
         FROM
-            -- TODO only for not hidden menu_items, recursively from theme
-            projects
-            JOIN themes_join AS themes ON
-                themes.project_id = projects.id AND
-                themes.slug = _theme_slug
-            JOIN (
-                SELECT
-                    *,
-                    fields(menu_items.popup_fields_id)->'fields' AS popup_fields,
-                    fields(menu_items.details_fields_id)->'fields' AS details_fields,
-                    fields(menu_items.list_fields_id)->'fields' AS list_fields
-                FROM
-                    menu_items_join AS menu_items
-            ) AS menu_items ON
-                menu_items.theme_id = themes.id AND
-                (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
-            JOIN menu_items_sources ON
-                menu_items_sources.menu_items_id = menu_items.id
-            JOIN sources ON
-                sources.project_id = projects.id AND
-                sources.id = menu_items_sources.sources_id
+            menu
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
                 SELECT * FROM pois_local(_project_slug)
             ) AS pois ON
-                pois.source_id = sources.id
+                pois.source_id = menu.source_id
         WHERE
-            projects.slug = _project_slug AND
             (_poi_ids IS NULL OR (
                 id_from_slugs(pois.slugs, pois.id) = ANY(_poi_ids) OR
                 (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
@@ -848,9 +861,16 @@ CREATE OR REPLACE FUNCTION pois(
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
         ORDER BY
-            menu_items.id,
+            menu.menu_id,
             pois.id
-    ) AS t
+    )
+    SELECT
+        jsonb_build_object(
+            'type', 'FeatureCollection',
+            'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
+        )
+    FROM
+        json_pois
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
