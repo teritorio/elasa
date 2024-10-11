@@ -220,6 +220,16 @@ def compare_pois(url_old, url_new, category_ids)
 
       poi['geometry']&.delete('coordinates') #### TMP, TODO approx commp are 0.0001
 
+      poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
+      poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
+      poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
+      poi['properties']['assmat_nb_places_agrees'] = poi['properties']['assmat_nb_places_agrees']&.to_i # Buggy WP
+      poi['properties']['assmat_nb_places_libres'] = poi['properties']['assmat_nb_places_libres']&.to_i # Buggy WP
+      poi['properties']['assmat_nb_places_bientot_dispo'] = poi['properties']['assmat_nb_places_bientot_dispo']&.to_i # Buggy WP
+
+      poi['properties'].delete('min_age') # Buggy WP with 0 value
+      poi['properties'].delete('roof:levels') # Buggy WP with 0 value
+
       #### TEMP before switch to clearance
       poi['properties']['metadata']&.delete('osm_id')
       poi['properties']['metadata']&.delete('osm_type')
