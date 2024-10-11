@@ -147,8 +147,7 @@ $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS pois_local;
 CREATE OR REPLACE FUNCTION pois_local(
-    _project_slug text,
-    _source_ids integer[]
+    _project_slug text
 ) RETURNS TABLE (
     id integer,
     geom geometry(Geometry,4326),
@@ -168,7 +167,6 @@ BEGIN
         FROM
             information_schema.tables
             JOIN sources ON
-                (_source_ids IS NULL OR sources.id = ANY (_source_ids)) AND
                 table_name = 'local-' || _project_slug || '-' || sources.slug
         WHERE
             table_type = 'BASE TABLE' AND
@@ -237,38 +235,47 @@ $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 DROP FUNCTION IF EXISTS filter_values;
 CREATE OR REPLACE FUNCTION filter_values(
     _project_slug text,
-    _project_id integer,
-    _menu_items_id integer,
     _property text
-) RETURNS jsonb AS $$
+)  RETURNS TABLE (
+    project_id integer,
+    menu_items_id integer,
+    property text,
+    filter_values jsonb
+) AS $$
     WITH
-    translation AS (
-        SELECT
-            values_translations
-        FROM
-            translations
-        WHERE
-            project_id = _project_id AND
-            key = _property
-        LIMIT 1
-    ),
     sources AS (
         SELECT
-            sources.id AS id
+            sources.project_id,
+            menu_items_sources.menu_items_id,
+            sources.id
         FROM
             menu_items_sources
             JOIN sources ON
                 sources.id = menu_items_sources.sources_id
-        WHERE
-            menu_items_sources.menu_items_id = _menu_items_id
     ),
     pois AS (
-        SELECT pois.* FROM pois JOIN sources ON sources.id = pois.source_id
-        UNION ALL
-        SELECT * FROM pois_local(_project_slug, (SELECT array_agg(id) FROM sources))
-    ),
-    properties AS (
         SELECT
+            sources.project_id,
+            sources.menu_items_id,
+            pois.*
+        FROM
+            pois
+            JOIN sources ON
+                sources.id = pois.source_id
+        UNION ALL
+        SELECT
+            sources.project_id,
+            sources.menu_items_id,
+            pois_local.*
+        FROM
+            sources
+            JOIN pois_local(_project_slug) AS pois_local ON
+                pois_local.source_id = sources.id
+    ),
+    properties_values AS (
+        SELECT
+            project_id,
+            menu_items_id,
             coalesce(
                 jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"' END)::jsonpath),
                 jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || '"' || _property || '"')::jsonpath)
@@ -278,6 +285,8 @@ CREATE OR REPLACE FUNCTION filter_values(
     ),
     values AS (
         SELECT
+            project_id,
+            menu_items_id,
             jsonb_array_elements_text(
                 CASE jsonb_typeof(property)
                 wHEN 'array' THEN property
@@ -285,36 +294,48 @@ CREATE OR REPLACE FUNCTION filter_values(
                 END
             ) AS value
         FROM
-            properties
+            properties_values
         WHERE
             property IS NOT NULL AND
             property != 'null'::jsonb
     ),
     values_uniq AS (
-        SELECT DISTINCT ON (upper(value))
+        SELECT DISTINCT ON (project_id, menu_items_id, value)
+            project_id,
+            menu_items_id,
             value
         FROM
             values
         ORDER BY
-            upper(value)
+            project_id,
+            menu_items_id,
+            value
     )
     SELECT
+        values_uniq.project_id,
+        menu_items_id,
+        _property AS property,
         jsonb_strip_nulls(
             jsonb_agg(
                 jsonb_build_object(
                     'value', value,
                     'name',
-                        CASE WHEN translation.values_translations IS NOT NULL THEN
+                        CASE WHEN translations.values_translations IS NOT NULL THEN
                             jsonb_build_object(
-                                'fr', translation.values_translations->value->'@default'->'fr'
+                                'fr', translations.values_translations->value->'@default'->'fr'
                             )
                         END
                 )
             )
-        )
+        ) AS filter_values
     FROM
         values_uniq
-        LEFT JOIN translation ON true
+        LEFT JOIN translations ON
+            translations.project_id = values_uniq.project_id AND
+            translations.key = _property
+    GROUP BY
+        values_uniq.project_id,
+        menu_items_id
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
@@ -390,7 +411,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', filters.multiselection_property,
                         'values', coalesce(
-                            filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.multiselection_property),
+                            (SELECT filter_values FROM filter_values(_project_slug, filters.multiselection_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -398,7 +419,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', filters.checkboxes_list_property,
                         'values', coalesce(
-                            filter_values(_project_slug, menu_items.project_id, menu_items.id, filters.checkboxes_list_property),
+                            (SELECT filter_values FROM filter_values(_project_slug, filters.checkboxes_list_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -813,7 +834,7 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT * FROM pois_local(_project_slug, NULL)
+                SELECT * FROM pois_local(_project_slug)
             ) AS pois ON
                 pois.source_id = sources.id
         WHERE
