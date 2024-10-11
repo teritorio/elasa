@@ -250,8 +250,6 @@ def compare_pois(url_old, url_new, category_ids)
       }
 
       #### TEMP before switch to clearance
-      poi['properties']['metadata']&.delete('osm_id')
-      poi['properties']['metadata']&.delete('osm_type')
       poi['properties']['metadata']&.delete('source')
 
       poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
