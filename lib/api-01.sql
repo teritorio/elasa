@@ -760,7 +760,8 @@ CREATE OR REPLACE FUNCTION pois(
             projects.slug = _project_slug
     ),
     json_pois AS (
-        SELECT DISTINCT ON (menu.menu_id, pois.id)
+        SELECT
+            row_number() OVER (PARTITION BY pois.id) = 1 AS first_one,
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(
@@ -817,7 +818,7 @@ CREATE OR REPLACE FUNCTION pois(
                         'metadata', jsonb_build_object(
                             'id', id_from_slugs(pois.slugs, pois.id), -- use slug as original POI id
                             -- cartocode
-                            'category_ids', array[id_from_slugs_menu_item(menu.slug, menu.menu_id)], -- FIXME Should be all menu_items.id
+                            'category_ids', array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.id),
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -871,6 +872,8 @@ CREATE OR REPLACE FUNCTION pois(
         )
     FROM
         json_pois
+    WHERE
+        first_one
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
