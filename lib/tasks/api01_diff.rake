@@ -98,6 +98,12 @@ def compare_menu(url_old, url_new)
       menu['category']&.delete('id')
       menu['link']&.delete('id')
 
+      ['menu_group', 'category', 'link'].each{ |k|
+        menu[k]&.delete('icon') if menu[k]&.delete('icon') == 'teritorio teritorio-beef00' # Values added as default on import from WP
+        menu[k]&.delete('color_fill') if menu[k]&.delete('color_fill') == '#beef00' # Values added as default on import from WP
+        menu[k]&.delete('color_line') if menu[k]&.delete('color_line') == '#beef00' # Values added as default on import from WP
+      }
+
       if menu['category']
         menu['category']['zoom'] = Integer(menu['category']['zoom'], exception: false)
       end
@@ -217,6 +223,10 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('description:es') # Buggy WP
       poi['properties'].delete('description:nl') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
+
+      poi['properties']['display'].delete('icon') if poi['properties']['display']&.delete('icon') == 'teritorio teritorio-beef00' # Values added as default on import from WP
+      poi['properties']['display'].delete('color_fill') if poi['properties']['display']&.delete('color_fill') == '#beef00' # Values added as default on import from WP
+      poi['properties']['display'].delete('color_line') if poi['properties']['display']&.delete('color_line') == '#beef00' # Values added as default on import from WP
 
       poi['geometry']&.delete('coordinates') #### TMP, TODO approx commp are 0.0001
 
