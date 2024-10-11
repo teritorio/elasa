@@ -224,6 +224,8 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('description:nl') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
 
+      poi['properties'].delete('website') # Buggy WP, wrong values including ";"
+
       poi['properties']['display'].delete('icon') if poi['properties']['display']&.delete('icon') == 'teritorio teritorio-beef00' # Values added as default on import from WP
       poi['properties']['display'].delete('color_fill') if poi['properties']['display']&.delete('color_fill') == '#beef00' # Values added as default on import from WP
       poi['properties']['display'].delete('color_line') if poi['properties']['display']&.delete('color_line') == '#beef00' # Values added as default on import from WP
