@@ -243,7 +243,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['zpj_zones_1_activer_dessin'] = poi['properties']['zpj_zones_1_activer_dessin']&.to_i # Imported as integer
 
       # Buggy WP with 0 and "no" values
-      ['min_age', 'roof:levels', 'capacity:caravans', 'addr:floor', 'name:signed', 'capacity:cabins', 'capacity'].each{ |k|
+      ['min_age', 'roof:levels', 'capacity:caravans', 'addr:floor', 'name:signed', 'capacity:cabins', 'capacity', 'covered'].each{ |k|
         if [0, 'no'].include?(poi['properties'][k])
           poi['properties'].delete(k)
         end
