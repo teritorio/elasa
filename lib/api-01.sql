@@ -783,7 +783,7 @@ CREATE OR REPLACE FUNCTION pois(
                 'properties',
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
-                        - 'description' - 'website:details' - 'colour'
+                        - 'description' - 'website:details'
                         - 'addr' - 'ref' - 'route' - 'source' ||
                     coalesce(json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
@@ -840,10 +840,7 @@ CREATE OR REPLACE FUNCTION pois(
                                 )
                             END
                         ),
-                        'display', menu.display || jsonb_build_object(
-                            'color_fill', coalesce(pois.properties->'tags'->'colour', menu.display->'color_fill'),
-                            'color_line', coalesce(pois.properties->'tags'->'colour', menu.display->'color_line')
-                        )
+                        'display', menu.display
                     )
             )) AS feature
         FROM
