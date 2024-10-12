@@ -95,7 +95,7 @@ DROP FUNCTION IF EXISTS project;
 CREATE OR REPLACE FUNCTION project(
     _project_slug text
 ) RETURNS TABLE (
-    d jsonb
+    d text
 ) AS $$
     SELECT
         jsonb_strip_nulls(
@@ -136,7 +136,7 @@ CREATE OR REPLACE FUNCTION project(
                         themes.project_id = projects.id
                 )
             )
-        ) AS project
+        )::text
     FROM
         projects_join AS projects
     WHERE
@@ -347,7 +347,7 @@ CREATE OR REPLACE FUNCTION menu(
     _project_slug text,
     _theme_slug text
 ) RETURNS TABLE (
-    d jsonb
+    d text
 ) AS $$
     WITH
     RECURSIVE theme_menu_items AS (
@@ -520,7 +520,7 @@ CREATE OR REPLACE FUNCTION menu(
                     )
                 END
             ))
-        )
+        )::text
     FROM
         theme_menu_items_filters AS menu_items
     WHERE
@@ -709,7 +709,7 @@ CREATE OR REPLACE FUNCTION pois(
     _end_date text,
     _with_deps boolean
 ) RETURNS TABLE (
-    d jsonb
+    d text
 ) AS $$
     WITH
     menu AS (
@@ -866,7 +866,7 @@ CREATE OR REPLACE FUNCTION pois(
         jsonb_build_object(
             'type', 'FeatureCollection',
             'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
-        )
+        )::text
     FROM
         json_pois
     WHERE
@@ -881,7 +881,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     _theme_slug text,
     _lang text
 ) RETURNS TABLE (
-    d jsonb
+    d text
 ) AS $$
     WITH
     translations AS (
@@ -930,7 +930,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                         json_each(values_translations)
                 )
             )
-        ))
+        ))::text
     FROM (
         SELECT * FROM translations
         UNION ALL

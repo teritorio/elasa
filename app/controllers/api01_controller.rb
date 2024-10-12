@@ -8,27 +8,35 @@ class Api01Controller < ApplicationController
   def settings
     project_slug, = project_theme_params
 
-    project = query('project($1)', [project_slug])
-    render json: project.except('articles')
+    project = JSON.parse(query('project($1)', [project_slug]))
+    respond_to do |format|
+      format.json { render json: project.except('articles') }
+    end
   end
 
   def articles
     project_slug, = project_theme_params
 
-    project = query('project($1)', [project_slug]) || { article: [] }
-    render json: (project['articles'] || []).collect{ |article|
-      {
-        url: article['url']['fr'],
-        title: article['title']['fr'],
+    articles = JSON.parse(query('project($1)', [project_slug]))['articles']
+    respond_to do |format|
+      format.json {
+        render json: (articles || []).collect{ |article|
+          {
+            url: article['url']['fr'],
+            title: article['title']['fr'],
+          }
+        }
       }
-    }
+    end
   end
 
   def menu
     project_slug, theme_slug = project_theme_params
 
     menu_items = query('menu($1, $2)', [project_slug, theme_slug]) || {}
-    render json: menu_items
+    respond_to do |format|
+      format.json { render plain: menu_items }
+    end
   end
 
   def poi
@@ -46,7 +54,16 @@ class Api01Controller < ApplicationController
       nil,
       params[:deps] == 'true',
     ]) || {}
-    render json: params[:deps] == 'true' ? pois : pois['features'][0]
+
+    respond_to do |format|
+      format.geojson {
+        if params[:deps] == 'true'
+          render plain: pois
+        else
+          render json: JSON.parse(pois)['features'][0]
+        end
+      }
+    end
   end
 
   def pois
@@ -67,7 +84,7 @@ class Api01Controller < ApplicationController
     ]) || {}
 
     respond_to do |format|
-      format.geojson { render json: pois }
+      format.geojson { render plain: pois }
       format.csv {
         features = pois['features']
         pois_hash_path = features.collect{ |poi| hash_path(poi['properties'].except('display', 'editorial')) }.flatten(1).uniq.sort
@@ -108,7 +125,6 @@ class Api01Controller < ApplicationController
       conn.exec('SET search_path TO api01,public')
       conn.exec_params("SELECT * FROM #{subject}", params) { |result|
         row = result.first&.[]('d')
-        JSON.parse(row) if !row.nil?
       }
     }
   end
