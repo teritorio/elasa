@@ -322,6 +322,12 @@ def compare_pois(url_old, url_new, category_ids)
       h[1]['properties']['metadata']['category_ids'] = h[0]['properties']['metadata']['category_ids']
     end
 
+    if h[0]['properties']['metadata']['category_ids'].size >=1
+      # Has it have multiple category_ids, could have different values, force to be the same
+      h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1]['properties']['display']['style_class'].nil?
+      h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1]['properties']['display']['list_fields'].nil?
+    end
+
     h.each{ |poi|
       poi['properties']['metadata'].delete('cartocode')
       poi['properties'].delete('classe')
