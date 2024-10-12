@@ -316,6 +316,12 @@ def compare_pois(url_old, url_new, category_ids)
       end
     }
 
+    # categories_ids
+    if !(h[0]['properties']['metadata']['category_ids'] | h[1]['properties']['metadata']['category_ids']).empty?
+      # Force WP categories_ids to contains all categories_ids
+      h[1]['properties']['metadata']['category_ids'] = h[0]['properties']['metadata']['category_ids']
+    end
+
     h.each{ |poi|
       poi['properties']['metadata'].delete('cartocode')
       poi['properties'].delete('classe')
