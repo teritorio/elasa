@@ -238,6 +238,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['route:road:duration'] = poi['properties']['route:road:duration']&.to_i # Buggy WP
       poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
       poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
+      poi['properties']['maxlength'] = poi['properties']['maxlength']&.to_i # Buggy WP
       # poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_agrees'] = poi['properties']['assmat_nb_places_agrees']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_libres'] = poi['properties']['assmat_nb_places_libres']&.to_i # Buggy WP
@@ -254,6 +255,7 @@ def compare_pois(url_old, url_new, category_ids)
         'capacity','capacity:caravans', 'capacity:cabins', 'capacity:rooms', 'capacity:disabled',
         'covered',
         'isced:level',
+        'maxlength',
       ].each{ |k|
         if [0, '0'].include?(poi['properties'][k])
           poi['properties'].delete(k)
