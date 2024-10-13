@@ -90,7 +90,7 @@ def compare_menu(url_old, url_new)
       menu['id']
     }.collect{ |menu|
       menu['menu_group']&.delete('id')
-      menu['menu_group']&.delete('style_class')
+      menu['menu_group']&.delete('style_class') # Buggy WP, menu_group have no style_class attribute
       menu['menu_group']&.delete('icon') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
       menu['menu_group']&.delete('color_fill') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
       menu['menu_group']&.delete('color_line') if !menu['parent_id'] || menu.dig('menu_group', 'name', 'fr') =~ /[Bb]loc |Recherche/ # WP, not configured
@@ -233,18 +233,37 @@ def compare_pois(url_old, url_new, category_ids)
       poi['geometry']&.delete('coordinates') #### TMP, TODO approx commp are 0.0001
 
       poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
+      poi['properties']['route:road:duration'] = poi['properties']['route:road:duration']&.to_i # Buggy WP
       poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
       poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
-      poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
+      # poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_agrees'] = poi['properties']['assmat_nb_places_agrees']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_libres'] = poi['properties']['assmat_nb_places_libres']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_bientot_dispo'] = poi['properties']['assmat_nb_places_bientot_dispo']&.to_i # Buggy WP
       poi['properties']['az_voir_listes_donnees'] = poi['properties']['az_voir_listes_donnees']&.to_i # Imported as integer
+      poi['properties']['az_has_data_liste'] = poi['properties']['az_has_data_liste']&.to_i # Imported as integer
       poi['properties']['zpj_zones_1_activer_dessin'] = poi['properties']['zpj_zones_1_activer_dessin']&.to_i # Imported as integer
 
       # Buggy WP with 0 and "no" values
-      ['min_age', 'roof:levels', 'capacity:caravans', 'addr:floor', 'name:signed', 'capacity:cabins', 'capacity', 'covered'].each{ |k|
-        if [0, 'no'].include?(poi['properties'][k])
+      [
+        'min_age',
+        'level', 'building:levels', 'roof:levels',
+        'addr:floor',
+        'capacity','capacity:caravans', 'capacity:cabins', 'capacity:rooms', 'capacity:disabled',
+        'covered',
+        'isced:level',
+      ].each{ |k|
+        if [0, '0'].include?(poi['properties'][k])
+          poi['properties'].delete(k)
+        end
+      }
+
+      {
+        'duration' => 'unlimited',
+        'name:signed' => 'no',
+        'maxlength' => 'none',
+      }.each{ |k, v|
+        if poi['properties'][k] == v
           poi['properties'].delete(k)
         end
       }
@@ -304,18 +323,6 @@ def compare_pois(url_old, url_new, category_ids)
       h[1]['properties'].delete('name')
     end
 
-    {
-      'building:levels' => '0',
-      'level' => '0',
-      'duration' => 'unlimited',
-      'capacity:disabled' => '0',
-      'capacity:rooms' => 0,
-    }.each{ |k, v|
-      if h[1]['properties'][k] == v
-        h[0]['properties'][k] = v # Buggy WP
-      end
-    }
-
     # categories_ids
     if !(h[0]['properties']['metadata']['category_ids'] | h[1]['properties']['metadata']['category_ids']).empty?
       # Force WP categories_ids to contains all categories_ids
@@ -325,6 +332,7 @@ def compare_pois(url_old, url_new, category_ids)
     if h[0]['properties']['metadata']['category_ids'].size >=1
       # Has it have multiple category_ids, could have different values, force to be the same
       h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1]['properties']['display']['style_class'].nil?
+      h[0]['properties']['display']['details_fields'] = h[1]['properties']['display']['details_fields'] if !h[1]['properties']['display']['details_fields'].nil?
       h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1]['properties']['display']['list_fields'].nil?
     end
 
