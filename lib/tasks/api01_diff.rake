@@ -224,7 +224,9 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('description:nl') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
       poi['properties'].delete('custom_details') # Buggy WP
+      poi['properties'].delete('osm_galerie_images') # Buggy WP
       poi['properties'].delete('sources') # Buggy WP
+      poi['properties']['metadata']&.delete('source') # Buggy WP
 
       poi['properties'].delete('website') # Buggy WP, wrong values including ";"
 
