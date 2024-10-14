@@ -239,7 +239,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
       poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
       poi['properties']['maxlength'] = poi['properties']['maxlength']&.to_i # Buggy WP
-      # poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
+      poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_agrees'] = poi['properties']['assmat_nb_places_agrees']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_libres'] = poi['properties']['assmat_nb_places_libres']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_bientot_dispo'] = poi['properties']['assmat_nb_places_bientot_dispo']&.to_i # Buggy WP
