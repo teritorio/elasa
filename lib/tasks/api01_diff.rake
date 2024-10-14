@@ -347,7 +347,8 @@ def compare_pois(url_old, url_new, category_ids)
   }
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
-  puts JSON.dump(diff.diff) if !diff.diff.empty?
+  diff = diff.diff.transform_keys{ |i| hashes.dig(0, i, 'properties', 'metadata', 'id') }
+  puts JSON.dump(diff) if !diff.empty?
 end
 
 def compare_attribute_translations(url_old, url_new)
