@@ -161,6 +161,10 @@ def load_field_group(conn, project_id, group)
     @fields[group_key]
   else
     if group['group']
+      duplicate_fields = (group['fields'] || []).pluck('field').compact.tally.select{ |k, v| v > 1 }.keys
+      if duplicate_fields.size > 0
+        puts "[ERROR] Duplicate field in group #{group['group']}: #{duplicate_fields.join(', ')}"
+      end
       ids = (group['fields'] || []).collect{ |f|
         load_field_group(conn, project_id, f)
       }
