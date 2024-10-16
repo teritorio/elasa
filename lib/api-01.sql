@@ -534,121 +534,111 @@ CREATE OR REPLACE FUNCTION fields(
     _root_field_id integer
 ) RETURNS jsonb AS $$
     WITH
-    a AS (
-        -- Recursive down
-        WITH RECURSIVE a AS (
-            SELECT
-                fields.id,
-                fields_fields.related_fields_id AS children_id,
-                fields_fields."index"
-            FROM
-                fields
-                LEFT JOIN fields_fields ON
-                    fields_fields.fields_id = fields.id
-            WHERE
-                fields.id = _root_field_id
-        UNION ALL
-            SELECT
-                fields.id,
-                fields_fields.related_fields_id AS children_id,
-                fields_fields."index"
-            FROM
-                a
-                JOIN fields ON
-                    fields.id = a.children_id
-                LEFT JOIN fields_fields ON
-                    fields_fields.fields_id = fields.id
-        )
+    -- Recursive down
+    RECURSIVE a AS (
         SELECT
-            *
-        FROM
-            a
-    ),
-    b AS (
-        -- Recursive up, manualy
-        SELECT
-            a.id,
-            jsonb_strip_nulls(jsonb_build_object(
-                'field', field,
-                'label', nullif(label, false),
-                'group', "group",
-                'display_mode', display_mode,
-                'icon', icon
-                -- 'fields', null
-            )) AS json
-        FROM
-            a
-            JOIN fields ON
-                fields.id = a.id
-        WHERE
-            "index" IS NULL -- leaf
-    ),
-    c AS (
-        SELECT
-            a.id,
-            jsonb_strip_nulls(jsonb_build_object(
-                'field', field,
-                'label', nullif(label, false),
-                'group', "group",
-                'display_mode', display_mode,
-                'icon', icon,
-                'fields', jsonb_agg(json ORDER BY "index")
-            )) as json
-        FROM
-            a
-            JOIN b ON
-                b.id = a.children_id
-            JOIN fields ON
-                fields.id = a.id
-        GROUP BY
-            a.id,
+            -1 AS parent_id,
             fields.id,
-            fields.field,
-            fields.label,
-            fields."group",
-            fields.display_mode,
-            fields.icon
-    ),
-    d AS (
-        SELECT
-            id,
-            json
+            NULL::integer AS "index",
+            jsonb_strip_nulls(jsonb_build_object(
+                -- 'field', null,
+                'label', nullif(fields.label, false),
+                'group', fields."group",
+                'display_mode', fields.display_mode,
+                'icon', fields.icon
+                -- 'fields', null
+            )) AS json,
+            false AS leaf
         FROM
-            c
+            fields
         WHERE
-            id = _root_field_id
+            fields.id = _root_field_id
     UNION ALL
         SELECT
-            a.id,
+            a.id AS parent_id,
+            fields.id,
+            fields_fields."index",
             jsonb_strip_nulls(jsonb_build_object(
-                'field', field,
-                'label', nullif(label, false),
-                'group', "group",
-                'display_mode', display_mode,
-                'icon', icon,
-                'fields', jsonb_agg(json ORDER BY "index")
-            )) as json
+                'field', fields.field,
+                'label', nullif(fields.label, false),
+                'group', fields."group",
+                'display_mode', fields.display_mode,
+                'icon', fields.icon
+                -- 'fields', null
+            )) AS json,
+            fields.field IS NOT NULL AS leaf
         FROM
             a
-            JOIN c ON
-                c.id = a.children_id
+            JOIN fields_fields ON
+                fields_fields.fields_id = a.id
             JOIN fields ON
-                fields.id = a.id
-        WHERE
-            c.id != _root_field_id
+                fields.id = fields_fields.related_fields_id
+    ),
+    -- Recursive up step 1
+    b AS (
+        SELECT
+            a3.parent_id,
+            a3.id,
+            a3."index",
+            a3.json || jsonb_build_object(
+                'fields', jsonb_agg(a2.json ORDER BY a2."index")
+            ) AS json,
+            true AS leaf
+        FROM
+            (SELECT parent_id FROM a GROUP BY parent_id HAVING BOOL_AND(leaf)) AS a
+            JOIN a AS a2 ON
+                a2.parent_id = a.parent_id
+            JOIN a AS a3 ON
+                a3.id = a.parent_id
         GROUP BY
-            a.id,
-            fields.id,
-            fields.field,
-            fields.label,
-            fields."group",
-            fields.display_mode,
-            fields.icon
+            a3.parent_id,
+            a3.id,
+            a3."index",
+            a3.json
+        UNION ALL
+        SELECT
+            a2.*
+        FROM
+            (SELECT parent_id FROM a GROUP BY parent_id HAVING NOT BOOL_AND(leaf)) AS a
+            JOIN a AS a2 ON
+                a2.parent_id = a.parent_id AND
+                a2.id NOT IN (SELECT parent_id FROM a GROUP BY parent_id HAVING BOOL_AND(leaf))
+    ),
+    -- Recursive up step 2
+    c AS (
+        SELECT
+            b3.parent_id,
+            b3.id,
+            b3."index",
+            b3.json || jsonb_build_object(
+                'fields', jsonb_agg(b2.json ORDER BY b2."index")
+            ) AS json,
+            true AS leaf
+        FROM
+            (SELECT parent_id FROM b GROUP BY parent_id HAVING BOOL_AND(leaf)) AS b
+            JOIN b AS b2 ON
+                b2.parent_id = b.parent_id
+            JOIN b AS b3 ON
+                b3.id = b.parent_id
+        GROUP BY
+            b3.parent_id,
+            b3.id,
+            b3."index",
+            b3.json
+        UNION ALL
+        SELECT
+            b2.*
+        FROM
+            (SELECT parent_id FROM b GROUP BY parent_id HAVING parent_id = -1 OR NOT BOOL_AND(leaf)) AS b
+            JOIN b AS b2 ON
+                b2.parent_id = b.parent_id AND
+                b2.id NOT IN (SELECT parent_id FROM b GROUP BY parent_id HAVING BOOL_AND(leaf))
     )
     SELECT
         json
     FROM
-        d
+        c
+    LIMIT 1
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
