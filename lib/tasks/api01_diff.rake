@@ -227,6 +227,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('osm_galerie_images') # Buggy WP
       poi['properties'].delete('sources') # Buggy WP
       poi['properties']['metadata']&.delete('source') # Buggy WP
+      poi['properties'] = poi['properties'].select{ |k, v| !k.start_with?('description:') } # API change
 
       poi['properties'].delete('website') # Buggy WP, wrong values including ";"
 
@@ -234,7 +235,9 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['display'].delete('color_fill') if poi['properties']['display']&.delete('color_fill') == '#beef00' # Values added as default on import from WP
       poi['properties']['display'].delete('color_line') if poi['properties']['display']&.delete('color_line') == '#beef00' # Values added as default on import from WP
 
-      poi['geometry']&.delete('coordinates') #### TMP, TODO approx commp are 0.0001
+      poi['properties']['metadata'].delete('refs') # WP does not support refs
+
+      poi.delete('geometry') # TMP, approx commp are 0.0001, and WP geom not the same
 
       poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
       poi['properties']['route:road:duration'] = poi['properties']['route:road:duration']&.to_i # Buggy WP
@@ -248,6 +251,8 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['az_voir_listes_donnees'] = poi['properties']['az_voir_listes_donnees']&.to_i # Imported as integer
       poi['properties']['az_has_data_liste'] = poi['properties']['az_has_data_liste']&.to_i # Imported as integer
       poi['properties']['zpj_zones_1_activer_dessin'] = poi['properties']['zpj_zones_1_activer_dessin']&.to_i # Imported as integer
+      poi['properties']['zpj_date_debut_annee'] = poi['properties']['zpj_date_debut_annee']&.to_i # Imported as integer
+      poi['properties']['zpj_date_fin_annee'] = poi['properties']['zpj_date_fin_annee']&.to_i # Imported as integer
 
       # Buggy WP with 0 and "no" values
       [
@@ -259,7 +264,7 @@ def compare_pois(url_old, url_new, category_ids)
         'isced:level',
         'maxlength',
       ].each{ |k|
-        if [0, '0'].include?(poi['properties'][k])
+        if [0, '0', nil].include?(poi['properties'][k])
           poi['properties'].delete(k)
         end
       }
@@ -313,9 +318,11 @@ def compare_pois(url_old, url_new, category_ids)
   common_ids = Set.new(ids[0] & ids[1])
   hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
 
-  # Ignore few changes on names
   hashes[0].zip(hashes[1]).each{ |h|
-    a, b = h.collect{ |poi| poi.dig('properties', 'name') }
+    # Ignore few changes on names
+    a, b = h.collect{ |poi|
+      poi.dig('properties', 'name')&.gsub('\\', '') # WP lost some \
+    }
     if a.presence && b.presence && a.size > 5 && b.size > 5
       d = DamerauLevenshtein.distance(a, b)
       if d <= 3
@@ -327,6 +334,13 @@ def compare_pois(url_old, url_new, category_ids)
     if a.presence && b.presence && (a == h[0]['properties']['classe'])
       h[0]['properties'].delete('name')
       h[1]['properties'].delete('name')
+    end
+
+    a, b = h.collect{ |poi|
+      poi.dig('properties', 'description')&.gsub('\\', '') # WP lost some \
+    }
+    if a.presence && b.presence
+      h[0]['properties']['description'] = h[1]['properties']['description']
     end
 
     # categories_ids
