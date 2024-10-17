@@ -867,7 +867,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
             f = ->(i, _j) { i }
             interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
             "\"#{key}\" text"
-          elsif ['addr:postcode', 'addr:housenumber', 'maxlength', 'ref', 'start_date'].include?(key)
+          elsif ['addr:postcode', 'addr:housenumber', 'maxlength', 'ref', 'start_date', 'end_date', 'ref:fr:siret'].include?(key)
             f = ->(i, _j) { i }
             "\"#{key}\" varchar"
           elsif key == 'website:details'
