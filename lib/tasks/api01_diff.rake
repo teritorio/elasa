@@ -219,15 +219,16 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['display']&.delete('color_line') # Not constant Elasa/WP on POI in multiple categories
 
       poi['properties']['metadata']&.delete('natives') # Buggy WP
-      poi['properties'].delete('description:de') # Buggy WP
-      poi['properties'].delete('description:es') # Buggy WP
-      poi['properties'].delete('description:nl') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
       poi['properties'].delete('custom_details') # Buggy WP
       poi['properties'].delete('osm_galerie_images') # Buggy WP
       poi['properties'].delete('sources') # Buggy WP
       poi['properties']['metadata']&.delete('source') # Buggy WP
+      poi['properties'] = poi['properties'].select{ |k, v| !k.start_with?('name:') } # API change
       poi['properties'] = poi['properties'].select{ |k, v| !k.start_with?('description:') } # API change
+
+      poi['properties'].delete('partenaire_fiche') # Buggy WP
+      poi['properties'].delete('partenaire_url') # Buggy WP
 
       poi['properties'].delete('website') # Buggy WP, wrong values including ";"
 
@@ -251,6 +252,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['az_voir_listes_donnees'] = poi['properties']['az_voir_listes_donnees']&.to_i # Imported as integer
       poi['properties']['az_has_data_liste'] = poi['properties']['az_has_data_liste']&.to_i # Imported as integer
       poi['properties']['zpj_zones_1_activer_dessin'] = poi['properties']['zpj_zones_1_activer_dessin']&.to_i # Imported as integer
+      poi['properties']['zpj_zones_2_activer_dessin'] = poi['properties']['zpj_zones_2_activer_dessin']&.to_i # Imported as integer
       poi['properties']['zpj_date_debut_annee'] = poi['properties']['zpj_date_debut_annee']&.to_i # Imported as integer
       poi['properties']['zpj_date_fin_annee'] = poi['properties']['zpj_date_fin_annee']&.to_i # Imported as integer
 
@@ -262,9 +264,9 @@ def compare_pois(url_old, url_new, category_ids)
         'capacity','capacity:caravans', 'capacity:cabins', 'capacity:rooms', 'capacity:disabled',
         'covered',
         'isced:level',
-        'maxlength',
+        'height', 'maxlength',
       ].each{ |k|
-        if [0, '0', nil].include?(poi['properties'][k])
+        if [0, '0', 'no', nil].include?(poi['properties'][k])
           poi['properties'].delete(k)
         end
       }
