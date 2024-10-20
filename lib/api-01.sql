@@ -708,7 +708,7 @@ CREATE OR REPLACE FUNCTION pois(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            menu_items.name_singular->'fr' AS name_singular,
+            coalesce(menu_items.name_singular->'fr', menu_items.name->'fr') AS name_singular,
             menu_items.use_details_link,
             jsonb_build_object(
                 'popup_fields', menu_items.popup_fields,
@@ -788,7 +788,7 @@ CREATE OR REPLACE FUNCTION pois(
                         'name', coalesce(
                             pois.properties->'tags'->'name'->'fr',
                             pois.properties->'natives'->'name'->'fr',
-                            menu.name_singular->'fr'
+                            menu.name_singular
                         ),
                         'official_name', pois.properties->'tags'->'official_name'->'fr',
                         'loc_name', pois.properties->'tags'->'loc_name'->'fr',
