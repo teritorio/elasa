@@ -272,10 +272,21 @@ def load_class_labels(pois)
   }
 end
 
-def load_use_details_link(pois)
-  menu_from_poi(pois, 'editorial.website:details') { |poi|
-    !poi.dig('properties', 'editorial', 'website:details').nil?
-  }
+def load_use_internal_details_link(pois, host)
+  pois.select { |poi|
+    poi.dig('properties', 'editorial', 'website:details')&.start_with?(host)
+  }.collect{ |poi|
+    poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
+  }.flatten.uniq.collect{ |id| [id, true] }.to_h
+end
+
+def load_use_external_details_link(pois, host)
+  pois.select { |poi|
+    website_details = poi.dig('properties', 'editorial', 'website:details')
+    !website_details.nil? && !website_details.start_with?(host)
+  }.collect{ |poi|
+    poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
+  }.flatten.uniq.collect{ |id| [id, true] }.to_h
 end
 
 def load_icon(pois)
@@ -389,7 +400,8 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     fields_ids = fields.index_by(&:first)
 
     labels = load_class_labels(pois)
-    use_details_link = load_use_details_link(pois)
+    use_internal_details_link = load_use_internal_details_link(pois, url.split('/')[0..2].join('/'))
+    use_external_details_link = load_use_external_details_link(pois, url.split('/')[0..2].join('/'))
     icon = load_icon(pois)
     style_class = load_style_class(pois)
     color_fill = load_color_fill(pois)
@@ -414,10 +426,10 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
           type,
           icon, color_fill, color_line, style_class_string, display_mode,
           search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
-          href, use_details_link
+          href, use_internal_details_link, use_external_details_link
         )
         VALUES (
-          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
         )
         RETURNING
           id
@@ -440,7 +452,8 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
           fields_id.nil? ? nil : fields_id[2],
           fields_id.nil? ? nil : fields_id[3],
           menu.dig('link', 'href'),
-          use_details_link[menu['id']],
+          use_internal_details_link[menu['id']],
+          use_external_details_link[menu['id']],
         ]
       ) { |result|
         catorgry_ids_map[menu['id']] = result.first['id']

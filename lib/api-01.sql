@@ -398,7 +398,8 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.popup_fields_id,
             menu_items.details_fields_id,
             menu_items.list_fields_id,
-            menu_items.use_details_link,
+            menu_items.use_internal_details_link,
+            menu_items.use_external_details_link,
             menu_items.name,
             menu_items.name_singular,
             menu_items.slug,
@@ -469,7 +470,8 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.popup_fields_id,
             menu_items.details_fields_id,
             menu_items.list_fields_id,
-            menu_items.use_details_link,
+            menu_items.use_internal_details_link,
+            menu_items.use_external_details_link,
             menu_items.name,
             menu_items.name_singular,
             menu_items.slug,
@@ -709,7 +711,8 @@ CREATE OR REPLACE FUNCTION pois(
             menu_items.slug,
             menu_items.id AS menu_id,
             coalesce(menu_items.name_singular->'fr', menu_items.name->'fr') AS name_singular,
-            menu_items.use_details_link,
+            menu_items.use_internal_details_link,
+            menu_items.use_external_details_link,
             jsonb_build_object(
                 'popup_fields', menu_items.popup_fields,
                 'details_fields', menu_items.details_fields,
@@ -822,13 +825,13 @@ CREATE OR REPLACE FUNCTION pois(
                                 END
                         ),
                         'editorial', menu.editorial || jsonb_build_object(
-                            'website:details', CASE WHEN menu.use_details_link THEN
-                                coalesce(
+                            'website:details', coalesce(
+                                CASE WHEN menu.use_external_details_link THEN coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
-                                    pois.properties->'natives'->>'website:details',
-                                    site_url->>'fr' || '/poi/' || pois.slug_id || '/details'
-                                )
-                            END
+                                    pois.properties->'natives'->>'website:details'
+                                ) END,
+                                CASE WHEN menu.use_internal_details_link THEN site_url->>'fr' || '/poi/' || pois.slug_id || '/details' END
+                            )
                         ),
                         'display', menu.display
                     )

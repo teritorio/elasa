@@ -126,10 +126,10 @@ def insert_menu_item(conn, **args)
       type,
       icon, color_fill, color_line, style_class_string, display_mode,
       search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
-      href, use_details_link
+      href, use_internal_details_link, use_external_details_link
     )
     VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
     )
     RETURNING
       id
@@ -139,7 +139,9 @@ def insert_menu_item(conn, **args)
       args[:type],
       args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
       args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
-      args[:href], args[:use_details_link].nil? ? true : args[:use_details_link],
+      args[:href],
+      args[:use_internal_details_link].nil ? true : args[:use_internal_details_link],
+      args[:use_external_details_link].nil ? true : args[:use_external_details_link],
     ]
   ) { |result|
     result.first['id']

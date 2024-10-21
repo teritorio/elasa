@@ -358,6 +358,20 @@ def compare_pois(url_old, url_new, category_ids)
       h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1]['properties']['display']['list_fields'].nil?
     end
 
+
+    if h[0]['properties']['source:image'] == 'local'
+      h[0]['properties'].delete('source:image')
+      h[0]['properties'].delete('image')
+      h[1]['properties'].delete('source:image')
+      h[1]['properties'].delete('image')
+    end
+    if h[0]['properties']['editorial']['source:website:details'] == 'local'
+      h[0]['properties']['editorial']&.delete('source:website:details')
+      h[0]['properties']['editorial']&.delete('website:details')
+      h[1]['properties']['editorial']&.delete('source:website:details')
+      h[1]['properties']['editorial']&.delete('website:details')
+    end
+
     h.each{ |poi|
       poi['properties']['metadata'].delete('cartocode')
       poi['properties'].delete('classe')

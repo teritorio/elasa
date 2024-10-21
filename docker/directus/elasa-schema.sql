@@ -306,7 +306,8 @@ CREATE TABLE public.menu_items (
     popup_fields_id integer,
     details_fields_id integer,
     list_fields_id integer,
-    use_details_link boolean DEFAULT true
+    use_internal_details_link boolean DEFAULT true,
+    use_external_details_link boolean DEFAULT true
 );
 
 
