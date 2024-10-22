@@ -662,8 +662,10 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     )
 
     # Categories not linked to datasource
-    categories_local = menu_items.select{ |m| m['category'] && !menu_sources.keys.include?(m['id'].to_s) }.compact
-    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid, url_base)
+    local_poi = pois.select{ |poi| ['tis', 'zone'].include?(poi['properties']['metadata']['source']) }
+    local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
+    categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }
+    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, local_poi, i18ns, role_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -692,6 +694,65 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         puts "[ERROR] Fails link _local_ source to menu_item: #{source_id}"
       end
     }
+
+    # POI from datasource with local addon
+    conn.exec("
+      CREATE TEMP TABLE local_addon_raw(
+        poi_id text,
+        website_details text,
+        image json
+      )
+    ")
+    customs = 0
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data('COPY local_addon_raw FROM STDIN (FORMAT binary)', enco) {
+      pois.each{ |poi|
+        website_details = nil
+        image = nil
+        if poi.dig('properties', 'editorial', 'source:website:details') == 'local'
+          website_details = poi['properties']['editorial']['website:details']
+        end
+        if poi.dig('properties', 'source:image') == 'local'
+          image = poi['properties']['image']
+        end
+        if website_details || image
+          conn.put_copy_data([poi['properties']['metadata']['id'].to_s, website_details, image.nil? ? nil : image.to_json])
+          customs += 1
+        end
+      }
+    }
+    pois_custom_poi_ids = conn.exec_params("
+      WITH a AS (
+        SELECT
+          pois.id AS poi_id,
+          local_addon_raw.website_details,
+          local_addon_raw.image
+        FROM
+          local_addon_raw
+          JOIN pois ON
+            (pois.slugs->>'original_id')::bigint = local_addon_raw.poi_id::bigint
+          JOIN sources ON
+            sources.id = pois.source_id AND
+            sources.project_id = $1
+      )
+      MERGE INTO
+        pois
+      USING
+        a AS local_addon_raw
+      ON
+        pois.id = local_addon_raw.poi_id
+      WHEN MATCHED THEN
+        UPDATE SET
+          website_details = local_addon_raw.website_details,
+          image = local_addon_raw.image::jsonb
+      RETURNING
+        pois.id
+    ", [project_id]) { |result|
+      result.collect{ |row| row['poi_id'] }
+    }
+    if pois_custom_poi_ids.size != customs
+      puts "[ERROR] Fails to insert custom POI : #{customs} != #{pois_custom_poi_ids.size}"
+    end
   }
 end
 

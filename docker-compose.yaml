@@ -10,7 +10,7 @@ x-common-environment: &common-environment
 
 services:
   postgres:
-    image: postgis/postgis:16-master
+    image: postgis/postgis:17-master
     volumes:
       - pg_data:/var/lib/postgresql/data
     environment:

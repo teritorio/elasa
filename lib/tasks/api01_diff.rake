@@ -309,15 +309,21 @@ def compare_pois(url_old, url_new, category_ids)
 
   ids = hashes.collect{ |h|
     h.collect{ |poi|
-      poi['properties']['metadata']['id']
-    }
+      [poi['properties']['metadata']['id'], poi['properties']['metadata']['category_ids']]
+    }.to_h
   }
-  only_in_0 = ids[0] - ids[1]
-  only_in_1 = ids[1] - ids[0]
-  puts "Ids only on 0\n#{only_in_0.inspect}" if !only_in_0.empty?
-  puts "Ids only on 1\n#{only_in_1.inspect}" if !only_in_1.empty?
+  only_in_0 = ids[0].keys - ids[1].keys
+  only_in_1 = ids[1].keys - ids[0].keys
+  if !only_in_0.empty?
+    puts "Ids only on 0\n#{only_in_0.inspect}"
+    puts "    by category ids #{only_in_0.collect{ |id| ids[0][id] }.tally.inspect}"
+  end
+  if !only_in_1.empty?
+    puts "Ids only on 1\n#{only_in_1.inspect}"
+    puts "    by category ids #{only_in_1.collect{ |id| ids[1][id] }.tally.inspect}"
+  end
 
-  common_ids = Set.new(ids[0] & ids[1])
+  common_ids = Set.new(ids[0].keys & ids[1].keys)
   hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
 
   hashes[0].zip(hashes[1]).each{ |h|
@@ -358,18 +364,11 @@ def compare_pois(url_old, url_new, category_ids)
       h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1]['properties']['display']['list_fields'].nil?
     end
 
-
     if h[0]['properties']['source:image'] == 'local'
       h[0]['properties'].delete('source:image')
-      h[0]['properties'].delete('image')
-      h[1]['properties'].delete('source:image')
-      h[1]['properties'].delete('image')
     end
     if h[0]['properties']['editorial']['source:website:details'] == 'local'
       h[0]['properties']['editorial']&.delete('source:website:details')
-      h[0]['properties']['editorial']&.delete('website:details')
-      h[1]['properties']['editorial']&.delete('source:website:details')
-      h[1]['properties']['editorial']&.delete('website:details')
     end
 
     h.each{ |poi|

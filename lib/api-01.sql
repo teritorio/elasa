@@ -268,7 +268,9 @@ CREATE OR REPLACE FUNCTION filter_values(
         SELECT
             sources.project_id,
             sources.menu_items_id,
-            pois_local.*
+            pois_local.*,
+            NULL::text AS website_details,
+            NULL::jsonb AS image
         FROM
             sources
             JOIN pois_local(_project_slug) AS pois_local ON
@@ -787,6 +789,7 @@ CREATE OR REPLACE FUNCTION pois(
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details') ||
+                    (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
                             pois.properties->'tags'->'name'->'fr',
@@ -826,6 +829,7 @@ CREATE OR REPLACE FUNCTION pois(
                         ),
                         'editorial', menu.editorial || jsonb_build_object(
                             'website:details', coalesce(
+                                pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr',
                                     pois.properties->'natives'->>'website:details'
@@ -841,10 +845,10 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT
                     *,
-                    id_from_slugs(pois.slugs, pois.id) AS slug_id -- use slug as original POI id
+                    id_from_slugs(slugs, id) AS slug_id -- use slug as original POI id
                 FROM pois
                 UNION ALL
-                SELECT *, id AS slug_id FROM pois_local(_project_slug)
+                SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_project_slug)
             ) AS pois ON
                 pois.source_id = menu.source_id
         WHERE
