@@ -718,6 +718,14 @@ CREATE OR REPLACE FUNCTION pois(
     d text
 ) AS $$
     WITH
+    projects AS (
+        SELECT
+            *
+        FROM
+            projects
+        WHERE
+            slug = _project_slug
+    ),
     menu AS (
         SELECT
             themes.site_url,
@@ -763,8 +771,6 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN sources ON
                 sources.project_id = projects.id AND
                 sources.id = menu_items_sources.sources_id
-        WHERE
-            projects.slug = _project_slug
     ),
     json_pois AS (
         SELECT
