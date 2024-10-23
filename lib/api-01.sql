@@ -713,7 +713,8 @@ CREATE OR REPLACE FUNCTION pois(
     _short_description boolean,
     _start_date text,
     _end_date text,
-    _with_deps boolean
+    _with_deps boolean,
+    _cliping_polygon_slug text
 ) RETURNS TABLE (
     d text
 ) AS $$
@@ -725,6 +726,23 @@ CREATE OR REPLACE FUNCTION pois(
             projects
         WHERE
             slug = _project_slug
+    ),
+    cliping_polygon AS (
+        SELECT
+            geom
+        FROM
+            projects
+            JOIN sources ON
+                sources.project_id = projects.id
+            JOIN (
+                SELECT * FROM pois
+                UNION ALL
+                SELECT *, NULL::text AS website_details, NULL::jsonb AS image FROM pois_local(_project_slug)
+            ) AS pois ON
+                pois.source_id = sources.id AND
+                pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects)
+            WHERE
+                _cliping_polygon_slug IS NOT NULL
     ),
     menu AS (
         SELECT
@@ -868,7 +886,11 @@ CREATE OR REPLACE FUNCTION pois(
                 UNION ALL
                 SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_project_slug)
             ) AS pois ON
-                pois.source_id = menu.source_id
+                pois.source_id = menu.source_id AND
+                (
+                    (SELECT geom FROM cliping_polygon) IS NULL OR
+                    ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
+                )
         WHERE
             (_poi_ids IS NULL OR (
                 pois.slug_id = ANY(_poi_ids) OR

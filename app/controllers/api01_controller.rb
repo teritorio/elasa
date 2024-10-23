@@ -43,7 +43,7 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     id = params.require(:id).to_i
 
-    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9)', [
+    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9, $10)', [
       project_slug,
       theme_slug,
       nil,
@@ -53,6 +53,7 @@ class Api01Controller < ApplicationController
       nil,
       nil,
       params[:deps] == 'true',
+      nil,
     ]) || {}
 
     respond_to do |format|
@@ -71,7 +72,7 @@ class Api01Controller < ApplicationController
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
     ids = params[:ids]&.split(',')&.collect(&:to_i)
 
-    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9)', [
+    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9, $10)', [
       project_slug,
       theme_slug,
       category_id,
@@ -81,6 +82,7 @@ class Api01Controller < ApplicationController
       params[:start_date],
       params[:end_date],
       nil,
+      params[:cliping_polygon_slug],
     ]) || {}
 
     respond_to do |format|
