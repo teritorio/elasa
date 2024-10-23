@@ -50,7 +50,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
         project_slug,
         settings['icon_font_css_url'],
         settings['polygon']['data'].to_json,
-        settings['polygons_extra'].to_json,
+        settings['polygons_extra']&.transform_values{ |polygon| polygon['data'].split('/')[-1].split('.')[0].to_i }&.to_json,
         articles.collect{ |article|
           {
             title: { fr: article['title'] },

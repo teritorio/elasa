@@ -106,6 +106,18 @@ CREATE OR REPLACE FUNCTION project(
                     'type', 'geojson',
                     'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
                 ),
+                'polygons_extra', (
+                    SELECT
+                        jsonb_object_agg(
+                            key,
+                            jsonb_build_object(
+                                'type', 'geojson',
+                                'data', (SELECT site_url->>'fr' || '/api/0.1/' || projects.slug || '/' || themes.slug || '/poi/' || (value::text) || '.geojson' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1)
+                            )
+                        )
+                    FROM
+                        json_each_text(polygons_extra)
+                ),
                 'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
                 'attributions', coalesce((
                     SELECT
