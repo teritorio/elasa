@@ -55,6 +55,16 @@ Compare original and new API results.
 docker compose run --rm api bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
 
+## Update Postgres version
+
+First, adjust version in docker compose file.
+```
+# Init the new database
+docker compose up postgres # And stop it once initialized with ctrl-c
+# Migrate
+docker compose --profile=* run --rm postgres-update
+```
+
 ## Test
 
 ```
