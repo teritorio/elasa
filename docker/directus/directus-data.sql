@@ -235,6 +235,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
 533	pois	image	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
 534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	1	full	\N	\N	\N	t	\N	\N	\N
 \.
 
 
@@ -250,7 +251,7 @@ COPY public.directus_folders (id, name, parent) FROM stdin;
 -- Data for Name: directus_files; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_files (id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, uploaded_on, modified_by, modified_on, charset, filesize, width, height, duration, embed, description, location, tags, metadata, focal_point_x, focal_point_y, tus_id, tus_data) FROM stdin;
+COPY public.directus_files (id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, uploaded_on, modified_by, modified_on, charset, filesize, width, height, duration, embed, description, location, tags, metadata, focal_point_x, focal_point_y, tus_id, tus_data, project_id) FROM stdin;
 \.
 
 
@@ -379,9 +380,9 @@ COPY public.directus_panels (id, dashboard, name, icon, color, show_header, note
 
 COPY public.directus_permissions (id, role, collection, action, permissions, validation, presets, fields) FROM stdin;
 1	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	create	{}	\N	\N	*
-2	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	read	{}	\N	\N	*
-3	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	update	{}	\N	\N	*
-4	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	delete	{}	\N	\N	*
+2	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
+3	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
+4	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
 5	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_dashboards	create	{}	\N	\N	*
 6	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_dashboards	read	{}	\N	\N	*
 7	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_dashboards	update	{}	\N	\N	*
@@ -500,6 +501,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 43	sources_translations	sources_id	sources	sources_translations	\N	\N	languages_code	\N	nullify
 44	filters_translations	languages_code	languages	\N	\N	\N	filters_id	\N	nullify
 45	filters_translations	filters_id	filters	filters_translations	\N	\N	languages_code	\N	nullify
+56	directus_files	project_id	projects	\N	\N	\N	\N	\N	nullify
 \.
 
 
@@ -508,7 +510,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 --
 
 COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides, report_error_url, report_bug_url, report_feature_url, public_registration, public_registration_verify_email, public_registration_role, public_registration_email_filter) FROM stdin;
-1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	all	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":false},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N	\N	\N	\N	f	t	\N	\N
+1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	none	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":true},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N	\N	\N	\N	f	t	\N	\N
 \.
 
 
@@ -555,7 +557,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 534, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 535, true);
 
 
 --
@@ -583,7 +585,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 55, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 56, true);
 
 
 --

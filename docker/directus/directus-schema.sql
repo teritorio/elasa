@@ -205,7 +205,8 @@ CREATE TABLE public.directus_files (
     focal_point_x integer,
     focal_point_y integer,
     tus_id character varying(64),
-    tus_data json
+    tus_data json,
+    project_id integer NOT NULL
 );
 
 
@@ -1084,6 +1085,14 @@ ALTER TABLE ONLY public.directus_files
 
 ALTER TABLE ONLY public.directus_files
     ADD CONSTRAINT directus_files_modified_by_foreign FOREIGN KEY (modified_by) REFERENCES public.directus_users(id);
+
+
+--
+-- Name: directus_files directus_files_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_files
+    ADD CONSTRAINT directus_files_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
