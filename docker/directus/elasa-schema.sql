@@ -292,7 +292,7 @@ CREATE TABLE public.menu_items (
     hidden boolean DEFAULT false NOT NULL,
     selected_by_default boolean DEFAULT false NOT NULL,
     parent_id integer,
-    theme_id integer NOT NULL,
+    project_id integer NOT NULL,
     icon character varying(255),
     display_mode public.menu_item_display_mode_type DEFAULT 'compact'::public.menu_item_display_mode_type NOT NULL,
     search_indexed boolean DEFAULT true,
@@ -1234,6 +1234,14 @@ ALTER TABLE ONLY public.menu_items
 
 
 --
+-- Name: menu_items menu_items_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.menu_items
+    ADD CONSTRAINT menu_items_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
 -- Name: menu_items_sources menu_items_sources_menu_items_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1247,14 +1255,6 @@ ALTER TABLE ONLY public.menu_items_sources
 
 ALTER TABLE ONLY public.menu_items_sources
     ADD CONSTRAINT menu_items_sources_sources_id_foreign FOREIGN KEY (sources_id) REFERENCES public.sources(id) ON DELETE CASCADE;
-
-
---
--- Name: menu_items menu_items_theme_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.menu_items
-    ADD CONSTRAINT menu_items_theme_id_foreign FOREIGN KEY (theme_id) REFERENCES public.themes(id) ON DELETE CASCADE;
 
 
 --

@@ -357,7 +357,7 @@ end
 
 def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
+    conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
 
@@ -421,7 +421,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
       menu_item_id = conn.exec(
         '
         INSERT INTO menu_items(
-          theme_id,
+          project_id,
           index_order, hidden, parent_id, selected_by_default,
           type,
           icon, color_fill, color_line, style_class_string, display_mode,
@@ -434,7 +434,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         RETURNING
           id
         ', [
-          theme_id,
+          project_id,
           menu['index_order'],
           menu['hidden'],
           catorgry_ids_map[menu['parent_id']],
@@ -679,14 +679,14 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
           JOIN menu_items_translations ON
             menu_items_translations.menu_items_id = menu_items.id
         WHERE
-          menu_items.theme_id = $1 AND
+          menu_items.project_id = $1 AND
           menu_items_translations.slug = $2
         ORDER BY
           menu_items.id
         RETURNING
           id
         ',
-        [theme_id, categorie['id'], source_id]
+        [project_id, categorie['id'], source_id]
       ) { |result|
         result&.first
       }

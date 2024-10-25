@@ -367,7 +367,6 @@ CREATE OR REPLACE FUNCTION menu(
     RECURSIVE theme_menu_items AS (
         SELECT
             menu_items.*,
-            projects.id AS project_id,
             NULL::bigint AS parent_slug_id
         FROM
             projects
@@ -383,7 +382,6 @@ CREATE OR REPLACE FUNCTION menu(
 
         SELECT
             menu_items.*,
-            project_id,
             id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id) AS parent_slug_id
         FROM
             theme_menu_items
@@ -397,7 +395,7 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.hidden,
             menu_items.selected_by_default,
             menu_items.parent_id,
-            menu_items.theme_id,
+            menu_items.project_id,
             menu_items.icon,
             menu_items.display_mode,
             menu_items.search_indexed,
@@ -469,7 +467,7 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.hidden,
             menu_items.selected_by_default,
             menu_items.parent_id,
-            menu_items.theme_id,
+            menu_items.project_id,
             menu_items.icon,
             menu_items.display_mode,
             menu_items.search_indexed,
@@ -782,7 +780,7 @@ CREATE OR REPLACE FUNCTION pois(
                 FROM
                     menu_items_join AS menu_items
             ) AS menu_items ON
-                menu_items.theme_id = themes.id AND
+                menu_items.project_id = projects.id AND
                 (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id

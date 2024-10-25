@@ -113,8 +113,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	5	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}}	related-values	{"template":null}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-53	menu_items	theme_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}}	related-values	{"template":null}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
 56	menu_items	selected_by_default	\N	\N	\N	\N	\N	f	f	2	half	\N	\N	\N	f	behavior	\N	\N
@@ -410,18 +410,18 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 35	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations
 41	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 42	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	create	{}	{}	\N	*
-43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
+43	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 44	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	update	{}	{}	\N	*
-45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
+45	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 52	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois,sources_translations
 58	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	create	{}	{}	\N	*
 59	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id
 60	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id
 61	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_sources	delete	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 62	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	create	{}	{}	\N	*
-63	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	read	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,collection,menu_items_id,item
-64	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	update	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
-65	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	delete	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
+63	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	read	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,collection,menu_items_id,item
+64	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	update	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
+65	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_childrens	delete	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 66	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	create	{}	{}	\N	*
 67	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
 68	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*
@@ -454,9 +454,9 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 105	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	sources_translations	delete	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 106	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	projects_translations	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 107	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	create	{}	{}	\N	*
-108	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	read	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
-109	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	update	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
-110	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	delete	{"_and":[{"menu_items_id":{"theme_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
+108	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	read	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
+109	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	update	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name
+110	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_translations	delete	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
 112	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	create	{}	{}	\N	*
 113	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 114	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
@@ -476,7 +476,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 7	menu_items	menu_item_parent_id	menu_items	\N	\N	\N	\N	\N	nullify
 10	menu_items	parent_id	menu_items	items	\N	\N	\N	index_order	nullify
 11	themes	root_menu_item_id	menu_items	\N	\N	\N	\N	\N	nullify
-14	menu_items	theme_id	themes	\N	\N	\N	\N	\N	nullify
+14	menu_items	project_id	projects	\N	\N	\N	\N	\N	nullify
 16	menu_items_sources	sources_id	sources	menu_items	\N	\N	menu_items_id	\N	nullify
 17	menu_items_sources	menu_items_id	menu_items	sources	\N	\N	sources_id	\N	nullify
 19	filters	project_id	projects	\N	\N	\N	\N	\N	nullify

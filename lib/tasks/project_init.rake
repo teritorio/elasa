@@ -121,7 +121,7 @@ def insert_menu_item(conn, **args)
   menu_item_id = conn.exec(
     '
     INSERT INTO menu_items(
-      theme_id,
+      project_id,
       index_order, hidden, parent_id, selected_by_default,
       type,
       icon, color_fill, color_line, style_class_string, display_mode,
@@ -134,7 +134,7 @@ def insert_menu_item(conn, **args)
     RETURNING
       id
     ', [
-      args[:theme_id],
+      args[:project_id],
       args[:index_order], args[:hidden].nil? ? false : args[:hidden], args[:parent_id], args[:selected_by_default].nil? ? false : args[:selected_by_default],
       args[:type],
       args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
@@ -164,11 +164,11 @@ def insert_menu_item(conn, **args)
   menu_item_id
 end
 
-def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs, index)
+def insert_menu_group(conn, project_id, parent_id, class_path, css_parser, classs, index)
   icon = css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]
   insert_menu_item(
     conn,
-    theme_id: theme_id,
+    project_id: project_id,
     slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
     index_order: index,
     parent_id: parent_id,
@@ -183,7 +183,7 @@ def insert_menu_group(conn, theme_id, parent_id, class_path, css_parser, classs,
   )
 end
 
-def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_parser, classs, index, group_fields_ids, filters)
+def insert_menu_category(conn, project_id, parent_id, class_path, css_parser, classs, index, group_fields_ids, filters)
   group_ids = classs['osm_tags_extra'].collect{ |group|
     next if group.include?('i18n')
 
@@ -223,7 +223,7 @@ def insert_menu_category(conn, project_id, theme_id, parent_id, class_path, css_
   icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
   category_id = insert_menu_item(
     conn,
-    theme_id: theme_id,
+    project_id: project_id,
     slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
     index_order: index,
     parent_id: parent_id,
@@ -306,19 +306,19 @@ def insert_group_fields(conn, project_id, ontology)
   }
 end
 
-def new_menu(project_id, theme_id, theme, css, filters)
+def new_menu(project_id, theme, css, filters)
   ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json") if %w[tourism city].include?(theme)
 
   css_parser = CssParser::Parser.new
   css_parser.load_uri!(css)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM menu_items WHERE theme_id = $1', [theme_id])
+    conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
 
     root_menu_id = insert_menu_item(
       conn,
-      theme_id: theme_id,
+      project_id: project_id,
       slugs: { en: 'root', fr: 'racine', es: 'raiz' },
       index_order: 1,
       type: 'menu_group',
@@ -340,12 +340,12 @@ def new_menu(project_id, theme_id, theme, css, filters)
         themes.project_id = projects.id AND
         themes.id = $2
       ',
-      [project_id, theme_id, root_menu_id]
+      [project_id, project_id, root_menu_id]
     )
 
     insert_menu_item(
       conn,
-      theme_id: theme_id,
+      project_id: project_id,
       slugs: { en: 'search', fr: 'search', es: 'búsqueda' },
       parent_id: root_menu_id,
       index_order: 1,
@@ -360,7 +360,7 @@ def new_menu(project_id, theme_id, theme, css, filters)
 
     poi_menu_id = insert_menu_item(
       conn,
-      theme_id: theme_id,
+      project_id: project_id,
       slugs: { en: 'pois', fr: 'poi', es: 'poi' },
       parent_id: root_menu_id,
       index_order: 2,
@@ -380,23 +380,23 @@ def new_menu(project_id, theme_id, theme, css, filters)
     ontology['superclass'].each_with_index{ |id_superclass, superclass_index|
       superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
-      superclass_menu_id = insert_menu_group(conn, theme_id, poi_menu_id, [superclass_id], css_parser, superclass, superclass_index)
+      superclass_menu_id = insert_menu_group(conn, project_id, poi_menu_id, [superclass_id], css_parser, superclass, superclass_index)
       superclass['class'].each_with_index{ |id_class, class_index|
         class_id, classs = id_class
         classs['color_fill'] = superclass['color_fill']
         classs['color_line'] = superclass['color_line']
         classs['display_mode'] = 'large'
         if classs.key?('subclass')
-          class_menu_id = insert_menu_group(conn, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index)
+          class_menu_id = insert_menu_group(conn, project_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index)
           classs['subclass'].each_with_index{ |id_subclass, subclass_index|
             subclass_id, subclass = id_subclass
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
-            insert_menu_category(conn, project_id, theme_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids, filters)
+            insert_menu_category(conn, project_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids, filters)
           }
         else
-          insert_menu_category(conn, project_id, theme_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids, filters)
+          insert_menu_category(conn, project_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids, filters)
         end
       }
     }
@@ -465,7 +465,7 @@ namespace :project do
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
     load_i18n(slug, i18ns)
     filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
-    new_menu(project_id, theme_id, theme, css, filters)
+    new_menu(project_id, theme, css, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
