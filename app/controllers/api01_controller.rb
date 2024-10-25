@@ -8,7 +8,10 @@ class Api01Controller < ApplicationController
   def settings
     project_slug, = project_theme_params
 
-    project = JSON.parse(query('project($1)', [project_slug]))
+    row_project = query('project($1)', [project_slug])
+    render status: :not_found if row_project.nil?
+
+    project = JSON.parse(row_project)
     respond_to do |format|
       format.json { render json: project.except('articles') }
     end
@@ -17,7 +20,10 @@ class Api01Controller < ApplicationController
   def articles
     project_slug, = project_theme_params
 
-    articles = JSON.parse(query('project($1)', [project_slug]))['articles']
+    row_project = query('project($1)', [project_slug])
+    render status: :not_found if row_project.nil?
+
+    articles = JSON.parse(row_project)['articles']
     respond_to do |format|
       format.json {
         render json: (articles || []).collect{ |article|
@@ -55,6 +61,8 @@ class Api01Controller < ApplicationController
       params[:deps] == 'true',
       nil,
     ]) || {}
+
+    render status: :not_found if pois.nil?
 
     respond_to do |format|
       format.geojson {
