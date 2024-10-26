@@ -660,7 +660,7 @@ ALTER SEQUENCE public.sources_translations_id_seq OWNED BY public.sources_transl
 
 CREATE TABLE public.themes (
     id integer NOT NULL,
-    project_id integer DEFAULT 0 NOT NULL,
+    project_id integer NOT NULL,
     slug character varying NOT NULL,
     logo_url character varying NOT NULL,
     favicon_url character varying NOT NULL,
@@ -1194,18 +1194,18 @@ ALTER TABLE ONLY public.menu_items_filters
 
 
 --
--- Name: themes menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.themes
-    ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-
-
---
 -- Name: sources menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.sources
+    ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: themes menu_items_fk_project_id; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes
     ADD CONSTRAINT menu_items_fk_project_id FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
