@@ -314,6 +314,18 @@ def compare_pois(url_old, url_new, category_ids)
   }
   only_in_0 = ids[0].keys - ids[1].keys
   only_in_1 = ids[1].keys - ids[0].keys
+
+  only_in_0 = only_in_0.select{ |poi_id|
+    poi = hashes[0].find{ |poi| poi_id == poi['properties']['metadata']['id'] }
+    return true if poi['properties']['metadata']['osm_id'].nil?
+
+    source_id = "#{poi['properties']['metadata']['osm_type'][0]}#{poi['properties']['metadata']['osm_id']}"
+    if !source_id.nil?
+      hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
+    else
+      true
+    end
+  }
   if !only_in_0.empty?
     puts "Ids only on 0\n#{only_in_0.inspect}"
     puts "    by category ids #{only_in_0.collect{ |id| ids[0][id] }.tally.inspect}"
