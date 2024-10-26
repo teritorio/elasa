@@ -382,7 +382,7 @@ COPY public.directus_panels (id, dashboard, name, icon, color, show_header, note
 COPY public.directus_permissions (id, role, collection, action, permissions, validation, presets, fields) FROM stdin;
 1	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	create	{}	\N	\N	*
 2	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
-3	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
+3	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	update	{"_and":[{"_or":[{"uploaded_by":{"_eq":"$CURRENT_USER.id"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}]}	\N	\N	*
 4	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_files	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
 5	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_dashboards	create	{}	\N	\N	*
 6	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_dashboards	read	{}	\N	\N	*

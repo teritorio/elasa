@@ -1,4 +1,6 @@
 var index = ({ filter, action }, { env, services }) => {
+  const { ItemsService } = services;
+
   filter("items.create", async (payload, { event, collection }, { database, schema, accountability }) => {
     if (["menu_items", "fields", "filters", "sources", "themes", "translations"].includes(collection)) {
       if (accountability && accountability.user) {
@@ -9,6 +11,25 @@ var index = ({ filter, action }, { env, services }) => {
       }
     }
     return payload;
+  });
+
+  action("files.upload", async ({ event, payload, key, collection }, { schema, accountability }) => {
+    if (accountability && accountability.user) {
+      const usersItemsService = new ItemsService('directus_users', {
+        schema: schema,
+        accountability: accountability
+      });
+      const filesItemsService = new ItemsService('directus_files', {
+        schema: schema,
+        accountability: accountability
+      });
+
+      usersItemsService.readOne(accountability.user).then((user) => {
+        filesItemsService.updateOne(key, {
+          project_id: user.project_id
+        })
+      });
+    }
   });
 };
 

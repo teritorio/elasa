@@ -206,7 +206,7 @@ CREATE TABLE public.directus_files (
     focal_point_y integer,
     tus_id character varying(64),
     tus_data json,
-    project_id integer NOT NULL
+    project_id integer
 );
 
 
