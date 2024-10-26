@@ -43,7 +43,7 @@ services:
       # local driver
       - ./uploads:/directus/uploads
       # If you want to load extensions from the host
-      # - ./extensions:/directus/extensions
+      - ./docker/directus/extensions:/directus/extensions
     depends_on:
       - cache
       - postgres
