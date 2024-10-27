@@ -161,7 +161,7 @@ def load_field_group(conn, project_id, group)
     @fields[group_key]
   else
     if group['group']
-      duplicate_fields = (group['fields'] || []).pluck('field').compact.tally.select{ |k, v| v > 1 }.keys
+      duplicate_fields = (group['fields'] || []).pluck('field').compact.tally.select{ |_k, v| v > 1 }.keys
       if duplicate_fields.size > 0
         puts "[ERROR] Duplicate field in group #{group['group']}: #{duplicate_fields.join(', ')}"
       end
@@ -662,7 +662,7 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     )
 
     # Categories not linked to datasource
-    local_poi = pois.select{ |poi| ['tis', 'zone'].include?(poi['properties']['metadata']['source']) }
+    local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
     categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }
     source_ids = load_local_pois(conn, project_slug, project_id, categories_local, local_poi, i18ns, role_uuid, url_base)

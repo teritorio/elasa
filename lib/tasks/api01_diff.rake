@@ -98,7 +98,7 @@ def compare_menu(url_old, url_new)
       menu['category']&.delete('id')
       menu['link']&.delete('id')
 
-      ['menu_group', 'category', 'link'].each{ |k|
+      %w[menu_group category link].each{ |k|
         menu[k]&.delete('icon') if menu[k]&.delete('icon') == 'teritorio teritorio-beef00' # Values added as default on import from WP
         menu[k]&.delete('color_fill') if menu[k]&.delete('color_fill') == '#beef00' # Values added as default on import from WP
         menu[k]&.delete('color_line') if menu[k]&.delete('color_line') == '#beef00' # Values added as default on import from WP
@@ -224,8 +224,8 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('osm_galerie_images') # Buggy WP
       poi['properties'].delete('sources') # Buggy WP
       poi['properties']['metadata']&.delete('source') # Buggy WP
-      poi['properties'] = poi['properties'].select{ |k, v| !k.start_with?('name:') } # API change
-      poi['properties'] = poi['properties'].select{ |k, v| !k.start_with?('description:') } # API change
+      poi['properties'] = poi['properties'].select{ |k, _v| !k.start_with?('name:') } # API change
+      poi['properties'] = poi['properties'].select{ |k, _v| !k.start_with?('description:') } # API change
 
       poi['properties'].delete('partenaire_fiche') # Buggy WP
       poi['properties'].delete('partenaire_url') # Buggy WP
@@ -261,7 +261,7 @@ def compare_pois(url_old, url_new, category_ids)
         'min_age',
         'level', 'building:levels', 'roof:levels',
         'addr:floor',
-        'capacity','capacity:caravans', 'capacity:cabins', 'capacity:rooms', 'capacity:disabled',
+        'capacity', 'capacity:caravans', 'capacity:cabins', 'capacity:rooms', 'capacity:disabled',
         'covered',
         'isced:level',
         'height', 'maxlength',
@@ -320,10 +320,10 @@ def compare_pois(url_old, url_new, category_ids)
     return true if poi['properties']['metadata']['osm_id'].nil?
 
     source_id = "#{poi['properties']['metadata']['osm_type'][0]}#{poi['properties']['metadata']['osm_id']}"
-    if !source_id.nil?
-      hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
-    else
+    if source_id.nil?
       true
+    else
+      hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
     end
   }
   if !only_in_0.empty?
@@ -369,7 +369,7 @@ def compare_pois(url_old, url_new, category_ids)
       h[1]['properties']['metadata']['category_ids'] = h[0]['properties']['metadata']['category_ids']
     end
 
-    if h[0]['properties']['metadata']['category_ids'].size >=1
+    if h[0]['properties']['metadata']['category_ids'].size >= 1
       # Has it have multiple category_ids, could have different values, force to be the same
       h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1]['properties']['display']['style_class'].nil?
       h[0]['properties']['display']['details_fields'] = h[1]['properties']['display']['details_fields'] if !h[1]['properties']['display']['details_fields'].nil?
