@@ -6,6 +6,7 @@ require 'json'
 require 'http'
 require 'pg'
 require 'cgi'
+require 'image_size'
 require 'active_support/core_ext/digest/uuid'
 
 require_relative 'sources_load'
@@ -32,10 +33,7 @@ def fetch_image(url)
   return [] if response.status.code == 404
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
 
-  {
-    data: response.body.to_s,
-    mime: response.headers['content-type'],
-  }
+  response.body.to_s
 end
 
 def load_settings(project_slug, theme_slug, url, url_articles)
@@ -719,24 +717,24 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       end
       if poi.dig('properties', 'source:image') == 'local'
         image_urls = poi['properties']['image']
-        image_urls.collect{ |image_url|
+        images_uuids = image_urls.collect{ |image_url|
           if directus_files[image_url].nil?
-            img = fetch_image(image_url)
-            if img[:mime].nil?
-              img[:mime] = "image/#{image_url.split('.')[-1]}"
-            end
+            img_data = fetch_image(image_url)
+            image_info = ImageSize.new(StringIO.new(img_data))
+            mime = image_info.media_type
             uuid = Digest::UUID.uuid_from_hash(Digest::MD5, Digest::UUID::DNS_NAMESPACE, image_url)
             name = image_url.split('/')[-1]
-            filename = "#{uuid}.#{img[:mime].split('/')[-1]}"
-            File.binwrite("./uploads/#{filename}", img[:data])
-            directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), img[:mime], user_uuid.to_s, img[:data].size.to_s, nil, nil]
+            filename = "#{uuid}.#{mime.split('/')[-1]}"
+            File.binwrite("./uploads/#{filename}", img_data)
+            directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), mime, user_uuid.to_s, img_data.size.to_s, image_info.width.to_s, image_info.height.to_s]
+            uuid.to_s
           else
-            directus_files[image_url]
+            directus_files[image_url][0]
           end
         }
       end
       if website_details || images_uuids
-        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, images_uuids.to_json]
+        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, images_uuids.nil? ? nil : images_uuids.to_json]
       end
     }
 
@@ -805,12 +803,38 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     conn.copy_data('COPY local_addon_raw FROM STDIN (FORMAT binary)', enco) {
       local_addon_raw.each{ |raw| conn.put_copy_data(raw) }
     }
+    conn.exec_params("
+      WITH a AS (
+        SELECT
+          pois.id AS poi_id,
+          json_array_elements_text(image::json)::uuid AS files_id
+        FROM
+          local_addon_raw
+          JOIN pois ON
+            (pois.slugs->>'original_id')::bigint = local_addon_raw.poi_id::bigint
+          JOIN sources ON
+            sources.id = pois.source_id AND
+            sources.project_id = $1
+      )
+      MERGE INTO
+        pois_files
+      USING
+        a AS local_addon_raw
+      ON
+        pois_files.pois_id = local_addon_raw.poi_id AND
+        pois_files.directus_files_id = local_addon_raw.files_id
+      WHEN NOT MATCHED THEN
+        INSERT (pois_id, directus_files_id)
+        VALUES (
+          local_addon_raw.poi_id,
+          local_addon_raw.files_id
+        )
+    ", [project_id])
     pois_custom_poi_ids = conn.exec_params("
       WITH a AS (
         SELECT
           pois.id AS poi_id,
-          local_addon_raw.website_details,
-          local_addon_raw.image
+          local_addon_raw.website_details
         FROM
           local_addon_raw
           JOIN pois ON
@@ -827,8 +851,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         pois.id = local_addon_raw.poi_id
       WHEN MATCHED THEN
         UPDATE SET
-          website_details = local_addon_raw.website_details,
-          image = local_addon_raw.image::jsonb
+          website_details = local_addon_raw.website_details
       RETURNING
         pois.id
     ", [project_id]) { |result|

@@ -35,6 +35,7 @@ menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
 menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
+pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
 projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
 sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
@@ -156,7 +157,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 118	filters	checkboxes_list_property	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	checkboxes_list	\N	\N
 119	filters	boolean_property	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	boolean	\N	\N
 120	filters	number_range_property	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
-121	pois	id	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
+121	pois	id	\N	\N	\N	\N	\N	t	f	1	full	\N	\N	\N	f	\N	\N	\N
 123	pois	geom	geometry	\N	\N	\N	\N	t	f	5	full	\N	\N	\N	f	\N	\N	\N
 124	pois	properties	cast-json	\N	\N	\N	\N	t	f	4	full	\N	\N	\N	f	\N	\N	\N
 125	pois	source_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	t	f	2	full	\N	\N	\N	f	\N	\N	\N
@@ -234,9 +235,12 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
-533	pois	image	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
 534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
+536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}}{{directus_files_id.title}}"}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
+537	pois_files	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -463,6 +467,10 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 114	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 115	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 231	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	update	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	override,image,website_details
+232	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	read	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id
+233	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	update	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id
+234	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	delete	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
+236	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	create	{}	{}	\N	*
 \.
 
 
@@ -504,6 +512,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 44	filters_translations	languages_code	languages	\N	\N	\N	filters_id	\N	nullify
 45	filters_translations	filters_id	filters	filters_translations	\N	\N	languages_code	\N	nullify
 56	directus_files	project_id	projects	\N	\N	\N	\N	\N	nullify
+57	pois_files	directus_files_id	directus_files	\N	\N	\N	pois_id	\N	nullify
+58	pois_files	pois_id	pois	image	\N	\N	directus_files_id	\N	nullify
 \.
 
 
@@ -567,7 +577,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 535, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 539, true);
 
 
 --
@@ -581,7 +591,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 231, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 236, true);
 
 
 --
@@ -595,7 +605,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 56, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 58, true);
 
 
 --

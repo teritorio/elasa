@@ -482,8 +482,7 @@ CREATE TABLE public.pois (
     properties jsonb,
     source_id integer,
     slugs json,
-    website_details text,
-    image jsonb
+    website_details text
 );
 
 

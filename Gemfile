@@ -30,6 +30,7 @@ gem 'sorbet-runtime'
 
 group :development do
   gem 'damerau-levenshtein'
+  gem 'image_size' # WP Imort
   gem 'rake'
   gem 'rubocop', require: false
   gem 'rubocop-rails', require: false

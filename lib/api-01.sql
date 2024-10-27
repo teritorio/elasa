@@ -281,8 +281,7 @@ CREATE OR REPLACE FUNCTION filter_values(
             sources.project_id,
             sources.menu_items_id,
             pois_local.*,
-            NULL::text AS website_details,
-            NULL::jsonb AS image
+            NULL::text AS website_details
         FROM
             sources
             JOIN pois_local(_project_slug) AS pois_local ON
@@ -735,7 +734,7 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT *, NULL::text AS website_details, NULL::jsonb AS image FROM pois_local(_project_slug)
+                SELECT *, NULL::text AS website_details FROM pois_local(_project_slug)
             ) AS pois ON
                 pois.source_id = sources.id AND
                 pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects)
@@ -878,9 +877,18 @@ CREATE OR REPLACE FUNCTION pois(
             menu
             JOIN (
                 SELECT
-                    *,
-                    id_from_slugs(slugs, id) AS slug_id -- use slug as original POI id
+                    pois.*,
+                    jsonb_agg(to_jsonb(
+                        'assets/' || pois_files.directus_files_id::text || '/' || directus_files.title
+                    )) AS image,
+                    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
                 FROM pois
+                    LEFT JOIN pois_files ON
+                        pois_files.pois_id = pois.id
+                    LEFT JOIN directus_files ON
+                        directus_files.id = pois_files.directus_files_id
+                GROUP BY
+                    pois.id
                 UNION ALL
                 SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_project_slug)
             ) AS pois ON
