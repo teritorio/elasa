@@ -24,10 +24,12 @@ end
 def create_user(project_id, project_slug, role_uuid)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     email = "#{project_slug}@example.com"
+    conn.exec('DELETE FROM directus_files USING directus_users WHERE directus_files.uploaded_by = directus_users.id AND email = $1', [email])
     conn.exec('DELETE FROM directus_users WHERE email = $1', [email])
     conn.exec('
       INSERT INTO directus_users(id, email, password, language, status, role, project_id)
       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
+      RETURNING id
     ', [
       email,
       # Default password: d1r3ctu5
@@ -36,7 +38,9 @@ def create_user(project_id, project_slug, role_uuid)
       'active', # draft
       role_uuid,
       project_id,
-    ])
+    ]) { |result|
+      result.first['id']
+    }
   }
 end
 

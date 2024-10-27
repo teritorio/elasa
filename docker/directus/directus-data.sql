@@ -236,7 +236,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
 533	pois	image	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
 534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	f	1	full	\N	\N	\N	t	\N	\N	\N
+535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
 \.
 
 

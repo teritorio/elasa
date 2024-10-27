@@ -6,6 +6,7 @@ require 'json'
 require 'http'
 require 'pg'
 require 'cgi'
+require 'active_support/core_ext/digest/uuid'
 
 require_relative 'sources_load'
 
@@ -24,6 +25,17 @@ def fetch_json(url)
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
 
   JSON.parse(response)
+end
+
+def fetch_image(url)
+  response = HTTP.follow.get(url)
+  return [] if response.status.code == 404
+  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
+
+  {
+    data: response.body.to_s,
+    mime: response.headers['content-type'],
+  }
 end
 
 def load_settings(project_slug, theme_slug, url, url_articles)
@@ -355,7 +367,7 @@ def add_missing_pois(menu_sources, pois)
   pois + equiv_pois
 end
 
-def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
+def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -696,6 +708,92 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     }
 
     # POI from datasource with local addon
+
+    directus_files = {}
+    local_addon_raw = []
+    pois.each{ |poi|
+      website_details = nil
+      images_uuids = nil
+      if poi.dig('properties', 'editorial', 'source:website:details') == 'local'
+        website_details = poi['properties']['editorial']['website:details']
+      end
+      if poi.dig('properties', 'source:image') == 'local'
+        image_urls = poi['properties']['image']
+        image_urls.collect{ |image_url|
+          if directus_files[image_url].nil?
+            img = fetch_image(image_url)
+            if img[:mime].nil?
+              img[:mime] = "image/#{image_url.split('.')[-1]}"
+            end
+            uuid = Digest::UUID.uuid_from_hash(Digest::MD5, Digest::UUID::DNS_NAMESPACE, image_url)
+            name = image_url.split('/')[-1]
+            filename = "#{uuid}.#{img[:mime].split('/')[-1]}"
+            File.binwrite("./uploads/#{filename}", img[:data])
+            directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), img[:mime], user_uuid.to_s, img[:data].size.to_s, nil, nil]
+          else
+            directus_files[image_url]
+          end
+        }
+      end
+      if website_details || images_uuids
+        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, images_uuids.to_json]
+      end
+    }
+
+    conn.exec("
+      CREATE TEMP TABLE files_raw(
+        id text,
+        filename_disk text,
+        filename_download text,
+        title text,
+        type text,
+        uploaded_by text,
+        filesize text,
+        width text,
+        height text
+      )
+    ")
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data('COPY files_raw FROM STDIN (FORMAT binary)', enco) {
+      directus_files.values.each{ |raw| conn.put_copy_data(raw) }
+    }
+    pois_custom_poi_ids = conn.exec_params("
+      MERGE INTO
+        directus_files
+      USING
+        files_raw
+      ON
+        directus_files.id = files_raw.id::uuid
+      WHEN MATCHED THEN
+        UPDATE SET
+          project_id = $1,
+          filename_disk = files_raw.filename_disk,
+          filename_download = files_raw.filename_download,
+          title = files_raw.title,
+          type = files_raw.type,
+          uploaded_by = files_raw.uploaded_by::uuid,
+          filesize = files_raw.filesize::integer,
+          width = files_raw.width::integer,
+          height = files_raw.height::integer
+      WHEN NOT MATCHED THEN
+        INSERT (id, project_id, storage, filename_disk, filename_download, title, type, uploaded_by, filesize, width, height)
+        VALUES (
+          files_raw.id::uuid,
+          $1,
+          'local',
+          files_raw.filename_disk,
+          files_raw.filename_download,
+          files_raw.title,
+          files_raw.type,
+          files_raw.uploaded_by::uuid,
+          files_raw.filesize::integer,
+          files_raw.width::integer,
+          files_raw.height::integer
+        )
+    ", [project_id]) { |result|
+      result.collect{ |row| row['poi_id'] }
+    }
+
     conn.exec("
       CREATE TEMP TABLE local_addon_raw(
         poi_id text,
@@ -703,23 +801,9 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
         image json
       )
     ")
-    customs = 0
     enco = PG::BinaryEncoder::CopyRow.new
     conn.copy_data('COPY local_addon_raw FROM STDIN (FORMAT binary)', enco) {
-      pois.each{ |poi|
-        website_details = nil
-        image = nil
-        if poi.dig('properties', 'editorial', 'source:website:details') == 'local'
-          website_details = poi['properties']['editorial']['website:details']
-        end
-        if poi.dig('properties', 'source:image') == 'local'
-          image = poi['properties']['image']
-        end
-        if website_details || image
-          conn.put_copy_data([poi['properties']['metadata']['id'].to_s, website_details, image.nil? ? nil : image.to_json])
-          customs += 1
-        end
-      }
+      local_addon_raw.each{ |raw| conn.put_copy_data(raw) }
     }
     pois_custom_poi_ids = conn.exec_params("
       WITH a AS (
@@ -750,8 +834,8 @@ def load_menu(project_slug, project_id, theme_id, url, url_pois, url_menu_source
     ", [project_id]) { |result|
       result.collect{ |row| row['poi_id'] }
     }
-    if pois_custom_poi_ids.size != customs
-      puts "[ERROR] Fails to insert custom POI : #{customs} != #{pois_custom_poi_ids.size}"
+    if pois_custom_poi_ids.size != local_addon_raw.size
+      puts "[ERROR] Fails to insert custom POI : #{local_addon_raw.size} != #{pois_custom_poi_ids.size}"
     end
   }
 end
@@ -1030,11 +1114,11 @@ namespace :wp do
     project_id, theme_id, url_base = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
 
     role_uuid = create_role(project_slug)
-    create_user(project_id, project_slug, role_uuid)
+    user_uuid = create_user(project_id, project_slug, role_uuid)
 
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
-    load_menu(project_slug, project_id, theme_id, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid, url_base)
+    load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid, url_base)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
 
     load_i18n(project_slug, i18ns) if !loaded_from_datasource.empty?
