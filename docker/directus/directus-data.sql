@@ -431,7 +431,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 74	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
 75	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id
 76	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	menu_items_filters	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N
-83	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs
+83	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs,override,image,website_details
 84	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	create	{}	{}	\N	*
 85	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields_fields	create	{}	{}	\N	*
 86	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	fields	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,accordion-9juoos,group_block,fields,project_id,icon,group,field,type,display_mode,label
@@ -462,6 +462,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 113	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 114	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 115	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
+231	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	update	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	override,image,website_details
 \.
 
 
@@ -572,7 +573,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 230, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 231, true);
 
 
 --
