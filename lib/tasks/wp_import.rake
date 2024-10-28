@@ -365,6 +365,79 @@ def add_missing_pois(menu_sources, pois)
   pois + equiv_pois
 end
 
+def load_images(conn, project_id, user_uuid, image_urls)
+  directus_files = {}
+  images_uuids = image_urls.collect{ |image_url|
+    if directus_files[image_url].nil?
+      img_data = fetch_image(image_url)
+      image_info = ImageSize.new(StringIO.new(img_data))
+      mime = image_info.media_type
+      uuid = Digest::UUID.uuid_from_hash(Digest::MD5, Digest::UUID::DNS_NAMESPACE, image_url)
+      name = image_url.split('/')[-1]
+      filename = "#{uuid}.#{mime.split('/')[-1]}"
+      File.binwrite("./uploads/#{filename}", img_data)
+      directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), mime, user_uuid.to_s, img_data.size.to_s, image_info.width.to_s, image_info.height.to_s]
+      uuid.to_s
+    else
+      directus_files[image_url][0]
+    end
+  }
+
+  conn.exec("
+    CREATE TEMP TABLE files_raw(
+      id text,
+      filename_disk text,
+      filename_download text,
+      title text,
+      type text,
+      uploaded_by text,
+      filesize text,
+      width text,
+      height text
+    )
+  ")
+  enco = PG::BinaryEncoder::CopyRow.new
+  conn.copy_data('COPY files_raw FROM STDIN (FORMAT binary)', enco) {
+    directus_files.values.each{ |raw| conn.put_copy_data(raw) }
+  }
+  conn.exec_params("
+    MERGE INTO
+      directus_files
+    USING
+      files_raw
+    ON
+      directus_files.id = files_raw.id::uuid
+    WHEN MATCHED THEN
+      UPDATE SET
+        project_id = $1,
+        filename_disk = files_raw.filename_disk,
+        filename_download = files_raw.filename_download,
+        title = files_raw.title,
+        type = files_raw.type,
+        uploaded_by = files_raw.uploaded_by::uuid,
+        filesize = files_raw.filesize::integer,
+        width = files_raw.width::integer,
+        height = files_raw.height::integer
+    WHEN NOT MATCHED THEN
+      INSERT (id, project_id, storage, filename_disk, filename_download, title, type, uploaded_by, filesize, width, height)
+      VALUES (
+        files_raw.id::uuid,
+        $1,
+        'local',
+        files_raw.filename_disk,
+        files_raw.filename_download,
+        files_raw.title,
+        files_raw.type,
+        files_raw.uploaded_by::uuid,
+        files_raw.filesize::integer,
+        files_raw.width::integer,
+        files_raw.height::integer
+      )
+  ", [project_id])
+
+  image_urls.zip(images_uuids).to_h
+end
+
 def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
@@ -707,89 +780,25 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 
     # POI from datasource with local addon
 
-    directus_files = {}
     local_addon_raw = []
     pois.each{ |poi|
       website_details = nil
-      images_uuids = nil
+      image_urls = nil
       if poi.dig('properties', 'editorial', 'source:website:details') == 'local'
         website_details = poi['properties']['editorial']['website:details']
       end
       if poi.dig('properties', 'source:image') == 'local'
         image_urls = poi['properties']['image']
-        images_uuids = image_urls.collect{ |image_url|
-          if directus_files[image_url].nil?
-            img_data = fetch_image(image_url)
-            image_info = ImageSize.new(StringIO.new(img_data))
-            mime = image_info.media_type
-            uuid = Digest::UUID.uuid_from_hash(Digest::MD5, Digest::UUID::DNS_NAMESPACE, image_url)
-            name = image_url.split('/')[-1]
-            filename = "#{uuid}.#{mime.split('/')[-1]}"
-            File.binwrite("./uploads/#{filename}", img_data)
-            directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), mime, user_uuid.to_s, img_data.size.to_s, image_info.width.to_s, image_info.height.to_s]
-            uuid.to_s
-          else
-            directus_files[image_url][0]
-          end
-        }
       end
-      if website_details || images_uuids
-        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, images_uuids.nil? ? nil : images_uuids.to_json]
+      if website_details || image_urls
+        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, image_urls]
       end
     }
 
-    conn.exec("
-      CREATE TEMP TABLE files_raw(
-        id text,
-        filename_disk text,
-        filename_download text,
-        title text,
-        type text,
-        uploaded_by text,
-        filesize text,
-        width text,
-        height text
-      )
-    ")
-    enco = PG::BinaryEncoder::CopyRow.new
-    conn.copy_data('COPY files_raw FROM STDIN (FORMAT binary)', enco) {
-      directus_files.values.each{ |raw| conn.put_copy_data(raw) }
-    }
-    pois_custom_poi_ids = conn.exec_params("
-      MERGE INTO
-        directus_files
-      USING
-        files_raw
-      ON
-        directus_files.id = files_raw.id::uuid
-      WHEN MATCHED THEN
-        UPDATE SET
-          project_id = $1,
-          filename_disk = files_raw.filename_disk,
-          filename_download = files_raw.filename_download,
-          title = files_raw.title,
-          type = files_raw.type,
-          uploaded_by = files_raw.uploaded_by::uuid,
-          filesize = files_raw.filesize::integer,
-          width = files_raw.width::integer,
-          height = files_raw.height::integer
-      WHEN NOT MATCHED THEN
-        INSERT (id, project_id, storage, filename_disk, filename_download, title, type, uploaded_by, filesize, width, height)
-        VALUES (
-          files_raw.id::uuid,
-          $1,
-          'local',
-          files_raw.filename_disk,
-          files_raw.filename_download,
-          files_raw.title,
-          files_raw.type,
-          files_raw.uploaded_by::uuid,
-          files_raw.filesize::integer,
-          files_raw.width::integer,
-          files_raw.height::integer
-        )
-    ", [project_id]) { |result|
-      result.collect{ |row| row['poi_id'] }
+    image_urls = local_addon_raw.collect(&:last).compact.flatten.uniq
+    directus_files = load_images(conn, project_id, user_uuid, image_urls)
+    local_addon_raw.select{ |raw| !raw[-1].nil? }.each{ |row|
+      row[-1] = row[-1].collect{ |image_url| directus_files[image_url] }
     }
 
     conn.exec("
