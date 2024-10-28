@@ -35,7 +35,7 @@ menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
 menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
-pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	\N	\N	open	\N	f
+pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	pois	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
 projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
 sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
@@ -237,10 +237,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
 534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
-536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}}{{directus_files_id.title}}"}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
+536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
 537	pois_files	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+540	pois_files	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
 \.
 
 
@@ -513,7 +514,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 45	filters_translations	filters_id	filters	filters_translations	\N	\N	languages_code	\N	nullify
 56	directus_files	project_id	projects	\N	\N	\N	\N	\N	nullify
 57	pois_files	directus_files_id	directus_files	\N	\N	\N	pois_id	\N	nullify
-58	pois_files	pois_id	pois	image	\N	\N	directus_files_id	\N	nullify
+58	pois_files	pois_id	pois	image	\N	\N	directus_files_id	index	nullify
 \.
 
 
@@ -562,7 +563,7 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 -- Data for Name: pois_files; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.pois_files (id, pois_id, directus_files_id) FROM stdin;
+COPY public.pois_files (id, pois_id, directus_files_id, index) FROM stdin;
 \.
 
 
@@ -577,7 +578,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 539, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 540, true);
 
 
 --

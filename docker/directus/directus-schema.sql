@@ -759,7 +759,8 @@ ALTER SEQUENCE public.directus_webhooks_id_seq OWNED BY public.directus_webhooks
 CREATE TABLE public.pois_files (
     id integer NOT NULL,
     pois_id integer NOT NULL,
-    directus_files_id uuid NOT NULL
+    directus_files_id uuid NOT NULL,
+    index integer
 );
 
 
