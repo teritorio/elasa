@@ -753,6 +753,41 @@ ALTER SEQUENCE public.directus_webhooks_id_seq OWNED BY public.directus_webhooks
 
 
 --
+-- Name: pois_files; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.pois_files (
+    id integer NOT NULL,
+    pois_id integer NOT NULL,
+    directus_files_id uuid NOT NULL
+);
+
+
+ALTER TABLE public.pois_files OWNER TO postgres;
+
+--
+-- Name: pois_files_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.pois_files_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.pois_files_id_seq OWNER TO postgres;
+
+--
+-- Name: pois_files_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.pois_files_id_seq OWNED BY public.pois_files.id;
+
+
+--
 -- Name: directus_activity id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -813,6 +848,13 @@ ALTER TABLE ONLY public.directus_settings ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.directus_webhooks ALTER COLUMN id SET DEFAULT nextval('public.directus_webhooks_id_seq'::regclass);
+
+
+--
+-- Name: pois_files id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pois_files ALTER COLUMN id SET DEFAULT nextval('public.pois_files_id_seq'::regclass);
 
 
 --
@@ -1053,6 +1095,14 @@ ALTER TABLE ONLY public.directus_versions
 
 ALTER TABLE ONLY public.directus_webhooks
     ADD CONSTRAINT directus_webhooks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pois_files pois_files_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pois_files
+    ADD CONSTRAINT pois_files_pkey PRIMARY KEY (id);
 
 
 --
@@ -1365,6 +1415,22 @@ ALTER TABLE ONLY public.directus_versions
 
 ALTER TABLE ONLY public.directus_webhooks
     ADD CONSTRAINT directus_webhooks_migrated_flow_foreign FOREIGN KEY (migrated_flow) REFERENCES public.directus_flows(id) ON DELETE SET NULL;
+
+
+--
+-- Name: pois_files pois_files_directus_files_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pois_files
+    ADD CONSTRAINT pois_files_directus_files_id_foreign FOREIGN KEY (directus_files_id) REFERENCES public.directus_files(id);
+
+
+--
+-- Name: pois_files pois_files_pois_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.pois_files
+    ADD CONSTRAINT pois_files_pois_id_foreign FOREIGN KEY (pois_id) REFERENCES public.pois(id);
 
 
 --

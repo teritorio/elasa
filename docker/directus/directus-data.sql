@@ -549,6 +549,14 @@ COPY public.directus_webhooks (id, name, method, url, status, data, actions, col
 
 
 --
+-- Data for Name: pois_files; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public.pois_files (id, pois_id, directus_files_id) FROM stdin;
+\.
+
+
+--
 -- Name: directus_activity_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -609,6 +617,13 @@ SELECT pg_catalog.setval('public.directus_settings_id_seq', 1, true);
 --
 
 SELECT pg_catalog.setval('public.directus_webhooks_id_seq', 1, false);
+
+
+--
+-- Name: pois_files_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.pois_files_id_seq', 10, true);
 
 
 --
