@@ -383,6 +383,7 @@ def load_images(conn, project_id, user_uuid, image_urls)
     end
   }
 
+  conn.exec('DROP TABLE IF EXISTS files_raw')
   conn.exec("
     CREATE TEMP TABLE files_raw(
       id text,
@@ -748,7 +749,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
     categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }
-    source_ids = load_local_pois(conn, project_slug, project_id, categories_local, local_poi, i18ns, role_uuid, url_base)
+    source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, role_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -872,17 +873,18 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
   }
 end
 
-def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uuid)
-  create_table = fields.collect(&:last).join(",\n")
+def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, role_uuid)
+  fields_table = fields.select{ |_, _, _, type| !type.nil? }
+  create_table = fields_table.collect(&:last).join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
   conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' bigint', 'text'))
 
   enco = PG::BinaryEncoder::CopyRow.new
-  conn.copy_data("COPY \"t_#{table}\"(\"#{fields.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
+  conn.copy_data("COPY \"t_#{table}\"(\"#{fields_table.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
     ps.each{ |p|
       begin
-        values = fields.collect{ |field, t, _, _|
+        values = fields_table.collect{ |field, t, _, _|
           begin
             if ['id', "#{source_name}_id"[..62]].include?(field)
               p['properties']['metadata']['id']
@@ -918,9 +920,9 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
   conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
   conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
   conn.exec("
-    INSERT INTO \"#{table}\"(\"#{fields.collect(&:first).join('", "')}\")
+    INSERT INTO \"#{table}\"(\"#{fields_table.collect(&:first).join('", "')}\")
     SELECT
-    " + fields.collect { |field, _, _, type|
+    " + fields_table.collect { |field, _, _, type|
       if ['id', "#{source_name}_id"[..62]].include?(field) || type.include?(' bigint')
         "\"#{field}\"::bigint"
       elsif field == 'geom'
@@ -945,7 +947,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
     [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
     table.end_with?('_t'),
     'pin_drop',
-    'local_sources',
+    table.end_with?('_t') ? table_aprent[..62] : 'local_sources',
   ])
   conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..62]])
   fields.each{ |key, _, interface, _|
@@ -953,12 +955,15 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
     name = i18ns.dig(key, 'label', 'fr')
 
     conn.exec('
-      INSERT INTO directus_fields(collection, field, translations, hidden, interface) VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO directus_fields(collection, field, special, translations, options, hidden, sort, interface) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     ', [
       table[..62],
       key[..62],
+      interface == 'files' ? 'files' : nil,
       nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+      interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
       table.end_with?('_t') && ['id', "#{source_name}_id"[..62], 'languages_code'].include?(key),
+      interface == 'files' ? 2 : nil,
       interface,
     ])
   }
@@ -978,7 +983,7 @@ def load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uui
   }
 end
 
-def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18ns, role_uuid, url_base)
+def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, pois, i18ns, role_uuid, url_base)
   slugs = []
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
@@ -1051,6 +1056,7 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     }
     fields = []
     fields_translations = []
+    fields_image = nil
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
       i = if %w[name description].include?(key)
@@ -1060,6 +1066,11 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
           elsif ['addr:postcode', 'addr:housenumber', 'maxlength', 'ref', 'start_date', 'end_date', 'ref:fr:siret'].include?(key)
             f = ->(i, _j) { i }
             "\"#{key}\" varchar"
+          elsif key == 'image'
+            fields_image = key
+            f = nil
+            interface = 'files'
+            nil
           elsif key == 'website:details'
             f = ->(_i, j) { j['editorial']['website:details'] }
             "\"#{key}\" varchar"
@@ -1091,11 +1102,11 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
     }
 
     fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
-    load_local_table(conn, source_name, name, table, fields, ps, i18ns, role_uuid)
+    load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, role_uuid)
 
     if !fields_translations.empty?
       fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id"[..62], nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
-      load_local_table(conn, source_name, name, "#{table}_t"[..62], fields_translations, ps, i18ns, role_uuid)
+      load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, role_uuid)
       conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
       conn.exec('
@@ -1126,6 +1137,72 @@ def load_local_pois(conn, project_slug, project_id, categories_local, pois, i18n
         table[..62],
         "#{source_name}_translations"[..62],
         'languages_code',
+        'nullify',
+      ])
+    end
+
+    if !fields_image.nil?
+      image_urls = ps.select{ |poi| !poi['properties']['image'].nil? }.collect{ |poi|
+        [poi['properties']['metadata']['id'], poi['properties']['image']]
+      }.to_h
+      directus_files = load_images(conn, project_id, user_uuid, image_urls.values.flatten.uniq)
+
+      table_i = "#{table}_i"[..62]
+      conn.exec("DROP TABLE IF EXISTS \"#{table_i}\"")
+      conn.exec("
+        CREATE TABLE \"#{table_i}\"(
+          id SERIAL PRIMARY KEY,
+          pois_id bigint not null REFERENCES \"#{table}\"(id),
+          directus_files_id uuid not null REFERENCES directus_files(id),
+          index integer
+        )
+      ")
+      image_urls.collect{ |poi_id, image_urls|
+        image_urls.each_with_index.collect{ |image_url, index|
+          conn.exec_params("
+          INSERT INTO \"#{table_i}\"(pois_id, directus_files_id, index)
+          VALUES ($1, $2, $3)
+        ", [
+            poi_id,
+            directus_files[image_url],
+            index,
+          ])
+
+          [poi_id, directus_files[image_url]]
+        }
+      }
+
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', [table_i])
+
+      conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table_i])
+      conn.exec('
+        INSERT INTO directus_collections(collection, hidden, icon, "group") VALUES ($1, $2, $3, $4)
+      ', [
+        table_i,
+        true,
+        'pin_drop',
+        table,
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_i,
+        'directus_files_id',
+        'directus_files',
+        nil,
+        'pois_id',
+        nil,
+        'nullify',
+      ])
+      conn.exec('
+      INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_i,
+        'pois_id',
+        table[..62],
+        'image',
+        'directus_files_id',
+        'index',
         'nullify',
       ])
     end
