@@ -287,7 +287,7 @@ def load_use_internal_details_link(pois, host)
     poi.dig('properties', 'editorial', 'website:details')&.start_with?(host)
   }.collect{ |poi|
     poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
-  }.flatten.uniq.collect{ |id| [id, true] }.to_h
+  }.flatten.uniq.index_with{ |_id| true }
 end
 
 def load_use_external_details_link(pois, host)
@@ -296,7 +296,7 @@ def load_use_external_details_link(pois, host)
     !website_details.nil? && !website_details.start_with?(host)
   }.collect{ |poi|
     poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
-  }.flatten.uniq.collect{ |id| [id, true] }.to_h
+  }.flatten.uniq.index_with{ |_id| true }
 end
 
 def load_icon(pois)
@@ -1091,7 +1091,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             f = ->(i, _j) { i }
             "\"#{key}\" varchar"
           end
-      if !stats.keys.include?(nil) && stats.keys.size == ps.size
+      if !i.nil? && !stats.keys.include?(nil) && stats.keys.size == ps.size
         i += ' NOT NULL'
       end
       if %w[name description].include?(key)
