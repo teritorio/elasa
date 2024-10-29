@@ -140,8 +140,8 @@ def insert_menu_item(conn, **args)
       args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
       args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
       args[:href],
-      args[:use_internal_details_link].nil ? true : args[:use_internal_details_link],
-      args[:use_external_details_link].nil ? true : args[:use_external_details_link],
+      args[:use_internal_details_link].nil? ? true : args[:use_internal_details_link],
+      args[:use_external_details_link].nil? ? true : args[:use_external_details_link],
     ]
   ) { |result|
     result.first['id']
