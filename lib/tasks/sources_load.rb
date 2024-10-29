@@ -202,7 +202,7 @@ end
 def load_from_source(datasource_url, project_slug, datasource_project)
   projects = fetch_json("#{datasource_url}.json")
 
-  projects.select{ |project| datasource_project.nil? || project['name'] == datasource_project }.each{ |_project|
+  projects.select{ |project| datasource_project.nil? || project['name'] == datasource_project }.collect{ |_project|
     metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
     puts "source #{project_slug} (#{metadatas.size})"
@@ -219,6 +219,8 @@ def load_from_source(datasource_url, project_slug, datasource_project)
     }
 
     puts ''
+
+    metadatas
   }
 end
 

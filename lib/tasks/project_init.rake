@@ -183,7 +183,7 @@ def insert_menu_group(conn, project_id, parent_id, class_path, css_parser, class
   )
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, css_parser, classs, index, group_fields_ids, filters)
+def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, filters)
   group_ids = classs['osm_tags_extra'].collect{ |group|
     next if group.include?('i18n')
 
@@ -224,7 +224,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, css_parser, cl
   category_id = insert_menu_item(
     conn,
     project_id: project_id,
-    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
+    slugs: classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] },
     index_order: index,
     parent_id: parent_id,
     type: 'category',
@@ -251,7 +251,6 @@ def insert_menu_category(conn, project_id, parent_id, class_path, css_parser, cl
     end
   }
 
-  source_slug = class_path.join('-')
   id = conn.exec(
     '
       INSERT INTO menu_items_sources(menu_items_id, sources_id)
@@ -306,12 +305,7 @@ def insert_group_fields(conn, project_id, ontology)
   }
 end
 
-def new_menu(project_id, theme, css, filters)
-  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json") if %w[tourism city].include?(theme)
-
-  css_parser = CssParser::Parser.new
-  css_parser.load_uri!(css)
-
+def new_root_menu(project_id)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
@@ -326,7 +320,6 @@ def new_menu(project_id, theme, css, filters)
       display_mode: 'compact',
     )
 
-    # Set theme root menu
     conn.exec(
       '
       UPDATE
@@ -358,6 +351,18 @@ def new_menu(project_id, theme, css, filters)
       color_line:	'#ff0000',
     )
 
+    root_menu_id
+  }
+end
+
+def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json") if %w[tourism city].include?(theme)
+  return if ontology.nil?
+
+  css_parser = CssParser::Parser.new
+  css_parser.load_uri!(css)
+
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
@@ -372,8 +377,6 @@ def new_menu(project_id, theme, css, filters)
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
-
-    return if ontology.nil?
 
     group_fields_ids = insert_group_fields(conn, project_id, ontology)
 
@@ -393,12 +396,53 @@ def new_menu(project_id, theme, css, filters)
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
-            insert_menu_category(conn, project_id, class_menu_id, [superclass_id, class_id, subclass_id], css_parser, subclass, subclass_index, group_fields_ids, filters)
+            class_path = [superclass_id, class_id, subclass_id]
+            source_slug = class_path.join('-')
+            insert_menu_category(conn, project_id, class_menu_id, class_path, source_slug, css_parser, subclass, subclass_index, group_fields_ids, filters)
           }
         else
-          insert_menu_category(conn, project_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index, group_fields_ids, filters)
+          class_path = [superclass_id, class_id]
+          source_slug = class_path.join('-')
+          insert_menu_category(conn, project_id, superclass_menu_id, class_path, source_slug, css_parser, classs, class_index, group_fields_ids, filters)
         end
       }
+    }
+  }
+end
+
+def new_source_menu(project_id, root_menu_id, metadatas, css, filters)
+  css_parser = CssParser::Parser.new
+  css_parser.load_uri!(css)
+
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    poi_menu_id = insert_menu_item(
+      conn,
+      project_id: project_id,
+      slugs: { en: 'pois', fr: 'poi', es: 'poi' },
+      parent_id: root_menu_id,
+      index_order: 2,
+      type: 'menu_group',
+      name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
+      display_mode: 'compact',
+
+      icon: 'teritorio teritorio-services',
+      color_fill:	'#ff0000',
+      color_line:	'#ff0000',
+    )
+
+    metadatas.collect.each_with_index.collect{ |slug_metadata, index|
+      slug, metadata = slug_metadata
+      subclass = {
+        'label' => metadata['name'],
+        'color_fill' => '#ff0000',
+        'color_line' => '#ff0000',
+        'display_mode' => 'compact',
+        'zoom' => 16,
+        'osm_tags_extra' => [],
+      }
+      group_fields_ids = nil
+
+      insert_menu_category(conn, project_id, poi_menu_id, ['remarkable'], slug, css_parser, subclass, index, group_fields_ids, filters)
     }
   }
 end
@@ -461,11 +505,13 @@ namespace :project do
     role_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
-    load_from_source("#{datasource_url}/data", slug, slug)
+    metadatas = load_from_source("#{datasource_url}/data", slug, slug).first
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
     load_i18n(slug, i18ns)
     filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
-    new_menu(project_id, theme, css, filters)
+    root_menu_id = new_root_menu(project_id)
+    new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+    new_source_menu(project_id, root_menu_id, metadatas, css, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end

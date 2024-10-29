@@ -381,7 +381,10 @@ CREATE OR REPLACE FUNCTION menu(
 
         SELECT
             menu_items.*,
-            id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id) AS parent_slug_id
+            CASE
+                WHEN theme_menu_items.parent_slug_id IS NULL THEN 0
+                ELSE id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id)
+            END AS parent_slug_id
         FROM
             theme_menu_items
             JOIN menu_items_join AS menu_items ON
