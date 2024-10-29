@@ -747,7 +747,7 @@ CREATE OR REPLACE FUNCTION pois(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            coalesce(menu_items.name_singular->'fr', menu_items.name->'fr') AS name_singular,
+            coalesce(menu_items.name_singular->>'fr', menu_items.name->>'fr') AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             jsonb_build_object(
@@ -825,8 +825,8 @@ CREATE OR REPLACE FUNCTION pois(
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
-                            pois.properties->'tags'->'name'->'fr',
-                            pois.properties->'natives'->'name'->'fr',
+                            pois.properties->'tags'->'name'->>'fr',
+                            pois.properties->'natives'->'name'->>'fr',
                             menu.name_singular
                         ),
                         'official_name', pois.properties->'tags'->'official_name'->'fr',
