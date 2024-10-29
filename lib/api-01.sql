@@ -878,9 +878,9 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT
                     pois.*,
-                    jsonb_agg(to_jsonb(
+                    nullif(jsonb_agg(to_jsonb(
                         'assets/' || pois_files.directus_files_id::text || '/' || directus_files.title
-                    )) AS image,
+                    )), '[null]') AS image,
                     id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
                 FROM pois
                     LEFT JOIN pois_files ON
