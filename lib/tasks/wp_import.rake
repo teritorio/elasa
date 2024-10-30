@@ -369,13 +369,23 @@ def load_images(conn, project_id, user_uuid, image_urls)
   images_uuids = image_urls.collect{ |image_url|
     if directus_files[image_url].nil?
       img_data = fetch_image(image_url)
-      image_info = ImageSize.new(StringIO.new(img_data))
-      mime = image_info.media_type
+      next if img_data.nil?
+
       uuid = Digest::UUID.uuid_from_hash(Digest::MD5, Digest::UUID::DNS_NAMESPACE, image_url)
       name = image_url.split('/')[-1]
-      filename = "#{uuid}.#{mime.split('/')[-1]}"
+      if %w[gpx pdf].include?(image_url.split('.').last)
+        width = nil
+        height = nil
+        mime = image_url.split('.').last == 'gpx' ? 'application/gpx+xml' : 'application/pdf'
+      else
+        image_info = ImageSize.new(StringIO.new(img_data))
+        width = image_info.width
+        height = image_info.height
+        mime = image_info.media_type
+      end
+      filename = "#{uuid}.#{mime.split('/')[-1].split('+')[0]}"
       File.binwrite("./uploads/#{filename}", img_data)
-      directus_files[image_url] = [uuid.to_s, filename.to_s, name, name.split('.')[..-2].join('.'), mime, user_uuid.to_s, img_data.size.to_s, image_info.width.to_s, image_info.height.to_s]
+      directus_files[image_url] = [uuid, filename, name, name.split('.')[..-2].join('.'), mime, user_uuid, img_data.size, width, height]
       uuid.to_s
     else
       directus_files[image_url][0]
@@ -398,7 +408,7 @@ def load_images(conn, project_id, user_uuid, image_urls)
   ")
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data('COPY files_raw FROM STDIN (FORMAT binary)', enco) {
-    directus_files.values.each{ |raw| conn.put_copy_data(raw) }
+    directus_files.values.each{ |raw| conn.put_copy_data(raw.collect{ |r| r&.to_s }) }
   }
   conn.exec_params("
     MERGE INTO
@@ -874,40 +884,40 @@ end
 
 def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, role_uuid)
   fields_table = fields.select{ |_, _, _, type| !type.nil? }
-  create_table = fields_table.collect(&:last).join(",\n")
+  create_table = fields_table.collect{ |_, _, _, type, fk| [type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
-  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' bigint', 'text'))
+  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' bigint', ' text').gsub(' uuid', ' text').gsub(/REFERENCES [^ ]+ ON DELETE SET NULL/, ''))
+
+  vv = ps.collect{ |p|
+    values = fields_table.collect{ |field, t, _, _|
+      begin
+        if ['id', "#{source_name}_id"[..62]].include?(field)
+          p['properties']['metadata']['id']
+        elsif field == 'geom'
+          if p['geometry']['type'] == 'Feature'
+            p['geometry'] = p['geometry']['geometry']
+          end
+          p['geometry'].to_json
+        elsif field == 'languages_code'
+          'fr-FR'
+        else
+          r = t.call(p['properties'][field], p['properties'])
+          r = r.strip if r.is_a?(String)
+          r
+        end
+      rescue StandardError => e
+        puts p.inspect
+        puts "ERROR: getting value for field \"#{field}\", #{e.message}"
+        raise
+      end
+    }
+  }.compact
 
   enco = PG::BinaryEncoder::CopyRow.new
   conn.copy_data("COPY \"t_#{table}\"(\"#{fields_table.collect(&:first).join('", "')}\") FROM STDIN (FORMAT binary)", enco) {
-    ps.each{ |p|
-      begin
-        values = fields_table.collect{ |field, t, _, _|
-          begin
-            if ['id', "#{source_name}_id"[..62]].include?(field)
-              p['properties']['metadata']['id']
-            elsif field == 'geom'
-              if p['geometry']['type'] == 'Feature'
-                p['geometry'] = p['geometry']['geometry']
-              end
-              p['geometry'].to_json
-            elsif field == 'languages_code'
-              'fr-FR'
-            else
-              r = t.call(p['properties'][field], p['properties'])
-              r = r.strip if r.is_a?(String)
-              r
-            end
-          rescue StandardError => e
-            puts p.inspect
-            puts "ERROR: getting value for field \"#{field}\", #{e.message}"
-            raise
-          end
-        }
-        conn.put_copy_data(values)
-      rescue StandardError
-      end
+    vv.each{ |values|
+      conn.put_copy_data(values.collect{ |r| r&.to_s })
     }
   }
 
@@ -924,6 +934,8 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     " + fields_table.collect { |field, _, _, type|
       if ['id', "#{source_name}_id"[..62]].include?(field) || type.include?(' bigint')
         "\"#{field}\"::bigint"
+      elsif type.include?(' uuid')
+        "\"#{field}\"::uuid"
       elsif field == 'geom'
         'ST_Force2D(ST_GeomFromGeoJSON(geom))'
       else
@@ -962,7 +974,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
       table.end_with?('_t') && ['id', "#{source_name}_id"[..62], 'languages_code'].include?(key),
-      interface == 'files' ? 2 : nil,
+      nil,
       interface,
     ])
   }
@@ -1058,6 +1070,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     fields_image = nil
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
+      fk = nil
       i = if %w[name description].include?(key)
             f = ->(i, _j) { i }
             interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
@@ -1070,6 +1083,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             f = nil
             interface = 'files'
             nil
+          elsif ['route:gpx_trace', 'route:pdf'].include?(key)
+            f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i]).values.first }
+            interface = 'file'
+            fk = 'directus_files(id) ON DELETE SET NULL'
+            "\"#{key}\" uuid"
           elsif key == 'website:details'
             f = ->(_i, j) { j['editorial']['website:details'] }
             "\"#{key}\" varchar"
@@ -1094,11 +1112,16 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         i += ' NOT NULL'
       end
       if %w[name description].include?(key)
-        fields_translations << [key, f, interface, i]
+        fields_translations << [key, f, interface, i, fk]
       else
-        fields << [key, f, interface, i]
+        fields << [key, f, interface, i, fk]
       end
     }
+
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\"")
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\"")
+    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_i"[..62]])
+    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_t"[..62]])
 
     fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, role_uuid)
