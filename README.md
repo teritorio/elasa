@@ -35,7 +35,7 @@ Default addmin acces to be changed: admin@example.com / d1r3ctu5
 ## Create new project
 
 ```
-docker compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city https://city-demo-bordeaux.beta.appcarto.teritorio.xyz
+docker compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city city https://city-demo-bordeaux.beta.appcarto.teritorio.xyz
 ```
 
 ## Import from remote API

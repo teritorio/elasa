@@ -496,7 +496,7 @@ namespace :project do
   task :new, [] => :environment do
     set_default_languages
 
-    slug, osm_id, theme, website = ARGV[2..]
+    slug, osm_id, theme, ontology, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = 'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.8.0'
@@ -510,7 +510,7 @@ namespace :project do
     load_i18n(slug, i18ns)
     filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
     root_menu_id = new_root_menu(project_id)
-    new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+    new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
     new_source_menu(project_id, root_menu_id, metadatas, css, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
