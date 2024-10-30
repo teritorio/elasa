@@ -30,7 +30,6 @@ end
 
 def fetch_image(url)
   response = HTTP.follow.get(url)
-  return [] if response.status.code == 404
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
 
   response.body.to_s
