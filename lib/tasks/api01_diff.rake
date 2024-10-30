@@ -281,6 +281,18 @@ def compare_pois(url_old, url_new, category_ids)
         end
       }
 
+      # Only image filename
+      if poi['properties']['image']
+        poi['properties']['image'] = poi['properties']['image'].collect{ |i|
+          i.split('/').last.gsub(/\.jpg$/, '.jpeg')
+        }
+      end
+
+      # Only filename
+      ['route:gpx_trace', 'route:pdf'].each{ |k|
+        poi['properties'][k] = poi['properties'][k].split('/').last if poi['properties'][k]
+      }
+
       #### TEMP before switch to clearance
       poi['properties']['metadata']&.delete('source')
 
