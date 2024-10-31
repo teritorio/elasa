@@ -172,20 +172,35 @@ DECLARE
     poi record;
 BEGIN
     FOR source IN
+        WITH
+        projects AS (
+            SELECT
+                *
+            FROM
+                projects
+            WHERE
+                slug = _project_slug
+        )
         SELECT
             sources.id,
-            table_name,
-            regexp_replace(table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id
+            tables.table_name,
+            regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
+            tables_t.table_name AS table_name_t,
+            tables_i.table_name AS table_name_i
         FROM
-            information_schema.tables
+            projects
             JOIN sources ON
-                table_name = 'local-' || _project_slug || '-' || sources.slug
-        WHERE
-            table_type = 'BASE TABLE' AND
-            table_schema = 'public'
+                sources.project_id = projects.id
+            JOIN information_schema.tables ON
+                tables.table_name = 'local-' || _project_slug || '-' || sources.slug
+            LEFT JOIN information_schema.tables AS tables_t ON
+                tables_t.table_name = tables.table_name || '_t'
+            LEFT JOIN information_schema.tables AS tables_i ON
+                tables_i.table_name = tables.table_name || '_i'
     LOOP
         FOR poi IN EXECUTE '
-            WITH
+            WITH ' ||
+            CASE WHEN source.table_name_t IS NULL THEN '' ELSE '
             j AS (
                 SELECT
                     "' || source.local_id || '" AS id,
@@ -193,7 +208,7 @@ BEGIN
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).key,
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).value
                 FROM
-                    "' || source.table_name || '_t" AS t
+                    "' || source.table_name_t || '" AS t
             ),
             jj AS (
                 SELECT
@@ -216,21 +231,52 @@ BEGIN
                     jj
                 GROUP BY
                     id
-            )
+            ),
+            ' END ||
+            CASE WHEN source.table_name_i IS NULL THEN '' ELSE '
+            pois_files AS (
+                SELECT
+                    pois_id,
+                    nullif(jsonb_agg(to_jsonb(
+                        ''assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
+                    ) ORDER BY pois_files.index), ''[null]'') AS image
+                FROM
+                    "' || source.table_name_i || '" AS pois_files
+                    LEFT JOIN directus_files ON
+                        directus_files.id = pois_files.directus_files_id
+                GROUP BY
+                    pois_id
+            ),
+            ' END || '
+            z AS (SELECT 0)
             SELECT
                 t.id,
                 geom,
-                jsonb_build_object(
+                jsonb_strip_nulls(jsonb_build_object(
                     ''id'', t.id,
                     ''source'', NULL,
                     ''updated_at'', NULL,
-                    ''natives'', row_to_json(t.*)::jsonb - ''id'' - ''geom'' || trans.jsonb
-                ) AS properties
+                    ''natives'', jsonb_strip_nulls(
+                        row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
+                        CASE WHEN source.table_name_i IS NULL THEN '''{}''::jsonb' ELSE '
+                        jsonb_build_object(
+                            ''image'', pois_files.image
+                        )' END || ' || ' ||
+                        CASE WHEN source.table_name_t IS NULL THEN '''{}''::jsonb' ELSE '
+                        trans.jsonb' END || '
+                    )
+                )) AS properties
             FROM
-                "' || source.table_name || '" AS t
-                JOIN trans ON
+                "' || source.table_name || '" AS t ' ||
+                CASE WHEN source.table_name_i IS NULL THEN '' ELSE '
+                LEFT JOIN pois_files ON
+                    pois_files.pois_id = t.id
+                ' END ||
+                CASE WHEN source.table_name_t IS NULL THEN '' ELSE '
+                LEFT JOIN trans ON
                     trans.id = t.id
-        '
+                ' END ||
+        ''
         LOOP
             id := poi.id;
             geom := poi.geom;
@@ -883,7 +929,7 @@ CREATE OR REPLACE FUNCTION pois(
                     pois.*,
                     nullif(jsonb_agg(to_jsonb(
                         'assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-                    )), '[null]') AS image,
+                    ) ORDER BY pois_files.index), '[null]') AS image,
                     id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
                 FROM pois
                     LEFT JOIN pois_files ON
