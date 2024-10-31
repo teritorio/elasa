@@ -760,7 +760,7 @@ CREATE TABLE public.pois_files (
     id integer NOT NULL,
     pois_id integer NOT NULL,
     directus_files_id uuid NOT NULL,
-    index integer
+    index integer NOT NULL
 );
 
 

@@ -826,7 +826,8 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       WITH a AS (
         SELECT
           pois.id AS poi_id,
-          json_array_elements_text(image::json)::uuid AS files_id
+          t.image::uuid AS files_id,
+          t.index
         FROM
           local_addon_raw
           JOIN pois ON
@@ -834,6 +835,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
           JOIN sources ON
             sources.id = pois.source_id AND
             sources.project_id = $1
+          JOIN LATERAL json_array_elements_text(image::json) WITH ORDINALITY AS t(image, index) ON true
       )
       MERGE INTO
         pois_files
@@ -843,10 +845,11 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         pois_files.pois_id = local_addon_raw.poi_id AND
         pois_files.directus_files_id = local_addon_raw.files_id
       WHEN NOT MATCHED THEN
-        INSERT (pois_id, directus_files_id)
+        INSERT (pois_id, directus_files_id, index)
         VALUES (
           local_addon_raw.poi_id,
-          local_addon_raw.files_id
+          local_addon_raw.files_id,
+          local_addon_raw.index
         )
     ", [project_id])
     pois_custom_poi_ids = conn.exec_params("
@@ -1174,9 +1177,9 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       conn.exec("
         CREATE TABLE \"#{table_i}\"(
           id SERIAL PRIMARY KEY,
-          pois_id bigint not null REFERENCES \"#{table}\"(id),
-          directus_files_id uuid not null REFERENCES directus_files(id),
-          index integer
+          pois_id bigint NOT NULL REFERENCES \"#{table}\"(id),
+          directus_files_id uuid NOT NULL REFERENCES directus_files(id),
+          index integer NOT NULL
         )
       ")
       image_urls.collect{ |poi_id, image_urls|
