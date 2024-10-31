@@ -186,17 +186,34 @@ BEGIN
             tables.table_name,
             regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
             tables_t.table_name AS table_name_t,
-            tables_i.table_name AS table_name_i
+            tables_i.table_name AS table_name_i,
+            array_agg(column_name) AS file_fields
         FROM
             projects
             JOIN sources ON
                 sources.project_id = projects.id
             JOIN information_schema.tables ON
                 tables.table_name = 'local-' || _project_slug || '-' || sources.slug
+            -- Translations
             LEFT JOIN information_schema.tables AS tables_t ON
                 tables_t.table_name = tables.table_name || '_t'
+            -- Many files fields
             LEFT JOIN information_schema.tables AS tables_i ON
                 tables_i.table_name = tables.table_name || '_i'
+            -- One file fields
+            LEFT JOIN information_schema.table_constraints  ON
+                table_constraints.table_name = tables.table_name AND
+                table_constraints.table_schema = 'public' AND
+                table_constraints.constraint_type = 'FOREIGN KEY'
+            LEFT JOIN information_schema.key_column_usage ON
+                key_column_usage.constraint_name = table_constraints.constraint_name AND
+                key_column_usage.table_schema = 'public' AND
+                key_column_usage.table_name = tables.table_name
+        GROUP BY
+            sources.id,
+            tables.table_name,
+            tables_t.table_name,
+            tables_i.table_name
     LOOP
         FOR poi IN EXECUTE '
             WITH ' ||
@@ -263,7 +280,10 @@ BEGIN
                             ''image'', pois_files.image
                         )' END || ' || ' ||
                         CASE WHEN source.table_name_t IS NULL THEN '''{}''::jsonb' ELSE '
-                        trans.jsonb' END || '
+                        trans.jsonb' END || ' ||
+                        jsonb_build_object(' ||
+                            (SELECT array_to_string(array_agg('''' || f || ''', ''assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                        ')
                     )
                 )) AS properties
             FROM
@@ -276,6 +296,7 @@ BEGIN
                 LEFT JOIN trans ON
                     trans.id = t.id
                 ' END ||
+                (SELECT array_to_string(array_agg('LEFT JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = "' || f || '"'), ' ') FROM unnest(source.file_fields) AS fields(f)) ||
         ''
         LOOP
             id := poi.id;
