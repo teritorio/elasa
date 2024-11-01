@@ -47,6 +47,10 @@ def compare_settings(url_old, url_new)
     hash['themes'].each{ |theme|
       theme.delete('id')
       theme.delete('slug') # Ignore
+      # Only filename
+        ['logo_url', 'favicon_url'].each{ |k|
+        theme[k] = theme[k].split('/').last if theme[k]
+      }
       theme['site_url'].each{ |lang, site_url|
         if site_url[-1] == '/'
           theme['site_url'][lang] = site_url[..-2]
@@ -56,7 +60,7 @@ def compare_settings(url_old, url_new)
     hash['polygon'] = nil # Ignore polygons
     hash['bbox_line'] = nil # Ignore polygons
     hash['icon_font_css_url'] = nil # Ignore remote changes
-    hash['attributions'] = (hash['attributions']&.sort || []).collect{ |a| a.gsub('&copy;', '©') }
+    hash['attributions'] = nil
 
     hash
   }
