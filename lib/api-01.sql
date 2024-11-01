@@ -139,8 +139,8 @@ CREATE OR REPLACE FUNCTION project(
                             jsonb_build_object(
                                 'title', themes.name,
                                 'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
-                                'logo_url', 'assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
-                                'favicon_url', 'assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
+                                'logo_url', '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
+                                'favicon_url', '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
                                 'favorites_mode', nullif(favorites_mode, true)
                             )
@@ -262,7 +262,7 @@ BEGIN
                 SELECT
                     pois_id,
                     nullif(jsonb_agg(to_jsonb(
-                        ''assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
+                        ''/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
                     ) ORDER BY pois_files.index), ''[null]'') AS image
                 FROM
                     "' || source.table_name_i || '" AS pois_files
@@ -289,7 +289,7 @@ BEGIN
                         CASE WHEN source.table_name_t IS NULL THEN '''{}''::jsonb' ELSE '
                         trans.jsonb' END || ' ||
                         jsonb_build_object(' ||
-                            (SELECT array_to_string(array_agg('''' || f || ''', ''assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                            (SELECT array_to_string(array_agg('''' || f || ''', ''/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
                         ')
                     )
                 )) AS properties
@@ -956,7 +956,7 @@ CREATE OR REPLACE FUNCTION pois(
                 SELECT
                     pois.*,
                     nullif(jsonb_agg(to_jsonb(
-                        'assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+                        '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
                     ) ORDER BY pois_files.index), '[null]') AS image,
                     id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
                 FROM pois
