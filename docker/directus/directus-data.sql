@@ -94,8 +94,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 6	projects	polygon	\N	\N	\N	formatted-json-value	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 7	themes	project_id	\N	select-dropdown-m2o	\N	related-values	{"template":"{{slug}}"}	t	t	2	full	\N	\N	\N	f	\N	\N	\N
 8	themes	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-13	themes	logo_url	\N	\N	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
-14	themes	favicon_url	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 15	themes	id	\N	\N	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 16	projects	themes	o2m	list-o2m	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 17	projects	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
@@ -115,7 +113,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	5	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}}	related-values	{"template":null}	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}}	related-values	{"template":null}	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
@@ -182,8 +180,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	10	half	\N	\N	\N	f	category	\N	\N
 151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	11	half	\N	\N	\N	f	category	\N	\N
 152	projects	articles	cast-json	list	{"fields":[{"field":"title","name":"title","type":"json","meta":{"field":"title","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}},{"field":"url","name":"url","type":"json","meta":{"field":"url","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}}]}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
-161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	14	full	\N	\N	\N	f	\N	\N	\N
+160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
 166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	t	f	3	full	\N	\N	\N	f	\N	\N	\N
@@ -242,6 +240,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 540	pois_files	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
+542	themes	logo	file	file-image	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+543	themes	favicon	file	file-image	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -515,6 +515,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 56	directus_files	project_id	projects	\N	\N	\N	\N	\N	nullify
 57	pois_files	directus_files_id	directus_files	\N	\N	\N	pois_id	\N	nullify
 58	pois_files	pois_id	pois	image	\N	\N	directus_files_id	index	nullify
+60	themes	logo	directus_files	\N	\N	\N	\N	\N	nullify
+61	themes	favicon	directus_files	\N	\N	\N	\N	\N	nullify
 \.
 
 
@@ -578,7 +580,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 540, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 543, true);
 
 
 --
@@ -606,7 +608,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 58, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 61, true);
 
 
 --

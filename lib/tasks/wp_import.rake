@@ -35,7 +35,7 @@ def fetch_image(url)
   response.body.to_s
 end
 
-def load_settings(project_slug, theme_slug, url, url_articles)
+def load_project(project_slug, url, url_articles)
   settings = fetch_json(url)
   articles = fetch_json(url_articles)
 
@@ -90,16 +90,25 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       )
     end
 
+    [project_id, settings]
+  }
+end
 
+def load_theme(project_id, settings, theme_slug, user_uuid)
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     theme = settings['themes'].first
+
+    logo = load_images(conn, project_id, user_uuid, [theme['logo_url']]).values.first
+    favicon = load_images(conn, project_id, user_uuid, [theme['favicon_url']]).values.first
+
     theme_id = conn.exec(
       '
-      INSERT INTO themes(project_id, slug, logo_url, favicon_url, favorites_mode, explorer_mode)
+      INSERT INTO themes(project_id, slug, logo, favicon, favorites_mode, explorer_mode)
       VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (project_id, slug)
       DO UPDATE SET
-        logo_url = $3,
-        favicon_url = $4,
+        logo = $3,
+        favicon = $4,
         favorites_mode = $5,
         explorer_mode = $6
       RETURNING
@@ -108,8 +117,8 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       [
         project_id,
         theme_slug,
-        theme['logo_url'],
-        theme['favicon_url'],
+        logo,
+        favicon,
         theme['favorites_mode'] != false,
         theme['explorer_mode'] != false,
       ]
@@ -142,7 +151,7 @@ def load_settings(project_slug, theme_slug, url, url_articles)
       )
     end
 
-    [project_id, theme_id, theme['site_url']['fr']]
+    [theme_id, theme['site_url']['fr']]
   }
 end
 
@@ -1245,10 +1254,12 @@ namespace :wp do
     datasource_project ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    project_id, theme_id, url_base = load_settings(project_slug, theme_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    project_id, settings = load_project(project_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
 
     role_uuid = create_role(project_slug)
     user_uuid = create_user(project_id, project_slug, role_uuid)
+
+    theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")

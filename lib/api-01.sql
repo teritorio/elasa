@@ -130,20 +130,27 @@ CREATE OR REPLACE FUNCTION project(
                 ), array[]::text[]),
                 'themes', (
                     SELECT
-                        jsonb_agg(
+                        jsonb_strip_nulls(jsonb_agg(
                             to_jsonb(themes.*)
                                 - 'project_id' - 'root_menu_item_id'
                                 - 'name' - 'keywords'
+                                - 'logo' - 'favicon'
                                 - 'explorer_mode' - 'favorites_mode' ||
                             jsonb_build_object(
                                 'title', themes.name,
                                 'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
+                                'logo_url', 'assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
+                                'favicon_url', 'assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
                                 'favorites_mode', nullif(favorites_mode, true)
                             )
-                        )
+                        ))
                     FROM
                         themes_join AS themes
+                        LEFT JOIN directus_files AS directus_files_logo ON
+                            directus_files_logo.id = themes.logo
+                        LEFT JOIN directus_files AS directus_files_favicon ON
+                            directus_files_favicon.id = themes.favicon
                     WHERE
                         themes.project_id = projects.id
                 )

@@ -65,7 +65,7 @@ INSERT INTO public.filters_translations (id, filters_id, languages_code, name) V
 -- Data for Name: themes; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.themes (id, project_id, slug, logo_url, favicon_url, root_menu_item_id, favorites_mode, explorer_mode) VALUES (1, 1, 'theme', 'https://carte.seignanx.com/content/wp-content/uploads/2022/02/seignanx-com.png', 'https://carte.seignanx.com/content/wp-content/uploads/2022/03/Favicon.jpg', NULL, false, false);
+INSERT INTO public.themes (id, project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode) VALUES (1, 1, 'theme', NULL, NULL, NULL, false, false);
 INSERT INTO public.themes_translations (id, themes_id, languages_code, name, description, site_url, main_url, keywords) VALUES (1, 1, 'fr-FR', 'Carte et points d''intérêts du Seignanx. Sud-Ouest des Landes', 'Carte et annuaire : hébergement, restauration, loisirs, sports, balades et commerces', 'https://carte.seignanx.com/', 'https://www.seignanx.com/', '');
 
 

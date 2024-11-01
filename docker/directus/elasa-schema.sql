@@ -661,11 +661,11 @@ CREATE TABLE public.themes (
     id integer NOT NULL,
     project_id integer NOT NULL,
     slug character varying NOT NULL,
-    logo_url character varying NOT NULL,
-    favicon_url character varying NOT NULL,
     root_menu_item_id integer,
     favorites_mode boolean DEFAULT true,
-    explorer_mode boolean DEFAULT true
+    explorer_mode boolean DEFAULT true,
+    logo uuid,
+    favicon uuid
 );
 
 
@@ -1310,6 +1310,22 @@ ALTER TABLE ONLY public.sources_translations
 
 ALTER TABLE ONLY public.sources_translations
     ADD CONSTRAINT sources_translations_sources_id_foreign FOREIGN KEY (sources_id) REFERENCES public.sources(id) ON DELETE CASCADE;
+
+
+--
+-- Name: themes themes_favicon_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes
+    ADD CONSTRAINT themes_favicon_foreign FOREIGN KEY (favicon) REFERENCES public.directus_files(id);
+
+
+--
+-- Name: themes themes_logo_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes
+    ADD CONSTRAINT themes_logo_foreign FOREIGN KEY (logo) REFERENCES public.directus_files(id);
 
 
 --

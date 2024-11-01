@@ -66,14 +66,14 @@ def new_project(slug, osm_id, theme, css, website)
     ])
 
     theme_id = conn.exec('
-      INSERT INTO themes(project_id, slug, logo_url, favicon_url, root_menu_item_id, favorites_mode, explorer_mode)
+      INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode)
       VALUES (
         $1, $2, $3, $4, $5, $6, $7
       )
       ON CONFLICT (project_id, slug)
       DO UPDATE SET
-        logo_url = $3,
-        favicon_url = $4,
+        logo = $3,
+        favicon = $4,
         root_menu_item_id = $5,
         favorites_mode = $6,
         explorer_mode = $7
@@ -82,8 +82,8 @@ def new_project(slug, osm_id, theme, css, website)
     ', [
       project_id,
       theme,
-      'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # logo
-      'https://www.teritorio.fr/wp-content/uploads/2022/10/favicon-194x194-1.png', # favico
+      nil, # logo
+      nil, # favicon
       nil, # root menu
       true, # favorite
       true # explorer
