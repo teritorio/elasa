@@ -1,7 +1,7 @@
 var index = ({ filter, action }, { env, services }) => {
   const { ItemsService } = services;
 
-  filter("items.create", async (payload, { event, collection }, { database, schema, accountability }) => {
+  async function setProjectId(payload, { event, collection }, { database, schema, accountability }) {
     if (["menu_items", "fields", "filters", "sources", "themes", "translations", "directus_folders"].includes(collection)) {
       if (accountability && accountability.user) {
         const user = await database.select("project_id").from("directus_users").where("id", accountability.user).first();
@@ -11,7 +11,10 @@ var index = ({ filter, action }, { env, services }) => {
       }
     }
     return payload;
-  });
+  };
+
+  filter("items.create", setProjectId);
+  filter("folders.create", setProjectId);
 
   action("files.upload", async ({ event, payload, key, collection }, { schema, accountability }) => {
     if (accountability && accountability.user) {

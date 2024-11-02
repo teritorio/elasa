@@ -299,7 +299,7 @@ CREATE TABLE public.directus_folders (
     id uuid NOT NULL,
     name character varying(255) NOT NULL,
     parent uuid,
-    project_id integer
+    project_id integer NOT NULL
 );
 
 
@@ -2275,7 +2275,7 @@ ALTER TABLE ONLY public.directus_folders
 --
 
 ALTER TABLE ONLY public.directus_folders
-    ADD CONSTRAINT directus_folders_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+    ADD CONSTRAINT directus_folders_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id);
 
 
 --
