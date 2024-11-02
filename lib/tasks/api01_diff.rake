@@ -48,7 +48,7 @@ def compare_settings(url_old, url_new)
       theme.delete('id')
       theme.delete('slug') # Ignore
       # Only filename
-        ['logo_url', 'favicon_url'].each{ |k|
+      %w[logo_url favicon_url].each{ |k|
         theme[k] = theme[k].split('/').last if theme[k]
       }
       theme['site_url'].each{ |lang, site_url|
