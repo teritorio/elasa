@@ -59,6 +59,7 @@ def compare_settings(url_old, url_new)
     }
     hash['polygon'] = nil # Ignore polygons
     hash['bbox_line'] = nil # Ignore polygons
+    hash['polygons_extra'] = nil # Ignore polygons
     hash['icon_font_css_url'] = nil # Ignore remote changes
     hash['attributions'] = nil
 
