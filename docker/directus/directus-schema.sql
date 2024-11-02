@@ -241,7 +241,8 @@ ALTER TABLE public.directus_flows OWNER TO postgres;
 CREATE TABLE public.directus_folders (
     id uuid NOT NULL,
     name character varying(255) NOT NULL,
-    parent uuid
+    parent uuid,
+    project_id integer
 );
 
 
@@ -1168,6 +1169,14 @@ ALTER TABLE ONLY public.directus_flows
 
 ALTER TABLE ONLY public.directus_folders
     ADD CONSTRAINT directus_folders_parent_foreign FOREIGN KEY (parent) REFERENCES public.directus_folders(id);
+
+
+--
+-- Name: directus_folders directus_folders_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_folders
+    ADD CONSTRAINT directus_folders_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
 
 
 --

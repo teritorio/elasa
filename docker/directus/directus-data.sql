@@ -242,6 +242,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 540	pois_files	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
 542	themes	logo	file	file-image	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 543	themes	favicon	file	file-image	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+544	directus_folders	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
 \.
 
 
@@ -249,7 +250,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 -- Data for Name: directus_folders; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_folders (id, name, parent) FROM stdin;
+COPY public.directus_folders (id, name, parent, project_id) FROM stdin;
 \.
 
 
@@ -398,9 +399,9 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 11	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_panels	update	{}	\N	\N	*
 12	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_panels	delete	{}	\N	\N	*
 13	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	create	{}	\N	\N	*
-14	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	read	{}	\N	\N	*
-15	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	update	{}	\N	\N	*
-16	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	delete	{}	\N	\N	\N
+14	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
+15	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*
+16	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_folders	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N
 17	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_users	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.id"}}]}	\N	\N	*
 18	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_users	update	{"id":{"_eq":"$CURRENT_USER"}}	\N	\N	first_name,last_name,email,password,location,title,description,avatar,language,theme,tfa_secret
 19	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	directus_roles	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.role.id"}}]}	\N	\N	*
@@ -517,6 +518,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 58	pois_files	pois_id	pois	image	\N	\N	directus_files_id	index	nullify
 60	themes	logo	directus_files	\N	\N	\N	\N	\N	nullify
 61	themes	favicon	directus_files	\N	\N	\N	\N	\N	nullify
+62	directus_folders	project_id	projects	\N	\N	\N	\N	\N	nullify
 \.
 
 
@@ -580,7 +582,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 543, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 544, true);
 
 
 --
@@ -608,7 +610,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 61, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 62, true);
 
 
 --
