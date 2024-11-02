@@ -473,6 +473,7 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 233	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	update	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id,index
 234	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	delete	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
 236	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	create	{}	{}	\N	*
+237	\N	directus_files	read	{}	{}	\N	*
 \.
 
 
@@ -588,7 +589,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 236, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 237, true);
 
 
 --
