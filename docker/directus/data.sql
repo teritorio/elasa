@@ -469,8 +469,8 @@ COPY public.directus_permissions (id, role, collection, action, permissions, val
 114	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 115	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	filters_translations	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	{}	\N	*
 231	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois	update	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	override,image,website_details
-232	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	read	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id
-233	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	update	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id
+232	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	read	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id,index
+233	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	update	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	id,directus_files_id,pois_id,index
 234	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	delete	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N
 236	5979e2ac-a34f-4c70-bf9d-de48b3900a8f	pois_files	create	{}	{}	\N	*
 \.
