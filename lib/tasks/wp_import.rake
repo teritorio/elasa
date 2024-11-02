@@ -1059,7 +1059,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         p['properties']['website:details'] = website_details
       end
 
-      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images').collect{ |k, v|
+      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'image:thumbnail').collect{ |k, v|
         if v.is_a?(Array)
           [k, Array]
         elsif v.is_a?(Hash)
