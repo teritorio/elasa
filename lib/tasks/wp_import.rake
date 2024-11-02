@@ -98,8 +98,8 @@ def load_theme(project_id, settings, theme_slug, user_uuid)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     theme = settings['themes'].first
 
-    logo = load_images(conn, project_id, user_uuid, [theme['logo_url']]).values.first
-    favicon = load_images(conn, project_id, user_uuid, [theme['favicon_url']]).values.first
+    logo = load_images(conn, project_id, user_uuid, [theme['logo_url']], nil).values.first
+    favicon = load_images(conn, project_id, user_uuid, [theme['favicon_url']], nil).values.first
 
     theme_id = conn.exec(
       '
@@ -373,7 +373,31 @@ def add_missing_pois(menu_sources, pois)
   pois + equiv_pois
 end
 
-def load_images(conn, project_id, user_uuid, image_urls)
+def load_images(conn, project_id, user_uuid, image_urls, directory)
+  folder_uuid = (
+    if !directory.nil?
+      folder_uuid = Digest::UUID.uuid_v4
+      conn.exec('
+      MERGE INTO
+        directus_folders
+      USING (SELECT $1::integer, $2::uuid AS id, $3) AS source(project_id, id, name) ON
+        directus_folders.project_id = source.project_id AND
+        directus_folders.name = source.name AND
+        directus_folders.parent IS NULL
+      WHEN MATCHED THEN
+        UPDATE SET
+          name = source.name -- Do nothing, but helps to return the id
+      WHEN NOT MATCHED THEN
+        INSERT (project_id, id, name)
+        VALUES (source.project_id, source.id, source.name)
+      RETURNING
+        directus_folders.id
+    ', [project_id, folder_uuid, directory]) { |result|
+        result.first['id']
+      }
+    end
+  )
+
   directus_files = {}
   images_uuids = image_urls.collect{ |image_url|
     if directus_files[image_url].nil?
@@ -433,12 +457,13 @@ def load_images(conn, project_id, user_uuid, image_urls)
         filename_download = files_raw.filename_download,
         title = files_raw.title,
         type = files_raw.type,
+        folder = $2::uuid,
         uploaded_by = files_raw.uploaded_by::uuid,
         filesize = files_raw.filesize::integer,
         width = files_raw.width::integer,
         height = files_raw.height::integer
     WHEN NOT MATCHED THEN
-      INSERT (id, project_id, storage, filename_disk, filename_download, title, type, uploaded_by, filesize, width, height)
+      INSERT (id, project_id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, filesize, width, height)
       VALUES (
         files_raw.id::uuid,
         $1,
@@ -447,12 +472,13 @@ def load_images(conn, project_id, user_uuid, image_urls)
         files_raw.filename_download,
         files_raw.title,
         files_raw.type,
+        $2::uuid,
         files_raw.uploaded_by::uuid,
         files_raw.filesize::integer,
         files_raw.width::integer,
         files_raw.height::integer
       )
-  ", [project_id])
+  ", [project_id, folder_uuid])
 
   image_urls.zip(images_uuids).to_h
 end
@@ -810,13 +836,23 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         image_urls = poi['properties']['image']
       end
       if website_details || image_urls
-        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, image_urls]
+        c = menu_items.find{ |menu| menu['id'] == poi['properties']['metadata']['category_ids'].first }
+        dir = menu_dig_all(c, 'name')&.dig('fr')
+        local_addon_raw << [poi['properties']['metadata']['id'].to_s, website_details, [image_urls, dir]]
       end
     }
 
-    image_urls = local_addon_raw.collect(&:last).compact.flatten.uniq
-    directus_files = load_images(conn, project_id, user_uuid, image_urls)
-    local_addon_raw.select{ |raw| !raw[-1].nil? }.each{ |row|
+    directus_files = local_addon_raw.collect(&:last).select{ |urls, _dir|
+      !urls.nil?
+    }.collect(&:reverse).group_by(&:first).transform_values{ |vv|
+      vv.collect(&:last).flatten.uniq
+    }.collect{ |dir, urls|
+      load_images(conn, project_id, user_uuid, urls, dir)
+    }.inject(&:merge)
+    local_addon_raw.collect{ |row|
+      row[-1] = row[-1][0]
+      row
+    }.select{ |raw| !raw[-1].nil? }.each{ |row|
       row[-1] = row[-1].collect{ |image_url| directus_files[image_url] }
     }
 
@@ -1096,7 +1132,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             interface = 'files'
             nil
           elsif ['route:gpx_trace', 'route:pdf'].include?(key)
-            f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i]).values.first }
+            f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
             interface = 'file'
             fk = 'directus_files(id) ON DELETE SET NULL'
             "\"#{key}\" uuid"
@@ -1179,7 +1215,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       image_urls = ps.select{ |poi| !poi['properties']['image'].nil? }.collect{ |poi|
         [poi['properties']['metadata']['id'], poi['properties']['image']]
       }.to_h
-      directus_files = load_images(conn, project_id, user_uuid, image_urls.values.flatten.uniq)
+      directus_files = load_images(conn, project_id, user_uuid, image_urls.values.flatten.uniq, name)
 
       table_i = "#{table}_i"[..62]
       conn.exec("DROP TABLE IF EXISTS \"#{table_i}\"")
