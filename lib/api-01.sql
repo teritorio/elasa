@@ -93,6 +93,7 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS project;
 CREATE OR REPLACE FUNCTION project(
+    _base_url text,
     _project_slug text
 ) RETURNS TABLE (
     d text
@@ -112,7 +113,7 @@ CREATE OR REPLACE FUNCTION project(
                             key,
                             jsonb_build_object(
                                 'type', 'geojson',
-                                'data', (SELECT site_url->>'fr' || '/api/0.1/' || projects.slug || '/' || themes.slug || '/poi/' || (value::text) || '.geojson' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1)
+                                'data', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/poi/' || (value::text) || '.geojson' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1)
                             )
                         )
                     FROM
@@ -139,8 +140,8 @@ CREATE OR REPLACE FUNCTION project(
                             jsonb_build_object(
                                 'title', themes.name,
                                 'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
-                                'logo_url', '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
-                                'favicon_url', '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
+                                'logo_url', _base_url || '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
+                                'favicon_url', _base_url || '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
                                 'favorites_mode', nullif(favorites_mode, true)
                             )
@@ -166,6 +167,7 @@ $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS pois_local;
 CREATE OR REPLACE FUNCTION pois_local(
+    _base_url text,
     _project_slug text
 ) RETURNS TABLE (
     id integer,
@@ -262,7 +264,7 @@ BEGIN
                 SELECT
                     pois_id,
                     nullif(jsonb_agg(to_jsonb(
-                        ''/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
+                        ''' || _base_url || '/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
                     ) ORDER BY pois_files.index), ''[null]'') AS image
                 FROM
                     "' || source.table_name_i || '" AS pois_files
@@ -289,7 +291,7 @@ BEGIN
                         CASE WHEN source.table_name_t IS NULL THEN '''{}''::jsonb' ELSE '
                         trans.jsonb' END || ' ||
                         jsonb_build_object(' ||
-                            (SELECT array_to_string(array_agg('''' || f || ''', ''/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                            (SELECT array_to_string(array_agg('''' || f || ''', ''' || _base_url || '/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
                         ')
                     )
                 )) AS properties
@@ -320,6 +322,7 @@ $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS filter_values;
 CREATE OR REPLACE FUNCTION filter_values(
+    _base_url text,
     _project_slug text,
     _property text
 )  RETURNS TABLE (
@@ -358,7 +361,7 @@ CREATE OR REPLACE FUNCTION filter_values(
             NULL::text AS website_details
         FROM
             sources
-            JOIN pois_local(_project_slug) AS pois_local ON
+            JOIN pois_local(_base_url, _project_slug) AS pois_local ON
                 pois_local.source_id = sources.id
     ),
     properties_values AS (
@@ -431,6 +434,7 @@ $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS menu;
 CREATE OR REPLACE FUNCTION menu(
+    _base_url text,
     _project_slug text,
     _theme_slug text
 ) RETURNS TABLE (
@@ -502,7 +506,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', filters.multiselection_property,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, filters.multiselection_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, filters.multiselection_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -510,7 +514,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', filters.checkboxes_list_property,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, filters.checkboxes_list_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, filters.checkboxes_list_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -779,6 +783,7 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS pois;
 CREATE OR REPLACE FUNCTION pois(
+    _base_url text,
     _project_slug text,
     _theme_slug text,
     _category_id bigint,
@@ -811,7 +816,7 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT *, NULL::text AS website_details FROM pois_local(_project_slug)
+                SELECT *, NULL::text AS website_details FROM pois_local(_base_url, _project_slug)
             ) AS pois ON
                 pois.source_id = sources.id AND
                 pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects)
@@ -820,7 +825,6 @@ CREATE OR REPLACE FUNCTION pois(
     ),
     menu AS (
         SELECT
-            themes.site_url,
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
@@ -844,9 +848,6 @@ CREATE OR REPLACE FUNCTION pois(
             ) AS display
         FROM
             projects
-            JOIN themes_join AS themes ON
-                themes.project_id = projects.id AND
-                themes.slug = _theme_slug
             JOIN (
                 SELECT
                     *,
@@ -944,7 +945,7 @@ CREATE OR REPLACE FUNCTION pois(
                                     pois.properties->'tags'->'website:details'->>'fr',
                                     pois.properties->'natives'->>'website:details'
                                 ) END,
-                                CASE WHEN menu.use_internal_details_link THEN site_url->>'fr' || '/poi/' || pois.slug_id || '/details' END
+                                CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
                             )
                         ),
                         'display', menu.display
@@ -956,10 +957,11 @@ CREATE OR REPLACE FUNCTION pois(
                 SELECT
                     pois.*,
                     nullif(jsonb_agg(to_jsonb(
-                        '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+                        _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
                     ) ORDER BY pois_files.index), '[null]') AS image,
                     id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
-                FROM pois
+                FROM
+                    pois
                     LEFT JOIN pois_files ON
                         pois_files.pois_id = pois.id
                     LEFT JOIN directus_files ON
@@ -967,7 +969,7 @@ CREATE OR REPLACE FUNCTION pois(
                 GROUP BY
                     pois.id
                 UNION ALL
-                SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_project_slug)
+                SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_base_url, _project_slug)
             ) AS pois ON
                 pois.source_id = menu.source_id AND
                 (

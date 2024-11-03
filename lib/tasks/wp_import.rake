@@ -39,12 +39,11 @@ def load_project(project_slug, url, url_articles)
   settings = fetch_json(url)
   articles = fetch_json(url_articles)
 
-  base_url = settings['themes'][0]['site_url']['fr']
   icon_font_css_url = settings['icon_font_css_url']
   if icon_font_css_url.include?('teritorio.css')
-    icon_font_css_url = icon_font_css_url.gsub(/(.*ver=)(.*)/, "#{base_url}/static/font-teritorio-\\2/teritorio/teritorio.css")
+    icon_font_css_url = icon_font_css_url.gsub(/(.*ver=)(.*)/, '/static/font-teritorio-\\2/teritorio/teritorio.css')
   elsif icon_font_css_url.include?('glyphicons')
-    icon_font_css_url = "#{base_url}/static/glyphicons-x.x.x/_glyphicons.css"
+    icon_font_css_url = '/static/glyphicons-x.x.x/_glyphicons.css'
   end
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|

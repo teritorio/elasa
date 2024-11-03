@@ -5,10 +5,14 @@ require 'csv'
 
 
 class Api01Controller < ApplicationController
+  def base_url
+    request.protocol + request.host_with_port
+  end
+
   def settings
     project_slug, = project_theme_params
 
-    row_project = query('project($1)', [project_slug])
+    row_project = query('project($1, $2)', [base_url, project_slug])
     render status: :not_found if row_project.nil?
 
     project = JSON.parse(row_project)
@@ -20,7 +24,7 @@ class Api01Controller < ApplicationController
   def articles
     project_slug, = project_theme_params
 
-    row_project = query('project($1)', [project_slug])
+    row_project = query('project($1, $2)', [base_url, project_slug])
     render status: :not_found if row_project.nil?
 
     articles = JSON.parse(row_project)['articles']
@@ -39,7 +43,7 @@ class Api01Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('menu($1, $2)', [project_slug, theme_slug]) || {}
+    menu_items = query('menu($1, $2, $3)', [base_url, project_slug, theme_slug]) || {}
     respond_to do |format|
       format.json { render plain: menu_items }
     end
@@ -49,7 +53,8 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     id = params.require(:id).to_i
 
-    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9, $10)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6, $7, $8, $9, $10, $11)', [
+      base_url,
       project_slug,
       theme_slug,
       nil,
@@ -80,7 +85,8 @@ class Api01Controller < ApplicationController
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
     ids = params[:ids]&.split(',')&.collect(&:to_i)
 
-    pois = query('pois($1, $2, $3, $4::bigint[], $5, $6, $7, $8, $9, $10)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6, $7, $8, $9, $10, $11)', [
+      base_url,
       project_slug,
       theme_slug,
       category_id,
