@@ -243,6 +243,8 @@ def compare_pois(url_old, url_new, category_ids)
 
       poi['properties']['metadata'].delete('refs') # WP does not support refs
 
+      poi['properties'].delete('image:thumbnail')
+
       poi.delete('geometry') # TMP, approx commp are 0.0001, and WP geom not the same
 
       poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
@@ -297,6 +299,7 @@ def compare_pois(url_old, url_new, category_ids)
       ['route:gpx_trace', 'route:pdf'].each{ |k|
         poi['properties'][k] = poi['properties'][k].split('/').last if poi['properties'][k]
       }
+      poi['properties']['editorial']['website:details'] = poi['properties']['editorial']['website:details'].split('/')[3..].join('/') if poi['properties']['editorial']['website:details']
 
       poi
     } || []
