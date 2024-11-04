@@ -519,9 +519,9 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
           'en' => 'Root',
           'fr' => 'Racine',
         },
-        'icon' => '',
-        'color_fill' => '',
-        'color_line' => '',
+        'icon' => 'teritorio teritorio-beef00',
+        'color_fill' => '#beef00',
+        'color_line' => '#beef00',
         'style_class' => nil,
         'display_mode' => 'compact'
       },

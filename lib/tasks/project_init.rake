@@ -318,6 +318,9 @@ def new_root_menu(project_id)
       type: 'menu_group',
       name: { en: 'Root Menu', fr: 'Menu racine', es: 'Menú raíz' }.compact,
       display_mode: 'compact',
+      icon: 'teritorio teritorio-services',
+      color_fill:	'#ff0000',
+      color_line:	'#ff0000',
     )
 
     conn.exec(

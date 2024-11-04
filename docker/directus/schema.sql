@@ -870,7 +870,7 @@ CREATE TABLE public.fields (
     field character varying(255),
     "group" character varying(255),
     display_mode character varying(255),
-    icon character varying(255) NOT NULL,
+    icon character varying(255),
     project_id integer NOT NULL,
     label boolean DEFAULT false
 );
@@ -1075,7 +1075,7 @@ CREATE TABLE public.menu_items (
     selected_by_default boolean DEFAULT false NOT NULL,
     parent_id integer,
     project_id integer NOT NULL,
-    icon character varying(255),
+    icon character varying(255) NOT NULL,
     display_mode public.menu_item_display_mode_type DEFAULT 'compact'::public.menu_item_display_mode_type NOT NULL,
     search_indexed boolean DEFAULT true,
     style_merge boolean DEFAULT true,
