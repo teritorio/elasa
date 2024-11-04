@@ -412,7 +412,7 @@ end
 
 def new_source_menu(project_id, root_menu_id, metadatas, css, filters)
   css_parser = CssParser::Parser.new
-  css_parser.load_uri!(css)
+  css_parser.load_uri!("/srv/app/public#{css}")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     poi_menu_id = insert_menu_item(
@@ -499,7 +499,7 @@ namespace :project do
     slug, osm_id, theme, ontology, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
-    css = 'https://carte.seignanx.com/content/wp-content/plugins/font-teritorio/dist/teritorio.css?ver=2.8.0'
+    css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
 
     role_uuid = create_role(slug)
