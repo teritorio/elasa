@@ -53,40 +53,38 @@ def create_role(project_slug)
     role_name = "Local Admin - #{project_slug}"
     conn.exec('DELETE FROM directus_roles WHERE name = $1', [role_name])
     role_uuid = conn.exec('
-      INSERT INTO directus_roles(id, name, icon, description, ip_access, enforce_tfa, admin_access, app_access)
-      SELECT
-        gen_random_uuid(),
-        $1,
-        icon,
-        description,
-        ip_access,
-        enforce_tfa,
-        admin_access,
-        app_access
-      FROM
-        directus_roles
-      WHERE
-        id = \'5979e2ac-a34f-4c70-bf9d-de48b3900a8f\' -- Local Admin
+      MERGE
+        INTO directus_roles
+      USING (SELECT gen_random_uuid()::uuid, $1, \'supervised_user_circle\', \'5979e2ac-a34f-4c70-bf9d-de48b3900a8f\'::uuid) AS source(id, name, icon, parent) ON
+        directus_roles.name = source.name
+      WHEN MATCHED THEN
+        UPDATE SET
+          icon = source.icon,
+          parent = source.parent
+      WHEN NOT MATCHED THEN
+        INSERT (id, name, icon, parent)
+        VALUES (source.id, source.name, source.icon, source.parent)
       RETURNING
-        id
+        directus_roles.id
     ', [role_name]) { |result|
       result.first['id']
     }
-    conn.exec('
-      INSERT INTO directus_permissions(role, collection, action, permissions, validation, presets, fields)
-      SELECT
-        $1,
-        collection,
-        action,
-        permissions,
-        validation,
-        presets,
-        fields
-      FROM
-        directus_permissions
-      WHERE
-        role = \'5979e2ac-a34f-4c70-bf9d-de48b3900a8f\'
-    ', [role_uuid])
-    role_uuid
+    policy_uuid = conn.exec('
+      MERGE INTO
+        directus_policies
+      USING (SELECT gen_random_uuid()::uuid, $1, \'supervised_user_circle\') AS source(id, name, icon) ON
+        directus_policies.name = source.name
+      WHEN MATCHED THEN
+        UPDATE SET
+          icon = source.icon
+      WHEN NOT MATCHED THEN
+        INSERT (id, name, icon)
+        VALUES (source.id, source.name, source.icon)
+      RETURNING
+        directus_policies.id
+    ', [role_name]) { |result|
+      result.first['id']
+    }
+    [role_uuid, policy_uuid]
   }
 end

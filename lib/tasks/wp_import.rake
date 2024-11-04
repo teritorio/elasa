@@ -490,7 +490,7 @@ def load_images(conn, project_id, user_uuid, image_urls, directory)
   image_urls.zip(images_uuids).to_h
 end
 
-def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_menu_sources, i18ns, role_uuid, url_base)
+def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_menu_sources, i18ns, policy_uuid, url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -800,7 +800,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
     categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }
-    source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, role_uuid, url_base)
+    source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
@@ -937,7 +937,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
   }
 end
 
-def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, role_uuid)
+def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, policy_uuid)
   fields_table = fields.select{ |_, _, _, type| !type.nil? }
   create_table = fields_table.collect{ |_, _, _, type, fk| [type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
@@ -1037,10 +1037,10 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table[..62]])
   %w[create read update delete].each{ |action|
     conn.exec('
-      INSERT INTO directus_permissions(role, collection, action, permissions, fields)
+      INSERT INTO directus_permissions(policy, collection, action, permissions, fields)
       VALUES ($1, $2, $3, $4, $5)
     ', [
-      role_uuid,
+      policy_uuid,
       table[..62],
       action,
       {}.to_json,
@@ -1049,7 +1049,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   }
 end
 
-def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, pois, i18ns, role_uuid, url_base)
+def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, pois, i18ns, policy_uuid, url_base)
   slugs = []
   categories_local.collect{ |category_local|
     name = category_local['category']['name']['fr']
@@ -1179,11 +1179,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_t"[..62]])
 
     fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
-    load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, role_uuid)
+    load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
 
     if !fields_translations.empty?
       fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id"[..62], nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
-      load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, role_uuid)
+      load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, policy_uuid)
       conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
       conn.exec('
@@ -1299,14 +1299,14 @@ namespace :wp do
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, settings = load_project(project_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
 
-    role_uuid = create_role(project_slug)
+    role_uuid, policy_uuid = create_role(project_slug)
     user_uuid = create_user(project_id, project_slug, role_uuid)
 
     theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
-    load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, role_uuid, url_base)
+    load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")
 
     load_i18n(project_slug, i18ns) if !loaded_from_datasource.empty?

@@ -79,6 +79,21 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: directus_access; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_access (
+    id uuid NOT NULL,
+    role uuid,
+    "user" uuid,
+    policy uuid NOT NULL,
+    sort integer
+);
+
+
+ALTER TABLE public.directus_access OWNER TO postgres;
+
+--
 -- Name: directus_activity; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -126,7 +141,7 @@ ALTER SEQUENCE public.directus_activity_id_seq OWNED BY public.directus_activity
 
 CREATE TABLE public.directus_collections (
     collection character varying(64) NOT NULL,
-    icon character varying(30),
+    icon character varying(64),
     note text,
     display_template character varying(255),
     hidden boolean DEFAULT false NOT NULL,
@@ -151,13 +166,31 @@ CREATE TABLE public.directus_collections (
 ALTER TABLE public.directus_collections OWNER TO postgres;
 
 --
+-- Name: directus_comments; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_comments (
+    id uuid NOT NULL,
+    collection character varying(64) NOT NULL,
+    item character varying(255) NOT NULL,
+    comment text NOT NULL,
+    date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    date_updated timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    user_created uuid,
+    user_updated uuid
+);
+
+
+ALTER TABLE public.directus_comments OWNER TO postgres;
+
+--
 -- Name: directus_dashboards; Type: TABLE; Schema: public; Owner: postgres
 --
 
 CREATE TABLE public.directus_dashboards (
     id uuid NOT NULL,
     name character varying(255) NOT NULL,
-    icon character varying(30) DEFAULT 'dashboard'::character varying NOT NULL,
+    icon character varying(64) DEFAULT 'dashboard'::character varying NOT NULL,
     note text,
     date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     user_created uuid,
@@ -246,7 +279,7 @@ CREATE TABLE public.directus_files (
     type character varying(255),
     folder uuid,
     uploaded_by uuid,
-    uploaded_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     modified_by uuid,
     modified_on timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     charset character varying(50),
@@ -263,7 +296,8 @@ CREATE TABLE public.directus_files (
     focal_point_y integer,
     tus_id character varying(64),
     tus_data json,
-    project_id integer
+    project_id integer,
+    uploaded_on timestamp with time zone
 );
 
 
@@ -276,7 +310,7 @@ ALTER TABLE public.directus_files OWNER TO postgres;
 CREATE TABLE public.directus_flows (
     id uuid NOT NULL,
     name character varying(255) NOT NULL,
-    icon character varying(30),
+    icon character varying(64),
     color character varying(255),
     description text,
     status character varying(255) DEFAULT 'active'::character varying NOT NULL,
@@ -389,7 +423,7 @@ CREATE TABLE public.directus_panels (
     id uuid NOT NULL,
     dashboard uuid NOT NULL,
     name character varying(255),
-    icon character varying(30) DEFAULT NULL::character varying,
+    icon character varying(64) DEFAULT NULL::character varying,
     color character varying(10),
     show_header boolean DEFAULT false NOT NULL,
     note text,
@@ -412,13 +446,13 @@ ALTER TABLE public.directus_panels OWNER TO postgres;
 
 CREATE TABLE public.directus_permissions (
     id integer NOT NULL,
-    role uuid,
     collection character varying(64) NOT NULL,
     action character varying(10) NOT NULL,
     permissions json,
     validation json,
     presets json,
-    fields text
+    fields text,
+    policy uuid NOT NULL
 );
 
 
@@ -447,6 +481,24 @@ ALTER SEQUENCE public.directus_permissions_id_seq OWNED BY public.directus_permi
 
 
 --
+-- Name: directus_policies; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.directus_policies (
+    id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    icon character varying(64) DEFAULT 'badge'::character varying NOT NULL,
+    description text,
+    ip_access text,
+    enforce_tfa boolean DEFAULT false NOT NULL,
+    admin_access boolean DEFAULT false NOT NULL,
+    app_access boolean DEFAULT false NOT NULL
+);
+
+
+ALTER TABLE public.directus_policies OWNER TO postgres;
+
+--
 -- Name: directus_presets; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -462,7 +514,7 @@ CREATE TABLE public.directus_presets (
     layout_options json,
     refresh_interval integer,
     filter json,
-    icon character varying(30) DEFAULT 'bookmark'::character varying,
+    icon character varying(64) DEFAULT 'bookmark'::character varying,
     color character varying(255)
 );
 
@@ -580,12 +632,9 @@ ALTER SEQUENCE public.directus_revisions_id_seq OWNED BY public.directus_revisio
 CREATE TABLE public.directus_roles (
     id uuid NOT NULL,
     name character varying(100) NOT NULL,
-    icon character varying(30) DEFAULT 'supervised_user_circle'::character varying NOT NULL,
+    icon character varying(64) DEFAULT 'supervised_user_circle'::character varying NOT NULL,
     description text,
-    ip_access text,
-    enforce_tfa boolean DEFAULT false NOT NULL,
-    admin_access boolean DEFAULT false NOT NULL,
-    app_access boolean DEFAULT true NOT NULL
+    parent uuid
 );
 
 
@@ -761,7 +810,8 @@ CREATE TABLE public.directus_versions (
     date_created timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     date_updated timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     user_created uuid,
-    user_updated uuid
+    user_updated uuid,
+    delta json
 );
 
 
@@ -1692,6 +1742,14 @@ ALTER TABLE ONLY public.translations ALTER COLUMN id SET DEFAULT nextval('public
 
 
 --
+-- Name: directus_access directus_access_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_access
+    ADD CONSTRAINT directus_access_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: directus_activity directus_activity_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1705,6 +1763,14 @@ ALTER TABLE ONLY public.directus_activity
 
 ALTER TABLE ONLY public.directus_collections
     ADD CONSTRAINT directus_collections_pkey PRIMARY KEY (collection);
+
+
+--
+-- Name: directus_comments directus_comments_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_comments
+    ADD CONSTRAINT directus_comments_pkey PRIMARY KEY (id);
 
 
 --
@@ -1817,6 +1883,14 @@ ALTER TABLE ONLY public.directus_panels
 
 ALTER TABLE ONLY public.directus_permissions
     ADD CONSTRAINT directus_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: directus_policies directus_policies_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_policies
+    ADD CONSTRAINT directus_policies_pkey PRIMARY KEY (id);
 
 
 --
@@ -2207,11 +2281,59 @@ CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_arra
 
 
 --
+-- Name: directus_access directus_access_policy_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_access
+    ADD CONSTRAINT directus_access_policy_foreign FOREIGN KEY (policy) REFERENCES public.directus_policies(id) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_access directus_access_role_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_access
+    ADD CONSTRAINT directus_access_role_foreign FOREIGN KEY (role) REFERENCES public.directus_roles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_access directus_access_user_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_access
+    ADD CONSTRAINT directus_access_user_foreign FOREIGN KEY ("user") REFERENCES public.directus_users(id) ON DELETE CASCADE;
+
+
+--
 -- Name: directus_collections directus_collections_group_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.directus_collections
     ADD CONSTRAINT directus_collections_group_foreign FOREIGN KEY ("group") REFERENCES public.directus_collections(collection);
+
+
+--
+-- Name: directus_comments directus_comments_collection_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_comments
+    ADD CONSTRAINT directus_comments_collection_foreign FOREIGN KEY (collection) REFERENCES public.directus_collections(collection) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_comments directus_comments_user_created_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_comments
+    ADD CONSTRAINT directus_comments_user_created_foreign FOREIGN KEY (user_created) REFERENCES public.directus_users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: directus_comments directus_comments_user_updated_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_comments
+    ADD CONSTRAINT directus_comments_user_updated_foreign FOREIGN KEY (user_updated) REFERENCES public.directus_users(id);
 
 
 --
@@ -2343,11 +2465,11 @@ ALTER TABLE ONLY public.directus_panels
 
 
 --
--- Name: directus_permissions directus_permissions_role_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: directus_permissions directus_permissions_policy_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.directus_permissions
-    ADD CONSTRAINT directus_permissions_role_foreign FOREIGN KEY (role) REFERENCES public.directus_roles(id) ON DELETE CASCADE;
+    ADD CONSTRAINT directus_permissions_policy_foreign FOREIGN KEY (policy) REFERENCES public.directus_policies(id) ON DELETE CASCADE;
 
 
 --
@@ -2388,6 +2510,14 @@ ALTER TABLE ONLY public.directus_revisions
 
 ALTER TABLE ONLY public.directus_revisions
     ADD CONSTRAINT directus_revisions_version_foreign FOREIGN KEY (version) REFERENCES public.directus_versions(id) ON DELETE CASCADE;
+
+
+--
+-- Name: directus_roles directus_roles_parent_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.directus_roles
+    ADD CONSTRAINT directus_roles_parent_foreign FOREIGN KEY (parent) REFERENCES public.directus_roles(id);
 
 
 --

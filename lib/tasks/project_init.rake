@@ -502,7 +502,7 @@ namespace :project do
     css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
     project_id, theme_id = new_project(slug, osm_id, theme, css, website)
 
-    role_uuid = create_role(slug)
+    role_uuid, policy_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
     metadatas = load_from_source("#{datasource_url}/data", slug, slug).first
