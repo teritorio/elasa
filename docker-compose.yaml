@@ -34,7 +34,8 @@ services:
     restart: unless-stopped
 
   directus:
-    image: directus/directus:11.1.2
+    build:
+      context: docker/directus/
     ports:
       - 8055:8055
     volumes:
@@ -44,6 +45,7 @@ services:
       - ./uploads:/directus/uploads
       # If you want to load extensions from the host
       - ./docker/directus/extensions:/directus/extensions
+      - ./docker/directus/schema-sync:/directus/schema-sync
     depends_on:
       - cache
       - postgres

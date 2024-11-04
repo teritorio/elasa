@@ -1,0 +1,20 @@
+[
+  {
+    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "role": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "sort": 1,
+    "user": null
+  },
+  {
+    "policy": "abf8a154-5b1c-4a46-ac9c-7300570f4f17",
+    "role": null,
+    "sort": 1,
+    "user": null
+  },
+  {
+    "policy": "f400ab71-d9c5-4ea8-96aa-0958f373ccca",
+    "role": "f400ab71-d9c5-4ea8-96aa-0958f373ccca",
+    "sort": 1,
+    "user": null
+  }
+]

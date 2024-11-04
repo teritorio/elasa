@@ -1,0 +1,317 @@
+{
+  "collection": "sources",
+  "meta": {
+    "accountability": "all",
+    "archive_app_filter": true,
+    "archive_field": null,
+    "archive_value": null,
+    "collapse": "open",
+    "collection": "sources",
+    "color": null,
+    "display_template": "{{slug}}",
+    "group": "projects",
+    "hidden": false,
+    "icon": "database",
+    "item_duplication_fields": null,
+    "note": null,
+    "preview_url": null,
+    "singleton": false,
+    "sort": 5,
+    "sort_field": null,
+    "translations": null,
+    "unarchive_value": null,
+    "versioning": false
+  },
+  "schema": {
+    "name": "sources"
+  },
+  "fields": [
+    {
+      "field": "attribution",
+      "type": "text",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "attribution",
+        "group": null,
+        "hidden": false,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 5,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "attribution",
+        "table": "sources",
+        "data_type": "text",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "field": "id",
+      "type": "integer",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "id",
+        "group": null,
+        "hidden": true,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 1,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "id",
+        "table": "sources",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": true,
+        "is_indexed": false,
+        "is_primary_key": true,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": true,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "field": "menu_items",
+      "type": "alias",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "menu_items",
+        "group": null,
+        "hidden": false,
+        "interface": "list-m2m",
+        "note": null,
+        "options": {
+          "enableLink": true
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 6,
+        "special": [
+          "m2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "field": "pois",
+      "type": "alias",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "pois",
+        "group": null,
+        "hidden": false,
+        "interface": "list-o2m",
+        "note": null,
+        "options": {
+          "enableLink": true
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 7,
+        "special": [
+          "o2m"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
+      "field": "project_id",
+      "type": "integer",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": "related-values",
+        "display_options": {
+          "template": "{{slug}}"
+        },
+        "field": "project_id",
+        "group": null,
+        "hidden": true,
+        "interface": "select-dropdown-m2o",
+        "note": null,
+        "options": {
+          "template": "{{slug}}"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "project_id",
+        "table": "sources",
+        "data_type": "integer",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": 32,
+        "numeric_scale": 0,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": "projects",
+        "foreign_key_column": "id"
+      }
+    },
+    {
+      "field": "slug",
+      "type": "string",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "slug",
+        "group": null,
+        "hidden": false,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "slug",
+        "table": "sources",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": -5,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "field": "sources_translations",
+      "type": "alias",
+      "meta": {
+        "collection": "sources",
+        "conditions": null,
+        "display": "translations",
+        "display_options": {
+          "languageField": "name",
+          "template": "{{name}}"
+        },
+        "field": "sources_translations",
+        "group": null,
+        "hidden": false,
+        "interface": "translations",
+        "note": null,
+        "options": {
+          "defaultLanguage": "en-US",
+          "defaultOpenSplitView": true,
+          "userLanguage": true
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 3,
+        "special": [
+          "translations"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "field": "project_id",
+      "related_collection": "projects",
+      "meta": {
+        "junction_field": null,
+        "many_collection": "sources",
+        "many_field": "project_id",
+        "one_allowed_collections": null,
+        "one_collection": "projects",
+        "one_collection_field": null,
+        "one_deselect_action": "nullify",
+        "one_field": "sources",
+        "sort_field": null
+      },
+      "schema": {
+        "table": "sources",
+        "column": "project_id",
+        "foreign_key_table": "projects",
+        "foreign_key_column": "id",
+        "constraint_name": "menu_items_fk_project_id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    }
+  ]
+}

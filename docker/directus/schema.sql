@@ -866,11 +866,11 @@ ALTER SEQUENCE public.directus_webhooks_id_seq OWNED BY public.directus_webhooks
 
 CREATE TABLE public.fields (
     id integer NOT NULL,
-    type character varying(255) DEFAULT NULL::character varying NOT NULL,
+    type character varying(255) NOT NULL,
     field character varying(255),
     "group" character varying(255),
     display_mode character varying(255),
-    icon character varying(255),
+    icon character varying(255) NOT NULL,
     project_id integer NOT NULL,
     label boolean DEFAULT false
 );
@@ -1550,7 +1550,7 @@ ALTER SEQUENCE public.themes_translations_id_seq OWNED BY public.themes_translat
 CREATE TABLE public.translations (
     id integer NOT NULL,
     project_id integer NOT NULL,
-    key character varying(255) DEFAULT NULL::character varying NOT NULL,
+    key character varying(255) NOT NULL,
     key_translations json NOT NULL,
     values_translations json
 );
