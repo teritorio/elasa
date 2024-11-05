@@ -419,11 +419,19 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   }
 end
 
-def new_source_menu(project_id, root_menu_id, metadatas, css, filters)
+def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
   css_parser = CssParser::Parser.new
   css_parser.load_uri!("/srv/app/public#{css}")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    osm_tags_extra = {
+      'all' => schema['properties'].to_h{ |key, _sch|
+        [key, nil]
+      },
+    }
+
+    group_fields_ids = insert_group_fields(conn, project_id, { 'osm_tags_extra' => osm_tags_extra })
+
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
@@ -447,17 +455,15 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, filters)
         'color_line' => '#ff0000',
         'display_mode' => 'compact',
         'zoom' => 16,
-        'osm_tags_extra' => [],
+        'osm_tags_extra' => ['all'],
       }
-      group_fields_ids = nil
 
       insert_menu_category(conn, project_id, poi_menu_id, ['remarkable'], slug, css_parser, subclass, index, group_fields_ids, filters)
     }
   }
 end
 
-def new_filter(project_id, schema_url, i18ns)
-  schema = fetch_json(schema_url)
+def new_filter(project_id, schema, i18ns)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
 
@@ -517,10 +523,11 @@ namespace :project do
     metadatas = load_from_source("#{datasource_url}/data", slug, slug).first
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
     load_i18n(slug, i18ns)
-    filters = new_filter(project_id, "#{datasource_url}/data/#{slug}/schema.json", i18ns)
+    schema = fetch_json("#{datasource_url}/data/#{slug}/schema.json")
+    filters = new_filter(project_id, schema, i18ns)
     root_menu_id = new_root_menu(project_id)
     new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
-    new_source_menu(project_id, root_menu_id, metadatas, css, filters)
+    new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
