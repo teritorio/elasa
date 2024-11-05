@@ -183,7 +183,7 @@ def insert_menu_group(conn, project_id, parent_id, class_path, css_parser, class
   )
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, filters)
+def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
   group_ids = classs['osm_tags_extra'].collect{ |group|
     next if group.include?('i18n')
 
@@ -219,6 +219,12 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
       [details_fields_id, group_id, group_index]
     )
   }
+
+  [fields, popup_fields_id, details_fields_id]
+end
+
+def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, filters)
+  fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
 
   icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
   category_id = insert_menu_item(
