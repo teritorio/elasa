@@ -474,7 +474,7 @@ def new_filter(project_id, schema, i18ns)
         spec['enum']
       end
     }.compact.except('tactile_paving', 'pastry', 'mobile_phone:repair', 'computer:repair', 'sport', 'access', 'dispensing').collect{ |key, enum|
-      name = i18ns.dig(key, '@default') || {}
+      name = i18ns.dig(key, '@default') || { 'en' => key }
       filter_id = (
         if [%w[yes no], %w[no yes]].include?(enum)
           conn.exec(
