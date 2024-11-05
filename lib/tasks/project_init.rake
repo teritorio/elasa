@@ -199,7 +199,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
 
   popup_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_popup', 'standard']
+    [project_id, 'group', "group_popup_#{source_slug}", 'standard']
   ) { |result| result.first['id'].to_i }
   field_ids.each_with_index{ |field_id, field_index|
     conn.exec(
@@ -211,7 +211,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
   # Details
   details_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-    [project_id, 'group', 'group_details', 'standard']
+    [project_id, 'group', "group_details_#{source_slug}", 'standard']
   ) { |result| result.first['id'].to_i }
   group_ids.each_with_index{ |group_id, group_index|
     conn.exec(
