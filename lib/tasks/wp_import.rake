@@ -43,7 +43,7 @@ def load_project(project_slug, url, url_articles)
   if icon_font_css_url.include?('teritorio.css')
     icon_font_css_url = icon_font_css_url.gsub(/(.*ver=)(.*)/, '/static/font-teritorio-\\2/teritorio/teritorio.css')
   elsif icon_font_css_url.include?('glyphicons')
-    icon_font_css_url = '/static/glyphicons-x.x.x/_glyphicons.css'
+    icon_font_css_url = '/static/glyphicons-regular-2.0/glyphicons-regular.css'
   end
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
