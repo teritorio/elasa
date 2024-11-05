@@ -112,7 +112,7 @@ class Api01ControllerTest < ActionController::TestCase
     json = JSON.parse(@response.body)
     JSON::Validator.validate!(@@schema, json, fragment: schema_for('pois.{format}'))
 
-    assert_equal 20, json['features'][0]['properties']['description'].size
+    assert_equal 100, json['features'][0]['properties']['description'].size
     # TODO: assert no html tags
   end
 

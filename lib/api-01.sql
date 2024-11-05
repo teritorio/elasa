@@ -916,7 +916,7 @@ CREATE OR REPLACE FUNCTION pois(
                             WHEN 'true' THEN substr(coalesce(
                                 pois.properties->'tags'->'description'->>'fr',
                                 pois.properties->'natives'->'description'->>'fr'
-                            ), 1, 20)
+                            ), 1, 100)
                             ELSE coalesce(
                                 pois.properties->'tags'->'description'->>'fr',
                                 pois.properties->'natives'->'description'->>'fr'
