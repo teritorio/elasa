@@ -224,7 +224,11 @@ def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids
 end
 
 def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, filters)
-  fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
+  if classs['osm_tags_extra'] != ['all']
+    fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
+  else
+    fields, popup_fields_id, details_fields_id = group_fields_ids.values.last.last.keys, group_fields_ids.values.first.first, group_fields_ids.values.first.first
+  end
 
   icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
   category_id = insert_menu_item(
