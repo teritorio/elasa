@@ -251,15 +251,16 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
     list_fields_id: popup_fields_id,
   )
 
-  fields.each{ |field|
-    filter_id = filters[field]
-    if filter_id
-      conn.exec(
-        'INSERT INTO menu_items_filters(menu_items_id, filters_id) VALUES ($1, $2) RETURNING id',
-        [category_id, filter_id]
-      )
-    end
-  }
+  # Disable, to much work to remove filters everywhere
+  # fields.each{ |field|
+  #   filter_id = filters[field]
+  #   if filter_id
+  #     conn.exec(
+  #       'INSERT INTO menu_items_filters(menu_items_id, filters_id) VALUES ($1, $2) RETURNING id',
+  #       [category_id, filter_id]
+  #     )
+  #   end
+  # }
 
   id = conn.exec(
     '
