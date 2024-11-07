@@ -462,7 +462,7 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 43	menu_items	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 44	menu_items	update	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 45	menu_items	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-52	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,project_id,attribution,slug,pois,sources_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+52	sources	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 58	menu_items_sources	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 59	menu_items_sources	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 60	menu_items_sources	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f

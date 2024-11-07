@@ -1402,13 +1402,7 @@
     "action": "read",
     "collection": "sources",
     "fields": [
-      "id",
-      "name",
-      "project_id",
-      "attribution",
-      "slug",
-      "pois",
-      "sources_translations"
+      "*"
     ],
     "permissions": {
       "_and": [
