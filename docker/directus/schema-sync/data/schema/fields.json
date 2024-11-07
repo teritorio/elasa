@@ -173,6 +173,36 @@
       }
     },
     {
+      "field": "fields_translations",
+      "type": "alias",
+      "meta": {
+        "collection": "fields",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "fields_translations",
+        "group": null,
+        "hidden": false,
+        "interface": "translations",
+        "note": null,
+        "options": {
+          "defaultLanguage": "en-US",
+          "defaultOpenSplitView": true,
+          "userLanguage": true
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "translations"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "field": "group",
       "type": "string",
       "meta": {
@@ -246,7 +276,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 4,
+        "sort": 5,
         "special": [
           "alias",
           "no-data",

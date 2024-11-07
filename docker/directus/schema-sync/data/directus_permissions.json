@@ -545,6 +545,84 @@
   },
   {
     "action": "create",
+    "collection": "fields_translations",
+    "fields": [
+      "*"
+    ],
+    "permissions": null,
+    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "presets": null,
+    "validation": null
+  },
+  {
+    "action": "delete",
+    "collection": "fields_translations",
+    "fields": null,
+    "permissions": {
+      "_and": [
+        {
+          "fields_id": {
+            "project_id": {
+              "_eq": "$CURRENT_USER.project_id"
+            }
+          }
+        }
+      ]
+    },
+    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "presets": null,
+    "validation": null
+  },
+  {
+    "action": "read",
+    "collection": "fields_translations",
+    "fields": [
+      "id",
+      "fields_id",
+      "languages_code",
+      "name"
+    ],
+    "permissions": {
+      "_and": [
+        {
+          "fields_id": {
+            "project_id": {
+              "_eq": "$CURRENT_USER.project_id"
+            }
+          }
+        }
+      ]
+    },
+    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "presets": null,
+    "validation": null
+  },
+  {
+    "action": "update",
+    "collection": "fields_translations",
+    "fields": [
+      "id",
+      "fields_id",
+      "languages_code",
+      "name"
+    ],
+    "permissions": {
+      "_and": [
+        {
+          "fields_id": {
+            "project_id": {
+              "_eq": "$CURRENT_USER.project_id"
+            }
+          }
+        }
+      ]
+    },
+    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
+    "presets": null,
+    "validation": null
+  },
+  {
+    "action": "create",
     "collection": "filters",
     "fields": [
       "*"

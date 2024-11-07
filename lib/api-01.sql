@@ -1020,6 +1020,25 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                 projects.slug = _project_slug AND
                 projects.id = translations.project_id
     ),
+    translation_fields AS (
+        SELECT
+            coalesce(fields.group, fields.field) AS key,
+            json_build_object(
+                '@default', json_build_object(
+                    -- TODO loop to get the right language translations
+                    substring(languages_code, 1, 2), fields_translations.name
+                )
+            ) AS key_translations,
+            NULL::json AS values_translations
+        FROM
+            projects
+            JOIN fields ON
+                fields.project_id = projects.id
+            JOIN fields_translations ON
+                fields_translations.fields_id = fields.id
+        WHERE
+            projects.slug = _project_slug
+    ),
     translations_local AS (
         SELECT
             field AS key,
@@ -1058,6 +1077,8 @@ CREATE OR REPLACE FUNCTION attribute_translations(
         ))::text
     FROM (
         SELECT * FROM translations
+        UNION ALL
+        SELECT * FROM translation_fields
         UNION ALL
         SELECT * FROM translations_local
     ) AS translations

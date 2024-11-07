@@ -937,6 +937,42 @@ ALTER SEQUENCE public.fields_id_seq OWNED BY public.fields.id;
 
 
 --
+-- Name: fields_translations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.fields_translations (
+    id integer NOT NULL,
+    fields_id integer,
+    languages_code character varying(255),
+    name character varying(255)
+);
+
+
+ALTER TABLE public.fields_translations OWNER TO postgres;
+
+--
+-- Name: fields_translations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.fields_translations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.fields_translations_id_seq OWNER TO postgres;
+
+--
+-- Name: fields_translations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.fields_translations_id_seq OWNED BY public.fields_translations.id;
+
+
+--
 -- Name: filters; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1658,6 +1694,13 @@ ALTER TABLE ONLY public.fields_fields ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: fields_translations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_translations ALTER COLUMN id SET DEFAULT nextval('public.fields_translations_id_seq'::regclass);
+
+
+--
 -- Name: filters id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -2027,6 +2070,14 @@ ALTER TABLE ONLY public.fields
 
 ALTER TABLE ONLY public.fields
     ADD CONSTRAINT fields_project_id_field_group_key UNIQUE (project_id, field, "group");
+
+
+--
+-- Name: fields_translations fields_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_translations
+    ADD CONSTRAINT fields_translations_pkey PRIMARY KEY (id);
 
 
 --
@@ -2678,6 +2729,22 @@ ALTER TABLE ONLY public.fields_fields
 
 ALTER TABLE ONLY public.fields
     ADD CONSTRAINT fields_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: fields_translations fields_translations_fields_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_translations
+    ADD CONSTRAINT fields_translations_fields_id_foreign FOREIGN KEY (fields_id) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
+-- Name: fields_translations fields_translations_languages_code_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_translations
+    ADD CONSTRAINT fields_translations_languages_code_foreign FOREIGN KEY (languages_code) REFERENCES public.languages(code) ON DELETE SET NULL;
 
 
 --

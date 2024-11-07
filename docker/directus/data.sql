@@ -65,6 +65,7 @@ c06ffc91-572e-4ff1-a700-333d65f1a034	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	f40
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url, versioning) FROM stdin;
 fields	rectangle	\N	{{field}}{{group}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
 fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N	f
+fields_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	fields	open	\N	f
 filters	filter_alt	\N	{{filters_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 filters_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	filters	open	\N	f
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
@@ -201,7 +202,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 138	fields	group	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	group_block	\N	\N
 139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
 140	fields	icon	\N	input	\N	\N	\N	f	f	3	half	\N	\N	\N	f	group_block	\N	\N
-141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	4	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
+141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	5	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	5	full	\N	\N	\N	f	group_block	\N	\N
 145	fields_fields	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 146	fields_fields	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
@@ -274,6 +275,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 542	themes	logo	file	file-image	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 543	themes	favicon	file	file-image	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 544	directus_folders	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
+545	fields	fields_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+546	fields_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+547	fields_translations	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+548	fields_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+549	fields_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -510,6 +516,10 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 234	pois_files	delete	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 236	pois_files	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 237	directus_files	read	{}	{}	\N	*	abf8a154-5b1c-4a46-ac9c-7300570f4f17
+238	fields_translations	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+239	fields_translations	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+240	fields_translations	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+241	fields_translations	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 \.
 
 
@@ -556,6 +566,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 60	themes	logo	directus_files	\N	\N	\N	\N	\N	nullify
 61	themes	favicon	directus_files	\N	\N	\N	\N	\N	nullify
 62	directus_folders	project_id	projects	\N	\N	\N	\N	\N	nullify
+63	fields_translations	languages_code	languages	\N	\N	\N	fields_id	\N	nullify
+64	fields_translations	fields_id	fields	fields_translations	\N	\N	languages_code	\N	nullify
 \.
 
 
@@ -611,7 +623,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 544, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 549, true);
 
 
 --
@@ -625,7 +637,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 237, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 241, true);
 
 
 --
@@ -639,7 +651,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 62, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 64, true);
 
 
 --

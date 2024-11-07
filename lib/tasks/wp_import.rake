@@ -180,7 +180,7 @@ end
 
 @fields = {}
 
-def load_field_group(conn, project_id, group)
+def load_field_group(conn, project_id, group, i18ns)
   group_key = group.except('group')
   if @fields[group_key]
     @fields[group_key]
@@ -191,7 +191,7 @@ def load_field_group(conn, project_id, group)
         puts "[ERROR] Duplicate field in group #{group['group']}: #{duplicate_fields.join(', ')}"
       end
       ids = (group['fields'] || []).collect{ |f|
-        load_field_group(conn, project_id, f)
+        load_field_group(conn, project_id, f, i18ns)
       }
     end
 
@@ -222,6 +222,20 @@ def load_field_group(conn, project_id, group)
       @fields[group_key] = result.first['id'].to_i
     }
 
+    label = i18ns.dig(group['group'], 'label', 'fr') || i18ns.dig(group['field'], 'label', 'fr')
+    if !label.nil?
+      conn.exec(
+        '
+      INSERT INTO fields_translations(fields_id, languages_code, name)
+      VALUES ($1, $2, $3)
+      ', [
+          id,
+          'fr-FR',
+          label,
+        ]
+      )
+    end
+
     if group['group']
       ids.each_with_index { |i, index|
         conn.exec('INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3)', [id, i, index])
@@ -232,7 +246,7 @@ def load_field_group(conn, project_id, group)
   end
 end
 
-def load_fields(conn, project_id, pois, menu_items)
+def load_fields(conn, project_id, pois, menu_items, i18ns)
   menu_items = menu_items.index_by{ |menu| menu['id'] }
 
   fields = pois.collect{ |poi|
@@ -263,7 +277,7 @@ def load_fields(conn, project_id, pois, menu_items)
       load_field_group(conn, project_id, {
         'group' => "#{menu_items[field[0]]&.dig('category', 'name', 'fr')} #{mode}",
         'fields' => f,
-      })
+      }, i18ns)
     }
   }
 end
@@ -531,7 +545,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     # Missing poi from buggy WP pois.geojson
     pois = add_missing_pois(menu_sources, pois)
 
-    fields = load_fields(conn, project_id, pois, menu_items)
+    fields = load_fields(conn, project_id, pois, menu_items, i18ns)
     fields_ids = fields.index_by(&:first)
 
     labels = load_class_labels(pois)
