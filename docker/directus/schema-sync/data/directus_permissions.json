@@ -1424,61 +1424,7 @@
     "validation": null
   },
   {
-    "action": "create",
-    "collection": "sources_translations",
-    "fields": [
-      "*"
-    ],
-    "permissions": {},
-    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
-    "presets": null,
-    "validation": {}
-  },
-  {
-    "action": "delete",
-    "collection": "sources_translations",
-    "fields": null,
-    "permissions": {
-      "_and": [
-        {
-          "sources_id": {
-            "project_id": {
-              "_eq": "$CURRENT_USER.project_id"
-            }
-          }
-        }
-      ]
-    },
-    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
-    "presets": null,
-    "validation": null
-  },
-  {
     "action": "read",
-    "collection": "sources_translations",
-    "fields": [
-      "id",
-      "sources_id",
-      "languages_code",
-      "name"
-    ],
-    "permissions": {
-      "_and": [
-        {
-          "sources_id": {
-            "project_id": {
-              "_eq": "$CURRENT_USER.project_id"
-            }
-          }
-        }
-      ]
-    },
-    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
-    "presets": null,
-    "validation": null
-  },
-  {
-    "action": "update",
     "collection": "sources_translations",
     "fields": [
       "id",

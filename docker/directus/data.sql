@@ -493,14 +493,11 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 94	projects_translations	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,projects_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 96	sources_translations	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,sources_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 97	projects_translations	update	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,projects_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-98	sources_translations	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,sources_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 99	projects_translations	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-100	sources_translations	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 101	themes_translations	read	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,themes_id,languages_code,site_url,description,name,main_url,keywords	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 102	themes_translations	update	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,themes_id,languages_code,site_url,description,name,main_url,keywords	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 103	themes_translations	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 104	themes_translations	delete	{"_and":[{"themes_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-105	sources_translations	delete	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 106	projects_translations	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 107	menu_items_translations	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 108	menu_items_translations	read	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,languages_code,slug,name_singular,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
