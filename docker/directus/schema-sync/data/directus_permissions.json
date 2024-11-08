@@ -423,7 +423,7 @@
       "display_mode",
       "label",
       "fields_translations",
-      "field_group",
+      "field_block",
       "values_translations"
     ],
     "permissions": {
@@ -454,7 +454,7 @@
       "project_id",
       "fields",
       "label",
-      "field_group",
+      "field_block",
       "values_translations",
       "fields_translations"
     ],

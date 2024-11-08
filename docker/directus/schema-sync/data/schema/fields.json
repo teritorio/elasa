@@ -11,7 +11,7 @@
     "display_template": "{{field}}{{group}}",
     "group": "projects",
     "hidden": false,
-    "icon": "rectangle",
+    "icon": "sell",
     "item_duplication_fields": null,
     "note": null,
     "preview_url": null,
@@ -88,7 +88,7 @@
         "display": null,
         "display_options": null,
         "field": "field",
-        "group": "field_group",
+        "group": "field_block",
         "hidden": false,
         "interface": "input",
         "note": null,
@@ -122,12 +122,13 @@
       }
     },
     {
-      "field": "field_group",
+      "field": "field_block",
       "type": "alias",
       "meta": {
         "collection": "fields",
         "conditions": [
           {
+            "hidden": true,
             "options": {
               "start": "open"
             },
@@ -144,7 +145,7 @@
         ],
         "display": null,
         "display_options": null,
-        "field": "field_group",
+        "field": "field_block",
         "group": null,
         "hidden": false,
         "interface": "group-detail",
@@ -545,7 +546,7 @@
         "display": null,
         "display_options": null,
         "field": "values_translations",
-        "group": "field_group",
+        "group": "field_block",
         "hidden": false,
         "interface": "input-code",
         "note": null,

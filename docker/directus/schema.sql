@@ -2022,11 +2022,11 @@ ALTER TABLE ONLY public.fields
 
 
 --
--- Name: fields fields_project_id_field_group_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: fields fields_project_id_field_block_key; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.fields
-    ADD CONSTRAINT fields_project_id_field_group_key UNIQUE (project_id, field, "group");
+    ADD CONSTRAINT fields_project_id_field_block_key UNIQUE (project_id, field, "group");
 
 
 --
