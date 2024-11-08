@@ -956,7 +956,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   create_table = fields_table.collect{ |_, _, _, type, fk| [type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
-  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' bigint', ' text').gsub(' uuid', ' text').gsub(/REFERENCES [^ ]+ ON DELETE SET NULL/, ''))
+  conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' integer', ' text').gsub(' bigint', ' text').gsub(' uuid', ' text').gsub(/REFERENCES [^ ]+ ON DELETE SET NULL/, ''))
 
   vv = ps.collect{ |p|
     values = fields_table.collect{ |field, t, _, _|
@@ -991,7 +991,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   }
 
   create_table = create_table
-                 .gsub('id varchar', 'id SERIAL PRIMARY KEY')
+                 .gsub(/^id varchar/, 'id SERIAL PRIMARY KEY')
                  .gsub("\"#{source_name}_id\" varchar", "\"#{source_name}_id\" SERIAL")
                  .gsub('geom json', 'geom geometry(Geometry,4326)')
                  .gsub(' json', ' jsonb')
@@ -1003,6 +1003,8 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     " + fields_table.collect { |field, _, _, type|
       if ['id', "#{source_name}_id"[..62]].include?(field) || type.include?(' bigint')
         "\"#{field}\"::bigint"
+      elsif field == 'project_id'
+        'project_id::integer'
       elsif type.include?(' uuid')
         "\"#{field}\"::uuid"
       elsif field == 'geom'
@@ -1042,7 +1044,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       interface == 'files' ? 'files' : nil,
       nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
-      table.end_with?('_t') && ['id', "#{source_name}_id"[..62], 'languages_code'].include?(key),
+      key == 'project_id' || (table.end_with?('_t') && ['id', "#{source_name}_id"[..62], 'languages_code'].include?(key)),
       nil,
       interface,
     ])
@@ -1057,7 +1059,11 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       policy_uuid,
       table[..62],
       action,
-      {}.to_json,
+      (action == 'create' ? {} :
+        table.end_with?('_t') ?
+          { _and: [{ "#{source_name}_id"[..62] => { 'project_id' => { '_eq' => '$CURRENT_USER.project_id' } } }] } :
+          { _and: [{ project_id: { _eq: '$CURRENT_USER.project_id' } }] }
+      ).to_json,
       '*'
     ])
   }
@@ -1192,13 +1198,14 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_i"[..62]])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_t"[..62]])
 
-    fields += [['id', nil, nil, 'id varchar'], ['geom', nil, nil, 'geom json NOT NULL']]
+    fields += [['id', nil, nil, 'id varchar'], ['project_id', ->(_, _) { project_id }, nil, 'project_id integer NOT NULL'], ['geom', nil, nil, 'geom json NOT NULL']]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
 
     if !fields_translations.empty?
       fields_translations += [['id', nil, nil, 'id varchar'], ["#{source_name}_id"[..62], nil, nil, "\"#{source_name}_id\" varchar NOT NULL"], ['languages_code', nil, nil, ' languages_code varchar(255)']]
       load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, policy_uuid)
-      conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}_t\"(id);")
+      conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table[..(62 - 5)]}_t_fk\" FOREIGN KEY (\"#{source_name}_id\") REFERENCES \"#{table}\"(id) ON DELETE CASCADE;")
+      conn.exec("ALTER TABLE \"#{table}_t\" ADD CONSTRAINT \"#{table[..(62 - 5)]}_tc_fk\" FOREIGN KEY (languages_code) REFERENCES languages(code) ON DELETE CASCADE;")
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
       conn.exec('
         INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)

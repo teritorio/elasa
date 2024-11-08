@@ -2,7 +2,10 @@ var index = ({ filter, action }, { env, services }) => {
   const { ItemsService } = services;
 
   async function setProjectId(payload, { event, collection }, { database, schema, accountability }) {
-    if (["menu_items", "fields", "filters", "sources", "themes", "translations", "directus_folders"].includes(collection)) {
+    if (
+      ["menu_items", "fields", "filters", "sources", "themes", "translations", "directus_folders"].includes(collection) ||
+      collection.startsWith("local-")
+    ) {
       if (accountability && accountability.user) {
         const user = await database.select("project_id").from("directus_users").where("id", accountability.user).first();
         if (user && user.project_id) {
