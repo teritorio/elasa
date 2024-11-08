@@ -411,20 +411,15 @@ CREATE OR REPLACE FUNCTION filter_values(
             jsonb_agg(
                 jsonb_build_object(
                     'value', value,
-                    'name',
-                        CASE WHEN translations.values_translations IS NOT NULL THEN
-                            jsonb_build_object(
-                                'fr', translations.values_translations->value->'@default'->'fr'
-                            )
-                        END
+                    'name', fields.values_translations->value->'@default:full'
                 )
             )
         ) AS filter_values
     FROM
         values_uniq
-        LEFT JOIN translations ON
-            translations.project_id = values_uniq.project_id AND
-            translations.key = _property
+        LEFT JOIN fields ON
+            fields.project_id = values_uniq.project_id AND
+            fields.field = _property
     GROUP BY
         values_uniq.project_id,
         menu_items_id
@@ -1009,32 +1004,21 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     d text
 ) AS $$
     WITH
-    translations AS (
-        SELECT
-            key,
-            key_translations,
-            values_translations
-        FROM
-            translations
-            JOIN projects ON
-                projects.slug = _project_slug AND
-                projects.id = translations.project_id
-    ),
     translation_fields AS (
         SELECT
             coalesce(fields.group, fields.field) AS key,
-            json_build_object(
+            CASE WHEN languages_code IS NULL THEN NULL ELSE json_build_object(
                 '@default', json_build_object(
-                    -- TODO loop to get the right language translations
                     substring(languages_code, 1, 2), fields_translations.name
                 )
-            ) AS key_translations,
-            NULL::json AS values_translations
+            ) END AS key_translations,
+            values_translations
         FROM
             projects
             JOIN fields ON
                 fields.project_id = projects.id
-            JOIN fields_translations ON
+            LEFT JOIN fields_translations ON
+                starts_with(fields_translations.languages_code, _lang) AND
                 fields_translations.fields_id = fields.id
         WHERE
             projects.slug = _project_slug
@@ -1059,14 +1043,14 @@ CREATE OR REPLACE FUNCTION attribute_translations(
         jsonb_strip_nulls(jsonb_object_agg(
             key, jsonb_build_object(
                 'label', jsonb_build_object(
-                    'fr', capitalize(key_translations->'@default'->>_lang)
+                    _lang, capitalize(key_translations->'@default'->>_lang)
                 ),
                 'values', (
                     SELECT
                         jsonb_object_agg(
                             key, jsonb_build_object(
                                 'label', jsonb_build_object(
-                                    'fr', capitalize(value->'@default:full'->>_lang)
+                                    _lang, capitalize(value->'@default:full'->>_lang)
                                 )
                             )
                         )
@@ -1076,8 +1060,6 @@ CREATE OR REPLACE FUNCTION attribute_translations(
             )
         ))::text
     FROM (
-        SELECT * FROM translations
-        UNION ALL
         SELECT * FROM translation_fields
         UNION ALL
         SELECT * FROM translations_local

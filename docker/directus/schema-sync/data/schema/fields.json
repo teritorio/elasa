@@ -84,38 +84,18 @@
       "type": "string",
       "meta": {
         "collection": "fields",
-        "conditions": [
-          {
-            "hidden": true,
-            "options": {
-              "clear": false,
-              "font": "sans-serif",
-              "masked": false,
-              "slug": false,
-              "trim": false
-            },
-            "rule": {
-              "_and": [
-                {
-                  "type": {
-                    "_neq": "field"
-                  }
-                }
-              ]
-            }
-          }
-        ],
+        "conditions": null,
         "display": null,
         "display_options": null,
         "field": "field",
-        "group": null,
+        "group": "field_group",
         "hidden": false,
         "interface": "input",
         "note": null,
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 3,
+        "sort": 1,
         "special": null,
         "translations": null,
         "validation": null,
@@ -139,6 +119,49 @@
         "has_auto_increment": false,
         "foreign_key_table": null,
         "foreign_key_column": null
+      }
+    },
+    {
+      "field": "field_group",
+      "type": "alias",
+      "meta": {
+        "collection": "fields",
+        "conditions": [
+          {
+            "options": {
+              "start": "open"
+            },
+            "rule": {
+              "_and": [
+                {
+                  "type": {
+                    "_neq": "field"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "display": null,
+        "display_options": null,
+        "field": "field_group",
+        "group": null,
+        "hidden": false,
+        "interface": "group-detail",
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": [
+          "alias",
+          "no-data",
+          "group"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
       }
     },
     {
@@ -192,7 +215,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 4,
+        "sort": 3,
         "special": [
           "translations"
         ],
@@ -503,6 +526,52 @@
         "numeric_precision": null,
         "numeric_scale": null,
         "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "field": "values_translations",
+      "type": "json",
+      "meta": {
+        "collection": "fields",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "values_translations",
+        "group": "field_group",
+        "hidden": false,
+        "interface": "input-code",
+        "note": null,
+        "options": {
+          "lineNumber": false
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 2,
+        "special": [
+          "cast-json"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "values_translations",
+        "table": "fields",
+        "data_type": "json",
+        "default_value": null,
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
         "is_unique": false,
         "is_indexed": false,
         "is_primary_key": false,

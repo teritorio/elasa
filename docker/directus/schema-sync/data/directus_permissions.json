@@ -421,7 +421,10 @@
       "field",
       "type",
       "display_mode",
-      "label"
+      "label",
+      "fields_translations",
+      "field_group",
+      "values_translations"
     ],
     "permissions": {
       "_and": [
@@ -450,7 +453,10 @@
       "type",
       "project_id",
       "fields",
-      "label"
+      "label",
+      "field_group",
+      "values_translations",
+      "fields_translations"
     ],
     "permissions": {
       "_and": [
@@ -1598,29 +1604,6 @@
             "project_id": {
               "_eq": "$CURRENT_USER.project_id"
             }
-          }
-        }
-      ]
-    },
-    "policy": "5979e2ac-a34f-4c70-bf9d-de48b3900a8f",
-    "presets": null,
-    "validation": null
-  },
-  {
-    "action": "read",
-    "collection": "translations",
-    "fields": [
-      "id",
-      "key",
-      "values_translations",
-      "project_id",
-      "key_translations"
-    ],
-    "permissions": {
-      "_and": [
-        {
-          "project_id": {
-            "_eq": "$CURRENT_USER.project_id"
           }
         }
       ]

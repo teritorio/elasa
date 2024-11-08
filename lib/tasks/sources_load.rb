@@ -226,19 +226,54 @@ end
 
 def load_i18n(project_slug, i18ns)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM translations WHERE project_id = (SELECT id FROM projects WHERE slug=$1)', [project_slug])
-
     puts "i18n: #{i18ns.size}"
-    i18ns.each{ |key, i18n|
-      conn.exec(
-        '
-        INSERT INTO translations(project_id, key, key_translations, values_translations)
-        VALUES (
-          (SELECT id FROM projects WHERE slug=$1), $2, $3, $4
-        )
-        ',
-        [project_slug, key, i18n.except('values').to_json, i18n['values']&.to_json]
+    conn.exec("
+      DROP TABLE IF EXISTS translations_import;
+      CREATE TEMP TABLE translations_import(
+        field text,
+        field_translations text,
+        values_translations text
       )
+    ")
+
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data('COPY translations_import FROM STDIN (FORMAT binary)', enco) {
+      i18ns.each{ |key, i18n|
+        conn.put_copy_data([key, i18n.except('values').to_json, i18n['values']&.to_json])
+      }
     }
+    conn.exec_params(
+      "
+      WITH translations_import AS (
+        SELECT
+          projects.id AS project_id,
+          translations_import.*
+        FROM
+          translations_import
+          JOIN projects ON
+            projects.slug = $1
+      )
+      MERGE INTO
+        fields
+      USING
+        translations_import
+      ON
+        fields.project_id = translations_import.project_id AND
+        fields.field = translations_import.field
+      WHEN MATCHED THEN
+        UPDATE SET
+          -- field_translations = translations_import.field_translations, -- field_translations is on join
+          values_translations = translations_import.values_translations::json
+      WHEN NOT MATCHED THEN
+        INSERT (project_id, type, field, values_translations)
+        VALUES (
+          translations_import.project_id,
+          'field',
+          translations_import.field,
+          translations_import.values_translations::json
+        )
+      ",
+      [project_slug]
+    )
   }
 end

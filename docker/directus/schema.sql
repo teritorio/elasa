@@ -872,7 +872,8 @@ CREATE TABLE public.fields (
     display_mode character varying(255),
     icon character varying(255),
     project_id integer NOT NULL,
-    label boolean DEFAULT false
+    label boolean DEFAULT false,
+    values_translations json
 );
 
 
@@ -1580,43 +1581,6 @@ ALTER SEQUENCE public.themes_translations_id_seq OWNED BY public.themes_translat
 
 
 --
--- Name: translations; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.translations (
-    id integer NOT NULL,
-    project_id integer NOT NULL,
-    key character varying(255) NOT NULL,
-    key_translations json NOT NULL,
-    values_translations json
-);
-
-
-ALTER TABLE public.translations OWNER TO postgres;
-
---
--- Name: translations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.translations_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.translations_id_seq OWNER TO postgres;
-
---
--- Name: translations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.translations_id_seq OWNED BY public.translations.id;
-
-
---
 -- Name: directus_activity id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1775,13 +1739,6 @@ ALTER TABLE ONLY public.sources_translations ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.themes_translations ALTER COLUMN id SET DEFAULT nextval('public.themes_translations_id_seq'::regclass);
-
-
---
--- Name: translations id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.translations ALTER COLUMN id SET DEFAULT nextval('public.translations_id_seq'::regclass);
 
 
 --
@@ -2278,22 +2235,6 @@ ALTER TABLE ONLY public.themes_translations
 
 ALTER TABLE ONLY public.themes_translations
     ADD CONSTRAINT themes_translations_theme_id_languages_code UNIQUE (themes_id, languages_code);
-
-
---
--- Name: translations translation_uniq_project_id_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.translations
-    ADD CONSTRAINT translation_uniq_project_id_key UNIQUE (project_id, key);
-
-
---
--- Name: translations translations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.translations
-    ADD CONSTRAINT translations_pkey PRIMARY KEY (id);
 
 
 --
@@ -2969,14 +2910,6 @@ ALTER TABLE ONLY public.themes_translations
 
 ALTER TABLE ONLY public.themes_translations
     ADD CONSTRAINT themes_translations_themes_id_foreign FOREIGN KEY (themes_id) REFERENCES public.themes(id) ON DELETE CASCADE;
-
-
---
--- Name: translations translations_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.translations
-    ADD CONSTRAINT translations_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --

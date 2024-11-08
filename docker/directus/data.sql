@@ -84,7 +84,6 @@ sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
 sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
 themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
-translations	\N	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	projects	open	\N	f
 \.
 
 
@@ -198,7 +197,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	8	full	\N	\N	\N	t	\N	\N	\N
 133	fields	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 134	fields	type	\N	select-dropdown	{"choices":[{"text":"field","value":"field"},{"text":"group","value":"group"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
-136	fields	field	\N	input	\N	\N	\N	f	f	3	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"hidden":true,"options":{"font":"sans-serif","trim":false,"masked":false,"clear":false,"slug":false}}]	f	\N	\N	\N
+136	fields	field	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	field_group	\N	\N
 138	fields	group	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	group_block	\N	\N
 139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
 140	fields	icon	\N	input	\N	\N	\N	f	f	3	half	\N	\N	\N	f	group_block	\N	\N
@@ -218,13 +217,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
 166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	t	f	3	full	\N	\N	\N	f	\N	\N	\N
 168	projects	polygons_extra	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
-169	translations	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
-171	translations	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
-172	translations	key	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
-173	translations	key_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-174	translations	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 175	projects	sources	o2m	list-o2m	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	f	13	full	\N	\N	\N	f	\N	\N	\N
-176	projects	translations	o2m	list-o2m	{"template":"{{key}}"}	related-values	{"template":"{{key}}"}	f	f	14	full	\N	\N	\N	f	\N	\N	\N
 178	fields	label	cast-boolean	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	group_block	\N	\N
 179	menu_items	use_internal_details_link	cast-boolean	boolean	\N	\N	\N	f	f	12	full	\N	\N	\N	f	category	\N	\N
 180	menu_items	use_external_details_link	cast-boolean	boolean	\N	\N	\N	f	f	12	full	\N	\N	\N	f	category	\N	\N
@@ -275,11 +268,13 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 542	themes	logo	file	file-image	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 543	themes	favicon	file	file-image	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 544	directus_folders	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
-545	fields	fields_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+545	fields	fields_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 546	fields_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 547	fields_translations	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 548	fields_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 549	fields_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+550	fields	field_group	alias,no-data,group	group-detail	\N	\N	\N	f	f	4	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"}}]	f	\N	\N	\N
+551	fields	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	field_group	\N	\N
 \.
 
 
@@ -488,7 +483,6 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 89	fields_fields	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 90	fields_fields	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 91	fields_fields	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-92	translations	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,key,values_translations,project_id,key_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 93	languages	read	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 94	projects_translations	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,projects_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 96	sources_translations	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,sources_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -545,7 +539,6 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 31	menu_items	popup_fields_id	fields	\N	\N	\N	\N	\N	nullify
 32	menu_items	details_fields_id	fields	\N	\N	\N	\N	\N	nullify
 33	menu_items	list_fields_id	fields	\N	\N	\N	\N	\N	nullify
-34	translations	project_id	projects	translations	\N	\N	\N	\N	nullify
 35	sources	project_id	projects	sources	\N	\N	\N	\N	nullify
 36	projects_translations	languages_code	languages	\N	\N	\N	projects_id	\N	nullify
 37	projects_translations	projects_id	projects	project_translations	\N	\N	languages_code	\N	nullify
@@ -620,7 +613,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 549, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 551, true);
 
 
 --
