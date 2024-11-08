@@ -85,6 +85,17 @@ def create_role(project_slug)
     ', [role_name]) { |result|
       result.first['id']
     }
+    conn.exec('
+      MERGE INTO
+        directus_access
+      USING (SELECT gen_random_uuid()::uuid, $1::uuid, $2::uuid) AS source(id, role, policy) ON
+        directus_access.role = source.role AND
+        directus_access.policy = source.policy
+      WHEN NOT MATCHED THEN
+        INSERT (id, role, policy)
+        VALUES (source.id, source.role, source.policy)
+    ', [role_uuid, policy_uuid])
+
     [role_uuid, policy_uuid]
   }
 end
