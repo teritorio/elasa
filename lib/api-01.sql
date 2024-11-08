@@ -1058,7 +1058,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                         json_each(values_translations)
                 )
             )
-        ))::text
+        ORDER BY key))::text
     FROM (
         SELECT * FROM translation_fields
         UNION ALL
