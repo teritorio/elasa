@@ -223,11 +223,13 @@ def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids
   [fields, popup_fields_id, details_fields_id]
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, filters)
-  if classs['osm_tags_extra'] != ['all']
-    fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
+def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, _filters)
+  if classs['osm_tags_extra'] == ['all']
+    fields = group_fields_ids.values.last.last.keys
+    popup_fields_id = group_fields_ids.values.first.first
+    details_fields_id = group_fields_ids.values.first.first
   else
-    fields, popup_fields_id, details_fields_id = group_fields_ids.values.last.last.keys, group_fields_ids.values.first.first, group_fields_ids.values.first.first
+    fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
   end
 
   icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
