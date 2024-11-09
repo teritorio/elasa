@@ -199,7 +199,7 @@ def load_field_group(conn, project_id, group, i18ns)
       '
     INSERT INTO fields(project_id, type, field, label, "group", display_mode, icon)
     VALUES ($1, $2, $3, $4, $5, $6, $7)
-    ON CONFLICT (project_id, field, "group")
+    ON CONFLICT (project_id, field)
     DO UPDATE SET
       label = EXCLUDED.label,
       field = EXCLUDED.field,
@@ -227,6 +227,9 @@ def load_field_group(conn, project_id, group, i18ns)
         '
       INSERT INTO fields_translations(fields_id, languages_code, name)
       VALUES ($1, $2, $3)
+      ON CONFLICT (fields_id, languages_code)
+      DO UPDATE SET
+        name = $3
       ', [
           id,
           'fr-FR',
@@ -1327,6 +1330,16 @@ namespace :wp do
     loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
     load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
+    i18ns = i18ns.transform_values{ |v|
+      {
+        '@default' => v['label'],
+        'values' => v['values']&.transform_values{ |vv|
+          {
+            '@default:full' => vv['label']
+          }.compact_blank
+        }
+      }.compact_blank
+    }
     load_i18n(project_slug, i18ns)
 
     i18ns = fetch_json("#{datasource_url}/data/#{project_slug}/i18n.json")

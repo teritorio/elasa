@@ -2022,19 +2022,27 @@ ALTER TABLE ONLY public.fields
 
 
 --
--- Name: fields fields_project_id_field_block_key; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.fields
-    ADD CONSTRAINT fields_project_id_field_block_key UNIQUE (project_id, field, "group");
-
-
---
 -- Name: fields_translations fields_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.fields_translations
     ADD CONSTRAINT fields_translations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: fields_translations fields_translations_uniq_fields_id; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_translations
+    ADD CONSTRAINT fields_translations_uniq_fields_id UNIQUE (fields_id, languages_code);
+
+
+--
+-- Name: fields fields_uniq_field; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields
+    ADD CONSTRAINT fields_uniq_field UNIQUE (project_id, field);
 
 
 --

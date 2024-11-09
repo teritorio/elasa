@@ -413,6 +413,14 @@ def compare_attribute_translations(url_old, url_new)
     "#{url_new}/attribute_translations/fr.json",
   ].collect{ |url|
     hash = fetch_json(url).except('id', 'slug')
+    hash.transform_values{ |v|
+      v['label'][fr] = v['label'][fr].strip.capitalize if v['label'][fr]
+      if v['values']
+        v['values'] = v['values'].transform_values{ |vv|
+          vv['label'][fr] = vv['label'][fr].strip.capitalize if vv['label'][fr]
+        }
+      end
+    }
     hash
   }
 

@@ -262,7 +262,6 @@ def load_i18n(project_slug, i18ns)
         fields.field = translations_import.field
       WHEN MATCHED THEN
         UPDATE SET
-          -- field_translations = translations_import.field_translations, -- field_translations is on join
           values_translations = (coalesce(fields.values_translations, '{}'::json)::jsonb || translations_import.values_translations::jsonb)::json
       WHEN NOT MATCHED THEN
         INSERT (project_id, type, field, values_translations)
@@ -271,6 +270,40 @@ def load_i18n(project_slug, i18ns)
           'field',
           translations_import.field,
           translations_import.values_translations::json
+        )
+      ",
+      [project_slug]
+    )
+    conn.exec_params(
+      "
+      WITH translations_import AS (
+        SELECT
+          fields.id AS field_id,
+          translations_import.*
+        FROM
+          translations_import
+          JOIN projects ON
+            projects.slug = $1
+          LEFT JOIN fields ON
+            fields.project_id = projects.id AND
+            fields.field = translations_import.field
+      )
+      MERGE INTO
+        fields_translations
+      USING
+        translations_import
+      ON
+        fields_translations.fields_id = translations_import.field_id AND
+        fields_translations.languages_code = 'fr-FR'
+      WHEN MATCHED THEN
+        UPDATE SET
+          name = translations_import.field_translations
+      WHEN NOT MATCHED THEN
+        INSERT (fields_id, languages_code, name)
+        VALUES (
+          translations_import.field_id,
+          'fr-FR',
+          translations_import.field_translations
         )
       ",
       [project_slug]
