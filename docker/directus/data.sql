@@ -143,15 +143,15 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 40	menu_items	menu_item_parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
-47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	5	full	\N	\N	\N	f	\N	\N	\N
+47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}}	related-values	{"template":null}	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
+53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
 56	menu_items	selected_by_default	\N	\N	\N	\N	\N	f	f	2	half	\N	\N	\N	f	behavior	\N	\N
 62	menu_items	icon	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	t	UI	\N	\N
-65	menu_items	UI	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
-66	menu_items	behavior	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+65	menu_items	UI	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"format_paint"}	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+66	menu_items	behavior	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"eyeglasses"}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 67	menu_items	display_mode	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	UI	\N	\N
 68	menu_items	category	alias,no-data,group	group-detail	\N	\N	\N	f	f	10	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"category"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
@@ -163,7 +163,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 77	menu_items_sources	sources_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 78	menu_items	color_fill	\N	select-color	\N	\N	\N	f	f	2	half	\N	\N	\N	f	UI	\N	\N
 79	menu_items	color_line	\N	select-color	\N	\N	\N	f	f	3	half	\N	\N	\N	f	UI	\N	\N
-80	menu_items	link	alias,no-data,group	group-detail	\N	\N	\N	f	f	12	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"link"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
+80	menu_items	link	alias,no-data,group	group-detail	\N	\N	\N	f	f	11	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"link"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 81	menu_items	href	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	link	\N	\N
 82	filters	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 83	filters	type	\N	select-dropdown	{"choices":[{"text":"multiselection","value":"multiselection"},{"text":"checkboxes_list","value":"checkboxes_list"},{"text":"boolean","value":"boolean"},{"text":"date_range","value":"date_range"},{"text":"number_range","value":"number_range"}]}	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
@@ -238,7 +238,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 242	themes_translations	site_url	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 243	themes_translations	main_url	\N	input	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 244	themes_translations	keywords	\N	input	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-245	menu_items	menu_items_translations	translations	translations	{"userLanguage":true,"defaultLanguage":"en-US","defaultOpenSplitView":true,"languageField":"name"}	translations	{"template":"{{name}}","languageField":"name"}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+245	menu_items	menu_items_translations	translations	translations	{"userLanguage":true,"defaultLanguage":"en-US","defaultOpenSplitView":true,"languageField":"name"}	translations	{"template":"{{name}}","languageField":"name"}	f	f	1	full	\N	\N	\N	f	translations	\N	\N
 246	menu_items_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 247	menu_items_translations	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 248	menu_items_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -275,6 +275,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 549	fields_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 550	fields	field_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	4	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"},"hidden":true}]	f	\N	\N	\N
 551	fields	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	field_block	\N	\N
+552	menu_items	translations	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"translate"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -451,7 +452,7 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 31	themes	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 33	themes	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 34	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country,polygons_extra,project_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations,logo,favicon	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 41	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 42	menu_items	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 43	menu_items	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -613,7 +614,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 551, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 552, true);
 
 
 --
