@@ -232,7 +232,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
     fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
   end
 
-  icon = (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])
+  icon = (class_path.nil? ? nil : (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])) || 'extra-point'
   category_id = insert_menu_item(
     conn,
     project_id: project_id,
@@ -245,7 +245,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
-    style_class_string: class_path.join(','),
+    style_class_string: class_path&.join(','),
     display_mode: classs['display_mode'],
     zoom: classs['zoom'],
     popup_fields_id: popup_fields_id,
@@ -331,7 +331,7 @@ def new_root_menu(project_id)
       type: 'menu_group',
       name: { en: 'Root Menu', fr: 'Menu racine', es: 'Menú raíz' }.compact,
       display_mode: 'compact',
-      icon: 'teritorio teritorio-services',
+      icon: 'teritorio teritorio-extra-point',
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
@@ -362,7 +362,7 @@ def new_root_menu(project_id)
       name: { en: 'Search', fr: 'Recherche', es: 'Búsqueda' }.compact,
       display_mode: 'compact',
 
-      icon: 'teritorio teritorio-services',
+      icon: 'teritorio teritorio-extra-point',
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
@@ -389,7 +389,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
       name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
       display_mode: 'compact',
 
-      icon: 'teritorio teritorio-services',
+      icon: 'teritorio teritorio-extra-point',
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
@@ -449,7 +449,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
       name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
       display_mode: 'compact',
 
-      icon: 'teritorio teritorio-services',
+      icon: 'teritorio teritorio-extra-point',
       color_fill:	'#ff0000',
       color_line:	'#ff0000',
     )
@@ -465,7 +465,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
         'osm_tags_extra' => ['all'],
       }
 
-      insert_menu_category(conn, project_id, poi_menu_id, ['remarkable'], slug, css_parser, subclass, index, group_fields_ids, filters)
+      insert_menu_category(conn, project_id, poi_menu_id, nil, slug, css_parser, subclass, index, group_fields_ids, filters)
     }
   }
 end
