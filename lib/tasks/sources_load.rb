@@ -279,7 +279,7 @@ def load_i18n(project_slug, i18ns)
       WITH translations_import AS (
         SELECT
           fields.id AS field_id,
-          translations_import.*
+          translations_import.field_translations::json->'@default'->>'fr' as field_translations
         FROM
           translations_import
           JOIN projects ON
@@ -287,6 +287,8 @@ def load_i18n(project_slug, i18ns)
           LEFT JOIN fields ON
             fields.project_id = projects.id AND
             fields.field = translations_import.field
+        WHERE
+          translations_import.field_translations::json->'@default'->>'fr' IS NOT NULL
       )
       MERGE INTO
         fields_translations

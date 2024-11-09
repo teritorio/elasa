@@ -1007,7 +1007,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     translation_fields AS (
         SELECT
             coalesce(fields.group, fields.field) AS key,
-            CASE WHEN languages_code IS NULL THEN NULL ELSE json_build_object(
+            CASE WHEN fields_translations.name IS NULL THEN NULL ELSE json_build_object(
                 '@default', json_build_object(
                     substring(languages_code, 1, 2), fields_translations.name
                 )
@@ -1042,9 +1042,9 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     SELECT
         jsonb_strip_nulls(jsonb_object_agg(
             key, jsonb_build_object(
-                'label', jsonb_build_object(
+                'label', CASE WHEN key_translations->'@default'->>'fr' IS NOT NULL THEN jsonb_build_object(
                     _lang, capitalize(key_translations->'@default'->>_lang)
-                ),
+                ) END,
                 'values', (
                     SELECT
                         jsonb_object_agg(

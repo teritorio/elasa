@@ -414,18 +414,40 @@ def compare_attribute_translations(url_old, url_new)
   ].collect{ |url|
     hash = fetch_json(url).except('id', 'slug')
     hash.transform_values{ |v|
-      v['label'][fr] = v['label'][fr].strip.capitalize if v['label'][fr]
+      if v['label'] == v['label_popup']
+        v.delete('label_popup')
+      end
+      if v['label'] == v['label_details']
+        v.delete('label_details')
+      end
+
+      ['label', 'label_popup', 'label_details'].each{ |k|
+        v[k]['fr'] = v[k]['fr'].strip.capitalize if !v.dig(k, 'fr').nil?
+      }
       if v['values']
         v['values'] = v['values'].transform_values{ |vv|
-          vv['label'][fr] = vv['label'][fr].strip.capitalize if vv['label'][fr]
+          vv['label']['fr'] = vv['label']['fr'].strip.capitalize if !vv.dig('label', 'fr').nil?
         }
       end
     }
     hash
   }
 
+  prune = lambda { |obj|
+    return nil if obj.is_a?(Array) && obj[0].to_s == 'HashDiff::NO_VALUE'
+
+    if obj.is_a?(Hash)
+      obj.transform_values{ |v| prune.call(v) }.compact_blank
+    elsif obj.is_a?(Array)
+      obj.collect{ |o| prune.call(o) }.compact_blank
+    else
+      obj
+    end
+  }
+
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
-  puts JSON.dump(diff.diff) if !diff.diff.empty?
+  json_diff = prune.call(diff.diff)
+  puts JSON.dump(json_diff) if !json_diff.empty?
 end
 
 namespace :api do
