@@ -451,7 +451,7 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 31	themes	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 33	themes	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 34	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country,polygons_extra,project_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 41	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 42	menu_items	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 43	menu_items	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
