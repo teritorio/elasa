@@ -265,8 +265,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 540	pois_files	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
-542	themes	logo	file	file-image	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-543	themes	favicon	file	file-image	\N	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+542	themes	logo	file	file-image	\N	image	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+543	themes	favicon	file	file-image	\N	image	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 544	directus_folders	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
 545	fields	fields_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 546	fields_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
