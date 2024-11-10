@@ -358,7 +358,7 @@ def new_root_menu(project_id)
       slugs: { en: 'search', fr: 'search', es: 'búsqueda' },
       parent_id: root_menu_id,
       index_order: 1,
-      type: 'menu_group',
+      type: 'search',
       name: { en: 'Search', fr: 'Recherche', es: 'Búsqueda' }.compact,
       display_mode: 'compact',
 
