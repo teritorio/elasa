@@ -980,15 +980,15 @@ ALTER SEQUENCE public.fields_translations_id_seq OWNED BY public.fields_translat
 CREATE TABLE public.filters (
     id integer NOT NULL,
     type character varying(255),
-    property_end character varying(255),
-    property_begin character varying(255),
     min integer,
     max integer,
     project_id integer NOT NULL,
-    multiselection_property character varying(255),
-    checkboxes_list_property character varying(255),
-    boolean_property character varying(255),
-    number_range_property character varying(255)
+    multiselection_property integer,
+    checkboxes_list_property integer,
+    boolean_property integer,
+    property_begin integer,
+    property_end integer,
+    number_range_property integer
 );
 
 
@@ -2697,11 +2697,59 @@ ALTER TABLE ONLY public.fields_translations
 
 
 --
+-- Name: filters filters_boolean_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_boolean_property_foreign FOREIGN KEY (boolean_property) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
+-- Name: filters filters_checkboxes_list_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_checkboxes_list_property_foreign FOREIGN KEY (checkboxes_list_property) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
+-- Name: filters filters_multiselection_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_multiselection_property_foreign FOREIGN KEY (multiselection_property) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
+-- Name: filters filters_number_range_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_number_range_property_foreign FOREIGN KEY (number_range_property) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
 -- Name: filters filters_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.filters
     ADD CONSTRAINT filters_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: filters filters_property_begin_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_property_begin_foreign FOREIGN KEY (property_begin) REFERENCES public.fields(id) ON DELETE SET NULL;
+
+
+--
+-- Name: filters filters_property_end_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.filters
+    ADD CONSTRAINT filters_property_end_foreign FOREIGN KEY (property_end) REFERENCES public.fields(id) ON DELETE SET NULL;
 
 
 --

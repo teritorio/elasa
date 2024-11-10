@@ -421,7 +421,7 @@ def compare_attribute_translations(url_old, url_new)
         v.delete('label_details')
       end
 
-      ['label', 'label_popup', 'label_details'].each{ |k|
+      %w[label label_popup label_details].each{ |k|
         v[k]['fr'] = v[k]['fr'].strip.capitalize if !v.dig(k, 'fr').nil?
       }
       if v['values']

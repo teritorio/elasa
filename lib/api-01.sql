@@ -499,32 +499,32 @@ CREATE OR REPLACE FUNCTION menu(
                 CASE filters.type
                 WHEN 'multiselection' THEN
                     jsonb_build_object(
-                        'property', filters.multiselection_property,
+                        'property', fields_multiselection.field,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, filters.multiselection_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
                 WHEN 'checkboxes_list' THEN
                     jsonb_build_object(
-                        'property', filters.checkboxes_list_property,
+                        'property', fields_checkboxes_list.field,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, filters.checkboxes_list_property) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
                 WHEN 'boolean' THEN
                     jsonb_build_object(
-                        'property', filters.boolean_property
+                        'property', fields_boolean.field
                     )
                 WHEN 'date_range' THEN
                     jsonb_build_object(
-                        'property_begin', filters.property_begin,
-                        'property_end', filters.property_end
+                        'property_begin', fields_date_range_begin.field,
+                        'property_end', fields_date_range_end.field
                     )
                 WHEN 'number_range' THEN
                     jsonb_build_object(
-                        'property', filters.number_range_property,
+                        'property', fields_number_range.field,
                         'min', filters.min,
                         'max', filters.max
                     )
@@ -536,6 +536,24 @@ CREATE OR REPLACE FUNCTION menu(
                 menu_items_filters.menu_items_id = menu_items.id
             LEFT JOIN filters_join AS filters ON
                 filters.id = menu_items_filters.filters_id
+            LEFT JOIN fields AS fields_multiselection ON
+                fields_multiselection.id = filters.multiselection_property AND
+                fields_multiselection.type = 'field'
+            LEFT JOIN fields AS fields_checkboxes_list ON
+                fields_checkboxes_list.id = filters.checkboxes_list_property AND
+                fields_checkboxes_list.type = 'field'
+            LEFT JOIN fields AS fields_boolean ON
+                fields_boolean.id = filters.boolean_property AND
+                fields_boolean.type = 'field'
+            LEFT JOIN fields AS fields_date_range_begin ON
+                fields_date_range_begin.id = filters.property_begin AND
+                fields_date_range_begin.type = 'field'
+            LEFT JOIN fields AS fields_date_range_end ON
+                fields_date_range_end.id = filters.property_end AND
+                fields_date_range_end.type = 'field'
+            LEFT JOIN fields AS fields_number_range ON
+                fields_number_range.id = filters.number_range_property AND
+                fields_number_range.type = 'field'
         GROUP BY
             menu_items.id,
             menu_items.index_order,

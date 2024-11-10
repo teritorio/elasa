@@ -300,7 +300,12 @@ def insert_group_fields(conn, project_id, ontology)
     field_ids = fields.each_with_index.to_h{ |field, index|
       field = field[0]
       field_id = conn.exec(
-        'INSERT INTO fields(project_id, type, field) VALUES ($1, $2, $3) RETURNING id',
+        'INSERT INTO fields(project_id, type, field)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (project_id, field)
+        DO UPDATE SET
+          field = EXCLUDED.field -- Do nothing, but helps to return the id
+        RETURNING id',
         [project_id, 'field', field]
       ) { |result|
         result.first['id'].to_i
@@ -321,7 +326,8 @@ end
 def new_root_menu(project_id)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
-    conn.exec('DELETE FROM fields WHERE project_id = $1', [project_id])
+    conn.exec('DELETE FROM fields_fields USING fields WHERE fields.project_id = $1 AND fields_fields.fields_id = fields.id', [project_id])
+    conn.exec('DELETE FROM fields WHERE project_id = $1 AND type = \'group\'', [project_id])
 
     root_menu_id = insert_menu_item(
       conn,
@@ -482,23 +488,38 @@ def new_filter(project_id, schema, i18ns)
       end
     }.compact.except('tactile_paving', 'pastry', 'mobile_phone:repair', 'computer:repair', 'sport', 'access', 'dispensing').collect{ |key, enum|
       name = i18ns.dig(key, '@default') || { 'en' => key }
+
+      field_id = conn.exec(
+        '
+        INSERT INTO fields(project_id, type, field)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (project_id, field)
+        DO UPDATE SET
+          field = EXCLUDED.field -- Do nothing, but helps to return the id
+        RETURNING
+          id
+      ', [project_id, 'field', key]
+      ) { |result|
+        result.first['id'].to_i
+      }
+
       filter_id = (
         if [%w[yes no], %w[no yes]].include?(enum)
           conn.exec(
             'INSERT INTO filters(project_id, type, boolean_property) VALUES ($1, $2, $3) RETURNING id',
-            [project_id, 'boolean', key]
+            [project_id, 'boolean', field_id]
           ) { |result| result.first['id'].to_i }
         elsif enum.size <= 1
           next
         elsif enum.size <= 5
           conn.exec(
             'INSERT INTO filters(project_id, type, checkboxes_list_property) VALUES ($1, $2, $3) RETURNING id',
-            [project_id, 'checkboxes_list', key]
+            [project_id, 'checkboxes_list', field_id]
           ) { |result| result.first['id'].to_i }
         else
           conn.exec(
             'INSERT INTO filters(project_id, type, multiselection_property) VALUES ($1, $2, $3) RETURNING id',
-            [project_id, 'multiselection', key]
+            [project_id, 'multiselection', field_id]
           ) { |result| result.first['id'].to_i }
         end
       )

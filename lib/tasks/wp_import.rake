@@ -665,6 +665,24 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 
     puts "filters: #{filters.size}"
     filters = filters.each{ |filter, category_ids|
+      # Create/get id of fields
+      fields_ids = %w[property_begin property_end property].select{ |property| filter[property].present? }.to_h{ |_property|
+        id = conn.exec(
+          '
+          INSERT INTO fields(project_id, type, field)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (project_id, field)
+          DO UPDATE SET
+            field = EXCLUDED.field -- Do nothing, but helps to return the id
+          RETURNING
+            id
+        ', [project_id, 'field', filter['property']]
+        ) { |result|
+          result.first['id'].to_i
+        }
+        [filter['property'], id]
+      }
+
       filter_id = conn.exec(
         '
         INSERT INTO filters(
@@ -691,18 +709,18 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
           project_id,
           filter['type'],
           # date_range
-          filter['property_begin'],
-          filter['property_end'],
+          filter['type'] == 'date_range' ? fields_ids[filter['property_begin']] : nil,
+          filter['type'] == 'date_range' ? fields_ids[filter['property_end']] : nil,
           # number_range
-          filter['property'],
+          filter['type'] == 'number_range' ? fields_ids[filter['property']] : nil,
           filter['min'],
           filter['max'],
           # multiselection
-          filter['property'],
+          filter['type'] == 'multiselection' ? fields_ids[filter['property']] : nil,
           # checkboxes_list
-          filter['property'],
+          filter['type'] == 'checkboxes_list' ? fields_ids[filter['property']] : nil,
           # boolean
-          filter['property'],
+          filter['type'] == 'boolean' ? fields_ids[filter['property']] : nil,
         ]
       ) { |result|
         result.first['id']
