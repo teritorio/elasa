@@ -1,0 +1,55 @@
+export default {
+  id: 'create-locale-table',
+  name: 'Create Local Table',
+  icon: 'box',
+  description: 'Create a new table in the local database',
+
+  overview: ({ }) => [],
+
+  options: [
+    {
+      field: "withTranslations",
+      name: "Add join table for translations",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
+      field: "withImages",
+      name: "Add join table for images",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
+      field: "withName",
+      name: "Add a name field",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
+      field: "withDescription",
+      name: "Add a name description",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+  ],
+}

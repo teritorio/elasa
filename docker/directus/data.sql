@@ -110,6 +110,7 @@ COPY public.directus_dashboards (id, name, icon, note, date_created, user_create
 COPY public.directus_extensions (enabled, id, folder, source, bundle) FROM stdin;
 t	5006d916-20a3-4706-8f31-583e8cfe74cb	directus-extension-hook	local	\N
 t	b5c3eb95-61a6-4b41-9396-17087fe20254	directus-extension-schema-sync	module	\N
+t	a4b66d1b-c7fe-4bc2-bd22-6c3d3ab0e83f	directus-extension-create-local-table	local	\N
 \.
 
 
@@ -300,6 +301,7 @@ COPY public.directus_files (id, storage, filename_disk, filename_download, title
 --
 
 COPY public.directus_flows (id, name, icon, color, description, status, trigger, accountability, options, operation, date_created, user_created) FROM stdin;
+96ccf7a5-8702-4760-8c9e-b53267f234b2	Create local POIs table	bolt	\N	\N	active	manual	all	{"collections":["sources"],"requireConfirmation":true,"fields":[{"field":"withImages","type":"boolean","name":"With Images","meta":{"interface":"boolean"}},{"field":"withTranslations","type":"boolean","name":"With Translations","meta":{"interface":"boolean"}},{"field":"withName","type":"boolean","name":"With Name","meta":{"interface":"boolean"}},{"field":"withDescription","type":"boolean","meta":{"interface":"boolean"}}]}	bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	2024-11-11 17:16:24.222+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
 
 
@@ -408,6 +410,7 @@ COPY public.directus_notifications (id, "timestamp", status, recipient, sender, 
 --
 
 COPY public.directus_operations (id, name, key, type, position_x, position_y, options, resolve, reject, flow, date_created, user_created) FROM stdin;
+bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	Create Local Table	create_locale_table_elkil	create-locale-table	19	1	{"withImages":"{{$trigger.body.withImages}}","withTranslations":"{{$trigger.body.withTranslations}}","withName":"{{$trigger.body.withName}}","withDescription":"{{$trigger.body.withDescription}}"}	\N	\N	96ccf7a5-8702-4760-8c9e-b53267f234b2	2024-11-11 17:16:33.864+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
 
 
