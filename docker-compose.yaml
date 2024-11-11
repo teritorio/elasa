@@ -70,6 +70,7 @@ services:
       # Make sure to set this in production
       # (see https://docs.directus.io/reference/environment-variables/#general)
       PUBLIC_URL: $DIRECTUS_PUBLIC_URL
+      EXTENSIONS_AUTO_RELOAD: ${DIRECTUS_EXTENSIONS_AUTO_RELOAD}
     restart: unless-stopped
 
   api:
