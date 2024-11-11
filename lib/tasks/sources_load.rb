@@ -4,6 +4,7 @@
 require 'json'
 require 'http'
 require 'pg'
+require 'i18n'
 require_relative 'commons'
 
 
@@ -14,7 +15,9 @@ class String
     s.strip!
     s.gsub!(' ', '-')
     s.gsub!('&', 'and')
+    s = I18n.transliterate(s)
     s.gsub!(/[^\w-]/u, '')
+    s.gsub!(/-+/, '-')
     s.mb_chars.downcase.to_s
   end
 end
