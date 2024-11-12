@@ -229,7 +229,7 @@ BEGIN
             CASE WHEN source.table_name_t IS NULL THEN '' ELSE '
             j AS (
                 SELECT
-                    "' || source.local_id || '" AS id,
+                    pois_id AS id,
                     substring(languages_code, 1, 2) AS languages_code,
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).key,
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).value
