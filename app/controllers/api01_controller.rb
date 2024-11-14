@@ -102,7 +102,7 @@ class Api01Controller < ApplicationController
     respond_to do |format|
       format.geojson { render plain: pois }
       format.csv {
-        features = pois['features']
+        features = JSON.parse(pois)['features']
         pois_hash_path = features.collect{ |poi| hash_path(poi['properties'].except('display', 'editorial')) }.flatten(1).uniq.sort
 
         # UTF-8 BOM + CSV content
