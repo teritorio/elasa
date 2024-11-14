@@ -6,7 +6,7 @@ require 'csv'
 
 class Api01Controller < ApplicationController
   def base_url
-    request.protocol + request.host_with_port
+    "https://#{request.host_with_port}"
   end
 
   def settings
