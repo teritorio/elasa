@@ -918,4 +918,4 @@ components:
       schema:
         type: boolean
         default: false
-      description: Output only a the beginning of the description in full text format.
+      description: Output only a the beginning of the description in full text format. Cutted by words, with at least 130 characters.

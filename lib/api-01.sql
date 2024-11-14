@@ -794,6 +794,43 @@ CREATE OR REPLACE FUNCTION json_flat(
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS short_description;
+CREATE OR REPLACE FUNCTION short_description(
+    _description text,
+    _min_length integer
+) RETURNS text AS $$
+DECLARE
+    ret text;
+BEGIN
+    SELECT
+        trim(regexp_replace(
+            trim((xpath(
+                'string(.)',
+                xmlparse(document '<root>' || _description || '</root>')
+            ))[1]::text),
+            '((?:.{' || _min_length || '}[^\s]*)).*', '\1'
+        ))
+    INTO
+        ret
+    ;
+    RETURN ret;
+EXCEPTION WHEN OTHERS THEN
+    -- Let's do the hack
+    SELECT
+        trim(regexp_replace(
+            trim(
+                regexp_replace(_description, '<[^>]+>', '', 'g')
+            ),
+            '((?:.{' || _min_length || '}[^\s]*)).*', '\1'
+        ))
+    INTO
+        ret
+    ;
+    RETURN ret;
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS pois;
 CREATE OR REPLACE FUNCTION pois(
     _base_url text,
@@ -926,10 +963,10 @@ CREATE OR REPLACE FUNCTION pois(
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
-                            WHEN 'true' THEN substr(coalesce(
+                            WHEN 'true' THEN short_description(coalesce(
                                 pois.properties->'tags'->'description'->>'fr',
                                 pois.properties->'natives'->'description'->>'fr'
-                            ), 1, 100)
+                            ), 130)
                             ELSE coalesce(
                                 pois.properties->'tags'->'description'->>'fr',
                                 pois.properties->'natives'->'description'->>'fr'
