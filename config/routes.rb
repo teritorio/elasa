@@ -13,4 +13,10 @@ Rails.application.routes.draw do
     get 'pois/category/:category_id(.:format)', controller: 'api01', action: :pois_category
     get 'attribute_translations/:lang.json', controller: 'api01', action: :attribute_translations
   end
+
+  scope '/api/0.2/project/:project' do
+    scope 'admin' do
+      get 'sources/load', controller: 'api02_admin', action: :sources_load
+    end
+  end
 end

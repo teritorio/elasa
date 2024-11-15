@@ -49,20 +49,22 @@ def load_project(project_slug, url, url_articles)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec(
       '
-      INSERT INTO projects(slug, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO projects(slug, datasources_slug, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (slug)
       DO UPDATE SET
-        icon_font_css_url = $2,
-        polygon = $3,
-        polygons_extra = $4,
-        articles = $5,
-        default_country = $6,
-        default_country_state_opening_hours = $7
+        datasources_slug = $2,
+        icon_font_css_url = $3,
+        polygon = $4,
+        polygons_extra = $5,
+        articles = $6,
+        default_country = $7,
+        default_country_state_opening_hours = $8
       RETURNING
         id
       ',
       [
+        project_slug,
         project_slug,
         icon_font_css_url,
         settings['polygon']['data'].to_json,

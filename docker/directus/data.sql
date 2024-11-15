@@ -188,7 +188,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 127	menu_items	style_class_string	\N	input	\N	\N	\N	f	f	5	half	\N	\N	\N	f	category	\N	\N
 128	menu_items	style_class	\N	\N	\N	\N	\N	f	t	7	full	\N	\N	\N	f	category	\N	\N
-131	projects	slug	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	t	\N	\N	\N
+131	projects	slug	\N	input	\N	\N	\N	f	f	3	half	\N	\N	\N	t	\N	\N	\N
 132	menu_items	type	\N	select-dropdown	{"choices":[{"text":"menu_group","value":"menu_group"},{"text":"category","value":"category"},{"text":"link","value":"link"},{"text":"search","value":"search"}]}	\N	\N	f	f	8	full	\N	\N	\N	t	\N	\N	\N
 133	fields	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 134	fields	type	\N	select-dropdown	{"choices":[{"text":"field","value":"field"},{"text":"group","value":"group"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	\N	\N	\N
@@ -251,7 +251,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 260	filters_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 261	filters_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	14	full	\N	\N	\N	f	\N	\N	\N
 532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
 534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
@@ -277,6 +277,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 556	filters	property_begin	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
 557	filters	property_end	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	2	full	\N	\N	\N	f	date_range	\N	\N
 558	filters	number_range_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
+559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	t	\N	\N	\N
+560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -301,6 +303,7 @@ COPY public.directus_files (id, storage, filename_disk, filename_download, title
 --
 
 COPY public.directus_flows (id, name, icon, color, description, status, trigger, accountability, options, operation, date_created, user_created) FROM stdin;
+8b576a89-30a0-4f3e-b20b-bc944914a1df	Update POIs from Datasources	download	\N	\N	active	manual	all	{"collections":["sources"]}	ada3d2b2-2666-4be9-ac80-c57a91576a06	2024-11-15 12:07:07.149+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 96ccf7a5-8702-4760-8c9e-b53267f234b2	Create local POIs table	bolt	\N	\N	active	manual	all	{"collections":["sources"],"requireConfirmation":true,"fields":[{"field":"withImages","type":"boolean","name":"With Images","meta":{"interface":"boolean"}},{"field":"withTranslations","type":"boolean","name":"With Translations","meta":{"interface":"boolean"}},{"field":"withName","type":"boolean","name":"With Name","meta":{"interface":"boolean"}},{"field":"withDescription","type":"boolean","meta":{"interface":"boolean"}}]}	bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	2024-11-11 17:16:24.222+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
 
@@ -411,6 +414,9 @@ COPY public.directus_notifications (id, "timestamp", status, recipient, sender, 
 
 COPY public.directus_operations (id, name, key, type, position_x, position_y, options, resolve, reject, flow, date_created, user_created) FROM stdin;
 bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	Create Local Table	create_locale_table_elkil	create-locale-table	19	1	{"withImages":"{{$trigger.body.withImages}}","withTranslations":"{{$trigger.body.withTranslations}}","withName":"{{$trigger.body.withName}}","withDescription":"{{$trigger.body.withDescription}}"}	\N	\N	96ccf7a5-8702-4760-8c9e-b53267f234b2	2024-11-11 17:16:33.864+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
+d334ba61-f792-40a2-9e9a-3bd6cf40f61a	Read Projects	projects	item-read	37	1	{"collection":"projects","key":"{{sources.project_id}}"}	8f15f766-7319-4c8e-a3c4-19a8ba54224b	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 12:14:18.725+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
+ada3d2b2-2666-4be9-ac80-c57a91576a06	Read Sources	sources	item-read	19	1	{"collection":"sources","key":"{{$trigger.body.keys}}"}	d334ba61-f792-40a2-9e9a-3bd6cf40f61a	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 12:14:18.829+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
+8f15f766-7319-4c8e-a3c4-19a8ba54224b	Webhook / Request URL	request_vcvmd	request	55	1	{"url":"http://api:12000/api/0.2/project/{{projects.slug}}/admin/sources/load?api_key={{projects.api_key}}"}	\N	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 16:24:47.807+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
 
 
@@ -623,7 +629,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 558, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 560, true);
 
 
 --

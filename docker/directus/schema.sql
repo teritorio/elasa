@@ -1366,11 +1366,13 @@ CREATE TABLE public.projects (
     icon_font_css_url character varying NOT NULL,
     polygon public.geometry(Geometry,4326),
     bbox_line public.geometry(LineString,4326) GENERATED ALWAYS AS (public.st_makeline(public.st_makepoint(public.st_xmin((polygon)::public.box3d), public.st_ymin((polygon)::public.box3d)), public.st_makepoint(public.st_xmax((polygon)::public.box3d), public.st_ymax((polygon)::public.box3d)))) STORED NOT NULL,
-    slug character varying(255) DEFAULT NULL::character varying,
+    slug character varying(255) DEFAULT NULL::character varying NOT NULL,
     articles json,
     default_country character varying(255),
     default_country_state_opening_hours character varying(255),
-    polygons_extra json
+    polygons_extra json,
+    datasources_slug character varying NOT NULL,
+    api_key uuid DEFAULT gen_random_uuid() NOT NULL
 );
 
 

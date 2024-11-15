@@ -80,6 +80,7 @@ services:
       <<: *common-environment
       # RAILS_ENV: ${RAILS_ENV:-production}
       SECRET_KEY_BASE: ${SECRET_KEY_BASE:-Toe8eihai5ieShai}
+      DATASOURCES_URL: ${DATASOURCES_URL}
     ports:
       - 12000:12000
     volumes:
