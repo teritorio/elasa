@@ -23,6 +23,7 @@ class String
 end
 
 def load_source(conn, project_slug, metadatas)
+  conn.exec('DROP TABLE IF EXISTS sources_import_raw')
   conn.exec("
     CREATE TEMP TABLE sources_import_raw(
       slug varchar NOT NULL,
@@ -41,6 +42,7 @@ def load_source(conn, project_slug, metadatas)
       ])
     }
   }
+  conn.exec('DROP TABLE IF EXISTS sources_import')
   conn.exec_params("
     CREATE TEMP TABLE sources_import AS (
       SELECT
@@ -202,28 +204,32 @@ def load_pois(conn, project_slug, source_slug, pois)
   )
 end
 
-def load_from_source(datasource_url, project_slug, datasource_project)
+def load_from_source(datasource_url, project_slug)
   projects = fetch_json("#{datasource_url}.json")
 
-  projects.select{ |project| datasource_project.nil? || project['name'] == datasource_project }.collect{ |_project|
-    metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
+  # Output a table of current connections to the DB
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec_params('SELECT slug, datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
+      results.collect{ |row|
+        project_slug = row.fetch('slug')
+        datasource_project = row.fetch('datasources_slug')
 
-    puts "source #{project_slug} (#{metadatas.size})"
+        metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
-    # Output a table of current connections to the DB
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-      load_source(conn, project_slug, metadatas)
+        puts "source #{project_slug} (#{metadatas.size})"
 
-      metadatas.each_key{ |source_slug|
-        pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
-        load_pois(conn, project_slug, source_slug, pois['features'])
-        puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
+        load_source(conn, project_slug, metadatas)
+
+        metadatas.each_key{ |source_slug|
+          pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
+          load_pois(conn, project_slug, source_slug, pois['features'])
+          puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
+        }
+        puts ''
+
+        metadatas
       }
     }
-
-    puts ''
-
-    metadatas
   }
 end
 

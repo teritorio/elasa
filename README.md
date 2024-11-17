@@ -44,7 +44,7 @@ docker compose run --rm api bundle exec rake wp:import -- https://carte.seignanx
 
 Update datasource only
 ```
-docker compose run --rm api bundle exec rake sources:load -- https://datasources.teritorio.xyz/0.1 slug_elasa slug_datasource
+docker compose run --rm api bundle exec rake sources:load -- https://datasources.teritorio.xyz/0.1 [project_slug]
 ```
 
 Compare original and new API results.

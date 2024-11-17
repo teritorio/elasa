@@ -35,7 +35,7 @@ def fetch_image(url)
   response.body.to_s
 end
 
-def load_project(project_slug, url, url_articles)
+def load_project(project_slug, datasources_slug, url, url_articles)
   settings = fetch_json(url)
   articles = fetch_json(url_articles)
 
@@ -65,7 +65,7 @@ def load_project(project_slug, url, url_articles)
       ',
       [
         project_slug,
-        project_slug,
+        datasources_slug,
         icon_font_css_url,
         settings['polygon']['data'].to_json,
         settings['polygons_extra']&.transform_values{ |polygon| polygon['data'].split('/')[-1].split('.')[0].to_i }&.to_json,
@@ -1337,18 +1337,18 @@ namespace :wp do
   task :import, [] => :environment do
     set_default_languages
 
-    url, project_slug, theme_slug, datasource_url, datasource_project = ARGV[2..]
-    datasource_project ||= project_slug
+    url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
+    datasources_slug ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    project_id, settings = load_project(project_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
 
     role_uuid, policy_uuid = create_role(project_slug)
     user_uuid = create_user(project_id, project_slug, role_uuid)
 
     theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
-    loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug, datasource_project)
+    loaded_from_datasource = load_from_source("#{datasource_url}/data", project_slug)
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
     load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
     i18ns = i18ns.transform_values{ |v|

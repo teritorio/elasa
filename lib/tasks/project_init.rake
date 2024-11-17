@@ -16,7 +16,7 @@ LANGS = {
   'es' => 'es-ES',
 }
 
-def new_project(slug, osm_id, theme, css, website)
+def new_project(slug, datasources_slug, osm_id, theme, css, website)
   osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
   geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
 
@@ -42,7 +42,7 @@ def new_project(slug, osm_id, theme, css, website)
       css,
       geojson.to_json,
       slug,
-      slug,
+      datasources_slug,
       [].to_json,
       'fr',
       'Nouvelle-Aquitaine',
@@ -541,16 +541,16 @@ namespace :project do
   task :new, [] => :environment do
     set_default_languages
 
-    slug, osm_id, theme, ontology, website = ARGV[2..]
+    slug, osm_id, theme, ontology, datasources_slug, website = ARGV[2..]
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
-    project_id, theme_id = new_project(slug, osm_id, theme, css, website)
+    project_id, theme_id = new_project(slug, datasources_slug, osm_id, theme, css, website)
 
     role_uuid, policy_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
-    metadatas = load_from_source("#{datasource_url}/data", slug, slug).first
+    metadatas = load_from_source("#{datasource_url}/data", slug).first
     i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
     load_i18n(slug, i18ns)
     schema = fetch_json("#{datasource_url}/data/#{slug}/schema.json")
