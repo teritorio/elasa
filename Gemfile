@@ -26,6 +26,8 @@ gem 'json'
 gem 'json-schema'
 gem 'optparse'
 gem 'pg', '~> 1.1'
+gem 'sentry-rails'
+gem 'sentry-ruby'
 gem 'sorbet-runtime'
 
 group :development do
