@@ -13,7 +13,11 @@ class Api01Controller < ApplicationController
     project_slug, = project_theme_params
 
     row_project = query('project($1, $2)', [base_url, project_slug])
-    render status: :not_found if row_project.nil?
+
+    if row_project.nil?
+      render status: :not_found
+      return
+    end
 
     project = JSON.parse(row_project)
     respond_to do |format|
@@ -25,7 +29,11 @@ class Api01Controller < ApplicationController
     project_slug, = project_theme_params
 
     row_project = query('project($1, $2)', [base_url, project_slug])
-    render status: :not_found if row_project.nil?
+
+    if row_project.nil?
+      render status: :not_found
+      return
+    end
 
     articles = JSON.parse(row_project)['articles']
     respond_to do |format|
@@ -43,7 +51,13 @@ class Api01Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('menu($1, $2, $3)', [base_url, project_slug, theme_slug]) || {}
+    menu_items = query('menu($1, $2, $3)', [base_url, project_slug, theme_slug])
+
+    if menu_items.nil?
+      render status: :not_found
+      return
+    end
+
     respond_to do |format|
       format.json { render plain: menu_items }
     end
@@ -65,9 +79,12 @@ class Api01Controller < ApplicationController
       nil,
       params[:deps] == 'true',
       nil,
-    ]) || {}
+    ])
 
-    render status: :not_found if pois.nil?
+    if pois.nil?
+      render status: :not_found
+      return
+    end
 
     respond_to do |format|
       format.geojson {
