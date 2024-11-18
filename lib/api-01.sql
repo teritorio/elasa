@@ -100,7 +100,7 @@ CREATE OR REPLACE FUNCTION project(
 ) AS $$
     SELECT
         jsonb_strip_nulls(
-            to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' ||
+            to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' ||
             jsonb_build_object(
                 'name', projects.name->'fr',
                 'polygon', jsonb_build_object(
@@ -120,6 +120,7 @@ CREATE OR REPLACE FUNCTION project(
                         json_each_text(polygons_extra)
                 ),
                 'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
+                'icon_font_css_url', _base_url || projects.icon_font_css_url,
                 'attributions', coalesce((
                     SELECT
                         array_agg(DISTINCT attribution)
