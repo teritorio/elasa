@@ -64,18 +64,18 @@ c06ffc91-572e-4ff1-a700-333d65f1a034	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	f40
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url, versioning) FROM stdin;
 fields	sell	\N	{{field}}{{group}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
-fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	\N	open	\N	f
+fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
 fields_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	fields	open	\N	f
 filters	filter_alt	\N	{{filters_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 filters_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	filters	open	\N	f
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
-languages	\N	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	7	\N	open	\N	f
+languages	\N	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
 local_sources	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	sources	open	\N	f
 menu_items	menu	\N	{{menu_items_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	themes	open	\N	f
-menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
-menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	\N	open	\N	f
-menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
-menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
+menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
+menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	menu_items	open	\N	f
+menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	menu_items	open	\N	f
+menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	menu_items	open	\N	f
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
 pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	pois	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
@@ -279,6 +279,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 558	filters	number_range_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	t	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
+561	menu_items_filters	index	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -481,8 +482,8 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 68	filters	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 69	filters	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 73	menu_items_filters	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-74	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-75	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,filters_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+74	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+75	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 76	menu_items_filters	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 83	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs,override,image,website_details	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 84	fields	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -541,7 +542,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 17	menu_items_sources	menu_items_id	menu_items	sources	\N	\N	sources_id	\N	nullify
 19	filters	project_id	projects	\N	\N	\N	\N	\N	nullify
 24	menu_items_filters	filters_id	filters	\N	\N	\N	menu_items_id	\N	nullify
-25	menu_items_filters	menu_items_id	menu_items	filters	\N	\N	filters_id	\N	nullify
+25	menu_items_filters	menu_items_id	menu_items	filters	\N	\N	filters_id	index	nullify
 26	pois	source_id	sources	pois	\N	\N	\N	\N	nullify
 28	fields_fields	related_fields_id	fields	\N	\N	\N	fields_id	\N	nullify
 29	fields_fields	fields_id	fields	fields	\N	\N	related_fields_id	index	delete
@@ -629,7 +630,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 560, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 561, true);
 
 
 --

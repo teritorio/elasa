@@ -529,7 +529,7 @@ CREATE OR REPLACE FUNCTION menu(
                         'max', filters.max
                     )
                 END
-            ), '[null]'::jsonb) AS filters
+            ORDER BY filters.index), '[null]'::jsonb) AS filters
         FROM
             theme_menu_items AS menu_items
             LEFT JOIN menu_items_filters ON

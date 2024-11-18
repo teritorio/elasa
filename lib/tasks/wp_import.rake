@@ -745,8 +745,12 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       category_ids.each{ |category_id|
         conn.exec(
           '
-          INSERT INTO menu_items_filters(menu_items_id, filters_id)
-          VALUES ($1, $2)
+          INSERT INTO menu_items_filters(menu_items_id, filters_id, index)
+          VALUES (
+            $1,
+            $2,
+            (SELECT coalesce(max(index) + 1, 1) FROM menu_items_filters WHERE menu_items_id = $1)
+          )
           ',
           [catorgry_ids_map[category_id], filter_id]
         )

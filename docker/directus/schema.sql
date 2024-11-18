@@ -1176,7 +1176,8 @@ ALTER SEQUENCE public.menu_items_childrens_id_seq OWNED BY public.menu_items_chi
 CREATE TABLE public.menu_items_filters (
     id integer NOT NULL,
     menu_items_id integer,
-    filters_id integer
+    filters_id integer,
+    index integer DEFAULT 1 NOT NULL
 );
 
 
