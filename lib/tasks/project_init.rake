@@ -384,7 +384,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   return if ontology.nil?
 
   css_parser = CssParser::Parser.new
-  css_parser.load_uri!(css)
+  css_parser.load_uri!('public/' + css)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     poi_menu_id = insert_menu_item(
