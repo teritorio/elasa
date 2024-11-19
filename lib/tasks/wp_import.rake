@@ -668,7 +668,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     puts "filters: #{filters.size}"
     filters = filters.each{ |filter, category_ids|
       # Create/get id of fields
-      fields_ids = %w[property_begin property_end property].select{ |property| filter[property].present? }.to_h{ |_property|
+      fields_ids = %w[property_begin property_end property].select{ |property| filter[property].present? }.to_h{ |property|
         id = conn.exec(
           '
           INSERT INTO fields(project_id, type, field)
@@ -678,11 +678,11 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
             field = EXCLUDED.field -- Do nothing, but helps to return the id
           RETURNING
             id
-        ', [project_id, 'field', filter['property']]
+        ', [project_id, 'field', filter[property]]
         ) { |result|
           result.first['id'].to_i
         }
-        [filter['property'], id]
+        [filter[property], id]
       }
 
       filter_id = conn.exec(
