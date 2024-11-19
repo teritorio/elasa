@@ -4,7 +4,7 @@
 require 'rake'
 require 'sentry-ruby'
 
-if ENV['SENTRY_DSN_TOOLS']
+if ENV['SENTRY_DSN_TOOLS'].present?
   Sentry.init do |config|
     config.dsn = ENV['SENTRY_DSN_TOOLS']
     # enable performance monitoring
