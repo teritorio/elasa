@@ -1342,7 +1342,6 @@ namespace :wp do
     set_default_languages
 
     url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
-    datasources_slug ||= project_slug
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
     project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")

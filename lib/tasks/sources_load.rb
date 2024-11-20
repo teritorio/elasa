@@ -213,6 +213,7 @@ def load_from_source(datasource_url, project_slug)
       results.collect{ |row|
         project_slug = row.fetch('slug')
         datasource_project = row.fetch('datasources_slug')
+        next if datasource_project.nil?
 
         metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
