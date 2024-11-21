@@ -39,7 +39,10 @@
         "hidden": false,
         "interface": "group-detail",
         "note": null,
-        "options": null,
+        "options": {
+          "headerIcon": "eyeglasses",
+          "start": "closed"
+        },
         "readonly": false,
         "required": false,
         "sort": 6,
@@ -579,7 +582,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 12,
+        "sort": 11,
         "special": [
           "alias",
           "no-data",
@@ -704,7 +707,7 @@
           "template": "{{name}}"
         },
         "field": "menu_items_translations",
-        "group": null,
+        "group": "translations",
         "hidden": false,
         "interface": "translations",
         "note": null,
@@ -716,7 +719,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": 3,
+        "sort": 1,
         "special": [
           "translations"
         ],
@@ -742,7 +745,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 5,
+        "sort": 4,
         "special": null,
         "translations": null,
         "validation": null,
@@ -841,7 +844,7 @@
         "options": null,
         "readonly": false,
         "required": false,
-        "sort": 4,
+        "sort": 3,
         "special": [
           "m2o"
         ],
@@ -1113,6 +1116,37 @@
       }
     },
     {
+      "field": "translations",
+      "type": "alias",
+      "meta": {
+        "collection": "menu_items",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "translations",
+        "group": null,
+        "hidden": false,
+        "interface": "group-detail",
+        "note": null,
+        "options": {
+          "headerIcon": "translate",
+          "start": "closed"
+        },
+        "readonly": false,
+        "required": false,
+        "sort": 5,
+        "special": [
+          "alias",
+          "no-data",
+          "group"
+        ],
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      }
+    },
+    {
       "field": "type",
       "type": "string",
       "meta": {
@@ -1186,7 +1220,10 @@
         "hidden": false,
         "interface": "group-detail",
         "note": null,
-        "options": null,
+        "options": {
+          "headerIcon": "format_paint",
+          "start": "closed"
+        },
         "readonly": false,
         "required": false,
         "sort": 7,

@@ -182,6 +182,7 @@
         "note": null,
         "options": {
           "enableLink": true,
+          "limit": 100,
           "template": "{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}"
         },
         "readonly": false,

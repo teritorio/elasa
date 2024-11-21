@@ -16,7 +16,7 @@
     "note": null,
     "preview_url": null,
     "singleton": false,
-    "sort": 6,
+    "sort": 3,
     "sort_field": null,
     "translations": null,
     "unarchive_value": null,
@@ -187,7 +187,7 @@
         "one_allowed_collections": null,
         "one_collection": "fields",
         "one_collection_field": null,
-        "one_deselect_action": "nullify",
+        "one_deselect_action": "delete",
         "one_field": "fields",
         "sort_field": "index"
       },

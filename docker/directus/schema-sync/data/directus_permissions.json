@@ -947,9 +947,7 @@
     "action": "read",
     "collection": "menu_items_filters",
     "fields": [
-      "id",
-      "menu_items_id",
-      "filters_id"
+      "*"
     ],
     "permissions": {
       "_and": [
@@ -970,9 +968,7 @@
     "action": "update",
     "collection": "menu_items_filters",
     "fields": [
-      "id",
-      "menu_items_id",
-      "filters_id"
+      "*"
     ],
     "permissions": {
       "_and": [
@@ -1511,7 +1507,9 @@
       "keywords",
       "explorer_mode",
       "favorites_mode",
-      "theme_translations"
+      "theme_translations",
+      "logo",
+      "favicon"
     ],
     "permissions": {
       "_and": [

@@ -27,6 +27,48 @@
   },
   "fields": [
     {
+      "field": "api_key",
+      "type": "uuid",
+      "meta": {
+        "collection": "projects",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "api_key",
+        "group": null,
+        "hidden": false,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": true,
+        "required": false,
+        "sort": 15,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "full"
+      },
+      "schema": {
+        "name": "api_key",
+        "table": "projects",
+        "data_type": "uuid",
+        "default_value": "gen_random_uuid()",
+        "max_length": null,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": false,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
       "field": "articles",
       "type": "json",
       "meta": {
@@ -140,6 +182,48 @@
         "is_primary_key": false,
         "is_generated": true,
         "generation_expression": "st_makeline(st_makepoint(st_xmin((polygon)::box3d), st_ymin((polygon)::box3d)), st_makepoint(st_xmax((polygon)::box3d), st_ymax((polygon)::box3d)))",
+        "has_auto_increment": false,
+        "foreign_key_table": null,
+        "foreign_key_column": null
+      }
+    },
+    {
+      "field": "datasources_slug",
+      "type": "string",
+      "meta": {
+        "collection": "projects",
+        "conditions": null,
+        "display": null,
+        "display_options": null,
+        "field": "datasources_slug",
+        "group": null,
+        "hidden": false,
+        "interface": null,
+        "note": null,
+        "options": null,
+        "readonly": false,
+        "required": false,
+        "sort": 4,
+        "special": null,
+        "translations": null,
+        "validation": null,
+        "validation_message": null,
+        "width": "half"
+      },
+      "schema": {
+        "name": "datasources_slug",
+        "table": "projects",
+        "data_type": "character varying",
+        "default_value": null,
+        "max_length": 255,
+        "numeric_precision": null,
+        "numeric_scale": null,
+        "is_nullable": true,
+        "is_unique": false,
+        "is_indexed": false,
+        "is_primary_key": false,
+        "is_generated": false,
+        "generation_expression": null,
         "has_auto_increment": false,
         "foreign_key_table": null,
         "foreign_key_column": null
@@ -265,7 +349,7 @@
         },
         "readonly": false,
         "required": false,
-        "sort": null,
+        "sort": 14,
         "special": [
           "o2m"
         ],
@@ -504,7 +588,7 @@
         "translations": null,
         "validation": null,
         "validation_message": null,
-        "width": "full"
+        "width": "half"
       },
       "schema": {
         "name": "slug",
@@ -514,7 +598,7 @@
         "max_length": 255,
         "numeric_precision": null,
         "numeric_scale": null,
-        "is_nullable": true,
+        "is_nullable": false,
         "is_unique": true,
         "is_indexed": false,
         "is_primary_key": false,

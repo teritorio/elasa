@@ -76,7 +76,7 @@
       "meta": {
         "collection": "themes",
         "conditions": null,
-        "display": null,
+        "display": "image",
         "display_options": null,
         "field": "favicon",
         "group": null,
@@ -206,7 +206,7 @@
       "meta": {
         "collection": "themes",
         "conditions": null,
-        "display": null,
+        "display": "image",
         "display_options": null,
         "field": "logo",
         "group": null,

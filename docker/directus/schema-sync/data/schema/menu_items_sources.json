@@ -9,7 +9,7 @@
     "collection": "menu_items_sources",
     "color": null,
     "display_template": null,
-    "group": null,
+    "group": "menu_items",
     "hidden": true,
     "icon": "import_export",
     "item_duplication_fields": null,
