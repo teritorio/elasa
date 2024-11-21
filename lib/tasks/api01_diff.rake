@@ -61,6 +61,8 @@ def compare_settings(url_old, url_new)
     hash['bbox_line'] = nil # Ignore polygons
     hash['polygons_extra'] = nil # Ignore polygons
     hash['icon_font_css_url'] = nil # Ignore remote changes
+    hash['datasources_slug'] = nil # Ignore, only on Elasa side
+    hash['api_key'] = nil # Ignore, only on Elasa side
     hash['attributions'] = nil
 
     hash
