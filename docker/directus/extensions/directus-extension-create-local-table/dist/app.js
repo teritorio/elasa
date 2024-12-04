@@ -51,5 +51,27 @@ export default {
         default_value: false,
       },
     },
+    {
+      field: "withAddr",
+      name: "Add addr:* fields",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
+      field: "withContact",
+      name: "Add contact:* fields",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
   ],
 }

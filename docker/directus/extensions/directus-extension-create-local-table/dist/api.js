@@ -1,9 +1,9 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withTranslations, withImages, withName, withDescription }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withTranslations, withImages, withName, withDescription, withAddr, withContact }, { services, database, get, env, logger, data, accountability }) => {
     try {
-      [withTranslations, withImages, withName, withDescription] = [withTranslations, withImages, withName, withDescription].map((value) => value.toString().trim() === 'true');
+      [withTranslations, withImages, withName, withDescription, withAddr, withContact] = [withTranslations, withImages, withName, withDescription, withAddr, withContact].map((value) => value.toString().trim() === 'true');
       withTranslations = withTranslations || withName || withDescription;
       const sourcesIds = data['$trigger']['body']['keys'].map((key) => Number(key));
 
@@ -38,7 +38,14 @@ export default {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
         const tableNameT = `local-${projects.slug}-${source.slug}_t`.slice(-63);
         const tableNameI = `local-${projects.slug}-${source.slug}_i`.slice(-63);
-        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id SERIAL PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), geom geometry(Geometry,4326) NOT NULL)`);
+        let tableExtraFields = []
+        if (withAddr) { tableExtraFields = tableExtraFields.concat(["addr:housenumber", "addr:street", "addr:place", "addr:postcode", "addr:city"]); }
+        if (withContact) { tableExtraFields = tableExtraFields.concat(["contact:website", "contact:phone", "contact:email", "contact:facebook", "contact:instagram"]); }
+        let fields = tableExtraFields.map((field) => `"${field}" character varying(255)`).join(', ')
+        if (fields) {
+          fields = `, ${fields}`;
+        }
+        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id SERIAL PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), geom geometry(Geometry,4326) NOT NULL ${fields})`);
         console.info(`Table ${tableName} created`);
         if (withTranslations) {
           let fields = "";
@@ -89,7 +96,7 @@ export default {
           console.info(`Collection ${tableNameI} configured`);
         }
 
-        ['id', 'project_id', 'geom'].forEach(async (field) => {
+        ['id', 'project_id', 'geom'].concat(tableExtraFields).forEach(async (field) => {
           await database.raw(`
             MERGE INTO directus_fields
             USING (SELECT ?, ?, ?::boolean, ?::boolean) AS source(collection, field, hidden, readonly)
