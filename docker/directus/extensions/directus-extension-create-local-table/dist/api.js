@@ -39,8 +39,8 @@ export default {
         const tableNameT = `local-${projects.slug}-${source.slug}_t`.slice(-63);
         const tableNameI = `local-${projects.slug}-${source.slug}_i`.slice(-63);
         let tableExtraFields = []
-        if (withAddr) { tableExtraFields = tableExtraFields.concat(["addr:housenumber", "addr:street", "addr:place", "addr:postcode", "addr:city"]); }
-        if (withContact) { tableExtraFields = tableExtraFields.concat(["contact:website", "contact:phone", "contact:email", "contact:facebook", "contact:instagram"]); }
+        if (withAddr) { tableExtraFields = tableExtraFields.concat(["addr___housenumber", "addr___street", "addr___place", "addr___postcode", "addr___city"]); }
+        if (withContact) { tableExtraFields = tableExtraFields.concat(["contact___website", "contact___phone", "contact___email", "contact___facebook", "contact___instagram"]); }
         let fields = tableExtraFields.map((field) => `"${field}" character varying(255)`).join(', ')
         if (fields) {
           fields = `, ${fields}`;

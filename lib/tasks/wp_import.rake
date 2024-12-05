@@ -978,7 +978,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 end
 
 def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, policy_uuid)
-  fields_table = fields.select{ |_, _, _, type| !type.nil? }
+  fields_table = fields.select{ |_, _, _, type| !type.nil? }.collect{ |field, t, _, type, fk| [field.gsub(':', '___'), t, _, type, fk] }
   create_table = fields_table.collect{ |_, _, _, type, fk| [type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")

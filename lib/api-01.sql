@@ -197,7 +197,7 @@ BEGIN
             regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
             tables_t.table_name AS table_name_t,
             tables_i.table_name AS table_name_i,
-            array_agg(column_name) AS file_fields
+            array_agg(key_column_usage.column_name) AS file_fields
         FROM
             projects
             JOIN sources ON
@@ -211,14 +211,15 @@ BEGIN
             LEFT JOIN information_schema.tables AS tables_i ON
                 tables_i.table_name = tables.table_name || '_i'
             -- One file fields
-            LEFT JOIN information_schema.table_constraints  ON
+            LEFT JOIN information_schema.table_constraints ON
                 table_constraints.table_name = tables.table_name AND
                 table_constraints.table_schema = 'public' AND
                 table_constraints.constraint_type = 'FOREIGN KEY'
             LEFT JOIN information_schema.key_column_usage ON
                 key_column_usage.constraint_name = table_constraints.constraint_name AND
                 key_column_usage.table_schema = 'public' AND
-                key_column_usage.table_name = tables.table_name
+                key_column_usage.table_name = tables.table_name AND
+                key_column_usage.column_name != 'project_id'
         GROUP BY
             sources.id,
             tables.table_name,
@@ -311,7 +312,9 @@ BEGIN
         LOOP
             id := poi.id;
             geom := poi.geom;
-            properties := poi.properties;
+            properties := (SELECT poi.properties || jsonb_build_object('natives',
+                (SELECT jsonb_object_agg(replace(key, '___', ':'), value) FROM jsonb_each(poi.properties->'natives'))
+            ));
             source_id := source.id;
             slugs := jsonb_build_object('original_id', poi.id);
             RETURN NEXT;
@@ -1081,7 +1084,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     ),
     translations_local AS (
         SELECT
-            field AS key,
+            replace(field, '___', ':') AS key,
             json_build_object(
                 '@default', json_build_object(
                     -- TODO loop to get the right language translations
