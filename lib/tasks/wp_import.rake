@@ -979,7 +979,7 @@ end
 
 def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, policy_uuid)
   fields_table = fields.select{ |_, _, _, type| !type.nil? }.collect{ |field, t, _, type, fk| [field.gsub(':', '___'), t, _, type, fk] }
-  create_table = fields_table.collect{ |_, _, _, type, fk| [type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
+  create_table = fields_table.collect{ |field, _, _, type, fk| [field, type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
   conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' integer', ' text').gsub(' bigint', ' text').gsub(' uuid', ' text').gsub(/REFERENCES [^ ]+( ON DELETE SET NULL| ON DELETE CASCADE|)/, ''))
@@ -997,7 +997,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
         elsif field == 'languages_code'
           'fr-FR'
         else
-          r = t.call(p['properties'][field], p['properties'])
+          r = t.call(p['properties'][field.gsub('___', ':')], p['properties'])
           r = r.strip if r.is_a?(String)
           r
         end
@@ -1027,11 +1027,11 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     INSERT INTO \"#{table}\"(\"#{fields_table.collect(&:first).join('", "')}\")
     SELECT
     " + fields_table.collect { |field, _, _, type|
-      if %w[id pois_id].include?(field) || type.include?(' bigint')
+      if %w[id pois_id].include?(field) || type.include?('bigint')
         "\"#{field}\"::bigint"
       elsif field == 'project_id'
         'project_id::integer'
-      elsif type.include?(' uuid')
+      elsif type.include?('uuid')
         "\"#{field}\"::uuid"
       elsif field == 'geom'
         'ST_Force2D(ST_GeomFromGeoJSON(geom))'
@@ -1175,10 +1175,10 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       i = if %w[name description].include?(key)
             f = ->(i, _j) { i }
             interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
-            "\"#{key}\" text"
+            'text'
           elsif ['addr:postcode', 'addr:housenumber', 'maxlength', 'ref', 'start_date', 'end_date', 'ref:fr:siret'].include?(key)
             f = ->(i, _j) { i }
-            "\"#{key}\" varchar"
+            'varchar'
           elsif key == 'image'
             fields_image = key
             f = nil
@@ -1188,26 +1188,26 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
             interface = 'file'
             fk = 'directus_files(id) ON DELETE SET NULL'
-            "\"#{key}\" uuid"
+            'uuid'
           elsif key == 'website:details'
             f = ->(_i, j) { j['editorial']['website:details'] }
-            "\"#{key}\" varchar"
+            'varchar'
           elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
             f = ->(i, _j) { i&.to_json }
-            "\"#{key}\" json"
+            'json'
           elsif stats&.keys&.size == 1 && stats&.keys&.include?(Integer)
             f = ->(i, _j) { i&.to_i }
-            "\"#{key}\" bigint"
+            'bigint'
           elsif stats&.keys&.include?(:html)
             f = ->(i, _j) { i }
             interface = 'input-rich-text-html'
-            "\"#{key}\" text"
+            'text'
           elsif stats&.keys&.include?('...')
             f = ->(i, _j) { i }
-            "\"#{key}\" text"
+            'text'
           else
             f = ->(i, _j) { i }
-            "\"#{key}\" varchar"
+            'varchar'
           end
       if !i.nil? && !stats.keys.include?(nil) && stats.keys.size == ps.size
         i += ' NOT NULL'
@@ -1224,13 +1224,13 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_i"[..62]])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_t"[..62]])
 
-    fields += [['id', nil, nil, 'id varchar'], ['project_id', ->(_, _) { project_id }, nil, 'project_id integer NOT NULL'], ['geom', nil, nil, 'geom json NOT NULL']]
+    fields += [['id', nil, nil, 'varchar'], ['project_id', ->(_, _) { project_id }, nil, 'integer NOT NULL'], ['geom', nil, nil, 'json NOT NULL']]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
 
     if !fields_translations.empty?
       fields_translations += [
-        ['id', nil, nil, 'id varchar'], ['pois_id', nil, nil, 'pois_id integer NOT NULL', "\"#{table}\"(id) ON DELETE CASCADE"],
-        ['languages_code', nil, nil, 'languages_code varchar(255)', 'languages(code) ON DELETE CASCADE']
+        ['id', nil, nil, 'varchar'], ['pois_id', nil, nil, 'integer NOT NULL', "\"#{table}\"(id) ON DELETE CASCADE"],
+        ['languages_code', nil, nil, 'varchar(255)', 'languages(code) ON DELETE CASCADE']
       ]
       load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, policy_uuid)
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
