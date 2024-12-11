@@ -45,7 +45,7 @@ export default {
         if (fields) {
           fields = `, ${fields}`;
         }
-        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id SERIAL PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), geom geometry(Geometry,4326) NOT NULL ${fields})`);
+        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), geom geometry(Geometry,4326) NOT NULL ${fields})`);
         console.info(`Table ${tableName} created`);
         if (withTranslations) {
           let fields = "";

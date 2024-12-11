@@ -1016,8 +1016,10 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     }
   }
 
+  create_table = create_table.gsub(/^id varchar/, table_aprent.nil? ?
+    'id integer DEFAULT nextval(\'"pois_id_seq"\'::regclass) PRIMARY KEY' :
+    'id SERIAL PRIMARY KEY')
   create_table = create_table
-                 .gsub(/^id varchar/, 'id SERIAL PRIMARY KEY')
                  .gsub('pois_id varchar', "\"#{source_name}_id\" SERIAL")
                  .gsub('geom json', 'geom geometry(Geometry,4326)')
                  .gsub(' json', ' jsonb')
@@ -1042,7 +1044,6 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     FROM
       \"t_#{table}\"
   ")
-  conn.exec("SELECT setval('#{table[..55]}_id_seq', (SELECT max(id) FROM \"#{table}\")+1)")
 
   conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..62]])
   conn.exec('
