@@ -40,7 +40,7 @@ export default {
         const tableNameI = `local-${projects.slug}-${source.slug}_i`.slice(-63);
         let tableExtraFields = []
         if (withAddr) { tableExtraFields = tableExtraFields.concat(["addr___housenumber", "addr___street", "addr___place", "addr___postcode", "addr___city"]); }
-        if (withContact) { tableExtraFields = tableExtraFields.concat(["contact___website", "contact___phone", "contact___email", "contact___facebook", "contact___instagram"]); }
+        if (withContact) { tableExtraFields = tableExtraFields.concat(["website", "phone", "email", "facebook", "instagram"]); }
         let fields = tableExtraFields.map((field) => `"${field}" character varying(255)`).join(', ')
         if (fields) {
           fields = `, ${fields}`;
