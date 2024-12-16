@@ -1278,8 +1278,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       conn.exec("
         CREATE TABLE \"#{table_i}\"(
           id SERIAL PRIMARY KEY,
-          pois_id bigint NOT NULL REFERENCES \"#{table}\"(id),
-          directus_files_id uuid NOT NULL REFERENCES directus_files(id),
+          pois_id bigint NOT NULL REFERENCES \"#{table}\"(id) ON DELETE CASCADE,
+          directus_files_id uuid NOT NULL REFERENCES directus_files(id) ON DELETE CASCADE,
           index integer NOT NULL
         )
       ")

@@ -45,17 +45,17 @@ export default {
         if (fields) {
           fields = `, ${fields}`;
         }
-        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id), geom geometry(Geometry,4326) NOT NULL ${fields})`);
+        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE, geom geometry(Geometry,4326) NOT NULL ${fields})`);
         console.info(`Table ${tableName} created`);
         if (withTranslations) {
           let fields = "";
           if (withName) { fields += ', name character varying(255)'; }
           if (withDescription) { fields += ', description text'; }
-          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameT}" (id SERIAL PRIMARY KEY, pois_id INTEGER NOT NULL REFERENCES "${tableName}"(id), languages_code character varying(255) NOT NULL REFERENCES languages(code) ON DELETE CASCADE ${fields})`);
+          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameT}" (id SERIAL PRIMARY KEY, pois_id INTEGER NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, languages_code character varying(255) NOT NULL REFERENCES languages(code) ON DELETE CASCADE ${fields})`);
           console.info(`Table ${tableNameT} created`);
         }
         if (withImages) {
-          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameI}" (id SERIAL PRIMARY KEY, pois_id bigint NOT NULL REFERENCES "${tableName}"(id), directus_files_id uuid NOT NULL REFERENCES directus_files(id), index INTEGER NOT NULL)`);
+          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameI}" (id SERIAL PRIMARY KEY, pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, directus_files_id uuid NOT NULL REFERENCES directus_files(id) ON DELETE CASCADE, index INTEGER NOT NULL)`);
           console.info(`Table ${tableNameI} created`);
         }
 
