@@ -116,9 +116,12 @@ def load_source(conn, project_slug, metadatas)
         projects.id = self.project_id
       LEFT JOIN sources_import ON
         sources_import.slug = self.slug
+      LEFT JOIN information_schema.tables ON
+          tables.table_name = 'local-#{project_slug}-' || self.slug
     WHERE
       sources.id = self.id AND
-      sources_import.slug IS NULL
+      sources_import.slug IS NULL AND
+      tables.table_name IS NULL
     ",
     [project_slug]
   )
