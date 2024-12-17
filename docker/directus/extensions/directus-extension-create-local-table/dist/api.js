@@ -38,10 +38,10 @@ export default {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
         const tableNameT = `local-${projects.slug}-${source.slug}_t`.slice(-63);
         const tableNameI = `local-${projects.slug}-${source.slug}_i`.slice(-63);
-        let tableExtraFields = []
-        if (withAddr) { tableExtraFields = tableExtraFields.concat(["addr___housenumber", "addr___street", "addr___place", "addr___postcode", "addr___city"]); }
-        if (withContact) { tableExtraFields = tableExtraFields.concat(["website", "phone", "email", "facebook", "instagram"]); }
-        let fields = tableExtraFields.map((field) => `"${field}" character varying(255)`).join(', ')
+        let tableExtraFields = {};
+        if (withAddr) { tableExtraFields = Object.assign(tableExtraFields, { "addr___housenumber": "String", "addr___street": "String", "addr___place": "String", "addr___postcode": "String", "addr___city": "String" }); }
+        if (withContact) { tableExtraFields = Object.assign(tableExtraFields, { "website": "Array", "phone": "Array", "email": "Array", "facebook": "String", "instagram": "String" }); }
+        let fields = Object.entries(tableExtraFields).map(([field, type]) => `"${field}" ${type === 'String' ? 'character varying(255)' : 'jsonb'}`).join(', ')
         if (fields) {
           fields = `, ${fields}`;
         }
@@ -96,7 +96,7 @@ export default {
           console.info(`Collection ${tableNameI} configured`);
         }
 
-        ['id', 'project_id', 'geom'].concat(tableExtraFields).forEach(async (field) => {
+        ['id', 'project_id', 'geom'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
           await database.raw(`
             MERGE INTO directus_fields
             USING (SELECT ?, ?, ?::boolean, ?::boolean) AS source(collection, field, hidden, readonly)
