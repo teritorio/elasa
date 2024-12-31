@@ -757,6 +757,10 @@ components:
                   type: string
                   enum: ['node', 'way', 'relation']
                   description: OpenStreetMap object type.
+                dep_ids:
+                  type: array
+                  items:
+                    type: integer
             display:
               type: object
               description: Properties to help how to display.
