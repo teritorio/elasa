@@ -479,16 +479,10 @@ paths:
     get:
       tags:
         - site
-      summary: Metadata of articles for a category.
+      summary: List and metadata of articles.
       parameters:
         - $ref: '#/components/parameters/param_path_project'
         - $ref: '#/components/parameters/param_path_theme'
-        - in: query
-          name: slug
-          schema:
-            type: string
-          required: true
-          description: Slug of the category.
       responses:
         '200':
           description: OK
@@ -505,6 +499,35 @@ paths:
                       type: string
                     url:
                       type: string
+
+  /{project}/{theme}/article/{lang}/{slug}.html:
+    get:
+      tags:
+        - site
+      summary: HTML article fragment.
+      parameters:
+        - $ref: '#/components/parameters/param_path_project'
+        - $ref: '#/components/parameters/param_path_theme'
+        - in: path
+          name: lang
+          schema:
+            type: string
+          required: true
+          description: ISO Lang code.
+          example: FR
+        - in: path
+          name: slug
+          schema:
+            type: string
+          required: true
+          description: Slug of the article.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/html:
+              schema:
+                type: string
 
   /search:
     get:
