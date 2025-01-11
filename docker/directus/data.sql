@@ -173,7 +173,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 90	filters	min	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	number_range	\N	\N
 91	filters	max	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	number_range	\N	\N
 98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-107	menu_items	filters	m2m	list-m2m	\N	\N	\N	f	f	8	full	\N	\N	\N	f	category	\N	\N
+107	menu_items	filters	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	category	\N	\N
 108	menu_items_filters	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 109	menu_items_filters	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 110	menu_items_filters	filters_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -279,7 +279,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 558	filters	number_range_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
-561	menu_items_filters	index	\N	\N	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+561	menu_items_filters	index	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
