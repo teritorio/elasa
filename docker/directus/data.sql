@@ -153,7 +153,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 62	menu_items	icon	\N	input	\N	\N	\N	f	f	4	half	\N	\N	\N	t	UI	\N	\N
 65	menu_items	UI	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"format_paint"}	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 66	menu_items	behavior	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"eyeglasses"}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-67	menu_items	display_mode	\N	\N	\N	\N	\N	f	f	1	full	\N	\N	\N	f	UI	\N	\N
+67	menu_items	display_mode	\N	select-dropdown	{"choices":[{"text":"compact","value":"compact"},{"text":"large","value":"large"}]}	\N	\N	f	f	1	full	\N	\N	\N	f	UI	\N	\N
 68	menu_items	category	alias,no-data,group	group-detail	\N	\N	\N	f	f	10	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"category"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
 71	menu_items	style_merge	cast-boolean	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	category	\N	\N
