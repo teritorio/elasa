@@ -83,6 +83,15 @@ def compare_articles(url_old, url_new)
     }
   }
 
+  hashes[0] = hashes[0].collect{ |v|
+    v['url'] = v['url'].split('/')[5]
+    v
+  }
+  hashes[1] = hashes[1].collect{ |v|
+    v['url'] = v['url'].split('/')[8].gsub(/\.html$/, '')
+    v
+  }
+
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   puts JSON.dump(diff.diff) if !diff.diff.empty?
 end

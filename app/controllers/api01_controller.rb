@@ -38,12 +38,26 @@ class Api01Controller < ApplicationController
     articles = JSON.parse(row_project)['articles']
     respond_to do |format|
       format.json {
-        render json: (articles || []).collect{ |article|
-          {
-            url: article['url']['fr'],
-            title: article['title']['fr'],
-          }
-        }
+        render json: articles
+      }
+    end
+  end
+
+  def article
+    project_slug, _theme, article_slug = params.require(%i[project theme slug])
+
+    puts [project_slug, article_slug].inspect
+    article = query('article($1, $2)', [project_slug, article_slug])
+    puts article.inspect
+
+    if article.nil?
+      render status: :not_found
+      return
+    end
+
+    respond_to do |format|
+      format.html {
+        render body: article
       }
     end
   end

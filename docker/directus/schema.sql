@@ -79,6 +79,78 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: articles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.articles (
+    id integer NOT NULL,
+    project_id integer
+);
+
+
+ALTER TABLE public.articles OWNER TO postgres;
+
+--
+-- Name: articles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.articles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.articles_id_seq OWNER TO postgres;
+
+--
+-- Name: articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.articles_id_seq OWNED BY public.articles.id;
+
+
+--
+-- Name: articles_translations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.articles_translations (
+    id integer NOT NULL,
+    articles_id integer NOT NULL,
+    languages_code character varying(255),
+    title character varying(255),
+    slug character varying(255),
+    body text
+);
+
+
+ALTER TABLE public.articles_translations OWNER TO postgres;
+
+--
+-- Name: articles_translations_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.articles_translations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.articles_translations_id_seq OWNER TO postgres;
+
+--
+-- Name: articles_translations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.articles_translations_id_seq OWNED BY public.articles_translations.id;
+
+
+--
 -- Name: directus_access; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1368,7 +1440,6 @@ CREATE TABLE public.projects (
     polygon public.geometry(Geometry,4326),
     bbox_line public.geometry(LineString,4326) GENERATED ALWAYS AS (public.st_makeline(public.st_makepoint(public.st_xmin((polygon)::public.box3d), public.st_ymin((polygon)::public.box3d)), public.st_makepoint(public.st_xmax((polygon)::public.box3d), public.st_ymax((polygon)::public.box3d)))) STORED NOT NULL,
     slug character varying(255) NOT NULL,
-    articles json,
     default_country character varying(255),
     default_country_state_opening_hours character varying(255),
     polygons_extra json,
@@ -1378,6 +1449,42 @@ CREATE TABLE public.projects (
 
 
 ALTER TABLE public.projects OWNER TO postgres;
+
+--
+-- Name: projects_articles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.projects_articles (
+    id integer NOT NULL,
+    projects_id integer,
+    articles_id integer,
+    index integer
+);
+
+
+ALTER TABLE public.projects_articles OWNER TO postgres;
+
+--
+-- Name: projects_articles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.projects_articles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.projects_articles_id_seq OWNER TO postgres;
+
+--
+-- Name: projects_articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.projects_articles_id_seq OWNED BY public.projects_articles.id;
+
 
 --
 -- Name: projects_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -1584,6 +1691,20 @@ ALTER SEQUENCE public.themes_translations_id_seq OWNED BY public.themes_translat
 
 
 --
+-- Name: articles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles ALTER COLUMN id SET DEFAULT nextval('public.articles_id_seq'::regclass);
+
+
+--
+-- Name: articles_translations id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles_translations ALTER COLUMN id SET DEFAULT nextval('public.articles_translations_id_seq'::regclass);
+
+
+--
 -- Name: directus_activity id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1724,6 +1845,13 @@ ALTER TABLE ONLY public.pois_files ALTER COLUMN id SET DEFAULT nextval('public.p
 
 
 --
+-- Name: projects_articles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.projects_articles ALTER COLUMN id SET DEFAULT nextval('public.projects_articles_id_seq'::regclass);
+
+
+--
 -- Name: projects_translations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1742,6 +1870,30 @@ ALTER TABLE ONLY public.sources_translations ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.themes_translations ALTER COLUMN id SET DEFAULT nextval('public.themes_translations_id_seq'::regclass);
+
+
+--
+-- Name: articles articles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles
+    ADD CONSTRAINT articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: articles_translations articles_translations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles_translations
+    ADD CONSTRAINT articles_translations_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: articles_translations articles_translations_uniq_articles_id; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles_translations
+    ADD CONSTRAINT articles_translations_uniq_articles_id UNIQUE (articles_id, languages_code);
 
 
 --
@@ -2153,6 +2305,14 @@ ALTER TABLE ONLY public.pois
 
 
 --
+-- Name: projects_articles projects_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.projects_articles
+    ADD CONSTRAINT projects_articles_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2281,6 +2441,30 @@ CREATE INDEX pois_idx_source_id ON public.pois USING btree (source_id);
 --
 
 CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_array(properties));
+
+
+--
+-- Name: articles articles_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles
+    ADD CONSTRAINT articles_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+
+
+--
+-- Name: articles_translations articles_translations_articles_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles_translations
+    ADD CONSTRAINT articles_translations_articles_id_foreign FOREIGN KEY (articles_id) REFERENCES public.articles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: articles_translations articles_translations_languages_code_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.articles_translations
+    ADD CONSTRAINT articles_translations_languages_code_foreign FOREIGN KEY (languages_code) REFERENCES public.languages(code) ON DELETE CASCADE;
 
 
 --
@@ -2897,6 +3081,22 @@ ALTER TABLE ONLY public.pois_files
 
 ALTER TABLE ONLY public.pois
     ADD CONSTRAINT pois_source_id_foreign FOREIGN KEY (source_id) REFERENCES public.sources(id) ON DELETE CASCADE;
+
+
+--
+-- Name: projects_articles projects_articles_articles_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.projects_articles
+    ADD CONSTRAINT projects_articles_articles_id_foreign FOREIGN KEY (articles_id) REFERENCES public.articles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: projects_articles projects_articles_projects_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.projects_articles
+    ADD CONSTRAINT projects_articles_projects_id_foreign FOREIGN KEY (projects_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --

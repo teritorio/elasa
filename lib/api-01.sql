@@ -14,6 +14,21 @@ GROUP BY
     projects.id
 ;
 
+DROP VIEW IF EXISTS articles_join;
+CREATE VIEW articles_join AS
+SELECT
+    articles.*,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title) AS title,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body) AS body
+FROM
+    articles
+    JOIN articles_translations AS trans ON
+        trans.articles_id = articles.id
+GROUP BY
+    articles.id
+;
+
 DROP VIEW IF EXISTS themes_join;
 CREATE VIEW themes_join AS
 SELECT
@@ -130,6 +145,19 @@ CREATE OR REPLACE FUNCTION project(
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
                 ), array[]::text[]),
+                'articles', (
+                    SELECT
+                        jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
+                            'title', articles.title->'fr'
+                        )) ORDER BY projects_articles.index)
+                    FROM
+                        projects_articles
+                        JOIN articles_join AS articles ON
+                            articles.id = projects_articles.articles_id
+                    WHERE
+                        projects_articles.projects_id = projects.id
+                ),
                 'themes', (
                     SELECT
                         jsonb_strip_nulls(jsonb_agg(
@@ -162,6 +190,36 @@ CREATE OR REPLACE FUNCTION project(
         projects_join AS projects
     WHERE
         projects.slug = _project_slug
+    ;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS article;
+CREATE OR REPLACE FUNCTION article(
+    _project_slug text,
+    _article_slug text
+) RETURNS TABLE (
+    d text
+) AS $$
+    SELECT
+        '<!DOCTYPE html>
+<html lang="fr">
+<title>' || articles_translations.title || '</title>
+<body>
+<h1>' || articles_translations.title || '</h1>
+' || articles_translations.body || '
+</body>
+</html>'
+    FROM
+        projects
+        JOIN articles ON
+            articles.project_id = projects.id
+        JOIN articles_translations ON
+            articles_translations.articles_id = articles.id AND
+            articles_translations.slug = _article_slug
+    WHERE
+        projects.slug = _project_slug
+    LIMIT 1
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 

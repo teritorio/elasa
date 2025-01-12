@@ -28,6 +28,15 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
+def fetch_html(url)
+  response = HTTP.follow.get(url)
+  return nil if response.status.code == 404
+  raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
+
+  doc = Nokogiri::HTML.parse(response.to_s)
+  doc.xpath('//article/div').children.to_s
+end
+
 def fetch_image(url)
   response = HTTP.follow.get(url)
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
@@ -35,9 +44,8 @@ def fetch_image(url)
   response.body.to_s
 end
 
-def load_project(project_slug, datasources_slug, url, url_articles)
+def load_project(project_slug, datasources_slug, url)
   settings = fetch_json(url)
-  articles = fetch_json(url_articles)
 
   icon_font_css_url = settings['icon_font_css_url']
   if icon_font_css_url.include?('teritorio.css')
@@ -49,17 +57,16 @@ def load_project(project_slug, datasources_slug, url, url_articles)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec(
       '
-      INSERT INTO projects(slug, datasources_slug, icon_font_css_url, polygon, polygons_extra, articles, default_country, default_country_state_opening_hours)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO projects(slug, datasources_slug, icon_font_css_url, polygon, polygons_extra, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
       ON CONFLICT (slug)
       DO UPDATE SET
         datasources_slug = $2,
         icon_font_css_url = $3,
         polygon = $4,
         polygons_extra = $5,
-        articles = $6,
-        default_country = $7,
-        default_country_state_opening_hours = $8
+        default_country = $6,
+        default_country_state_opening_hours = $7
       RETURNING
         id
       ',
@@ -69,12 +76,6 @@ def load_project(project_slug, datasources_slug, url, url_articles)
         icon_font_css_url,
         settings['polygon']['data'].to_json,
         settings['polygons_extra']&.transform_values{ |polygon| polygon['data'].split('/')[-1].split('.')[0].to_i }&.to_json,
-        articles.collect{ |article|
-          {
-            title: { fr: article['title'] },
-            url: { fr: article['url'] },
-          }
-        }.to_json,
         settings['default_country'],
         settings['default_country_state_opening_hours'],
       ]
@@ -100,6 +101,71 @@ def load_project(project_slug, datasources_slug, url, url_articles)
     end
 
     [project_id, settings]
+  }
+end
+
+def load_articles(project_id, base_url, url_articles)
+  base_url = base_url.split('/')[0..2].join('/') + '/'
+  articles = fetch_json(url_articles)
+
+  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('DELETE FROM projects_articles WHERE projects_id = $1', [project_id])
+
+    articles.each_with_index { |article, index|
+      url = article['url']
+      title = article['title']
+
+      if url.start_with?(base_url)
+        html = fetch_html(article['url'])
+        html = html.gsub(base_url, '/')
+
+        slug = url.split('/')[5]
+
+        article_id = conn.exec("
+          SELECT
+            articles.id
+          FROM
+            articles
+            JOIN articles_translations ON
+              articles_translations.articles_id = articles.id
+          WHERE
+            articles.project_id = $1 AND
+            articles_translations.languages_code = 'fr-FR' AND
+            articles_translations.slug = $2
+        ", [project_id, slug]) { |result|
+          result.first&.[]('id')&.to_i
+        }
+
+        if article_id.nil?
+          article_id = conn.exec("
+            INSERT INTO articles(project_id)
+            VALUES ($1)
+            RETURNING
+              id
+          ", [project_id]) { |result|
+            result.first['id'].to_i
+          }
+        end
+
+        conn.exec("
+          INSERT INTO articles_translations(articles_id, languages_code, title, slug, body)
+          VALUES ($1, $2, $3, $4, $5)
+          ON CONFLICT (articles_id, languages_code)
+          DO UPDATE SET
+            title = $3,
+            slug = $4,
+            body = $5
+          ", [article_id, 'fr-FR', title, slug, html])
+
+        conn.exec("
+          INSERT INTO projects_articles(projects_id, articles_id, index)
+          VALUES ($1, $2, $3)
+          ", [project_id, article_id, index])
+      else
+        puts "[ERROR] Article not in base url: #{url}"
+        exit
+      end
+    }
   }
 end
 
@@ -1345,7 +1411,9 @@ namespace :wp do
     url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
     puts "\n====\n#{project_slug}\n====\n\n"
     base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json", "#{base_url}/articles.json?slug=non-classe")
+    project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
+
+    load_articles(project_id, base_url, "#{base_url}/articles.json?slug=non-classe")
 
     role_uuid, policy_uuid = create_role(project_slug)
     user_uuid = create_user(project_id, project_slug, role_uuid)

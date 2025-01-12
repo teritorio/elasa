@@ -63,10 +63,12 @@ c06ffc91-572e-4ff1-a700-333d65f1a034	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	f40
 --
 
 COPY public.directus_collections (collection, icon, note, display_template, hidden, singleton, translations, archive_field, archive_app_filter, archive_value, unarchive_value, sort_field, accountability, color, item_duplication_fields, sort, "group", collapse, preview_url, versioning) FROM stdin;
-fields	sell	\N	{{field}}{{group}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
+articles	article	\N	{{article_translations.title}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	6	projects	open	\N	f
+articles_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	articles	open	\N	f
+fields	sell	\N	{{field}}{{group}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
 fields_fields	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	\N	open	\N	f
 fields_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	fields	open	\N	f
-filters	filter_alt	\N	{{filters_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
+filters	filter_alt	\N	{{filters_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	projects	open	\N	f
 filters_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	filters	open	\N	f
 junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	\N	open	\N	f
 languages	\N	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
@@ -79,10 +81,11 @@ menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	men
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
 pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	pois	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
+projects_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
 projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
-sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	projects	open	\N	f
+sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	7	projects	open	\N	f
 sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
-themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
 \.
 
@@ -205,7 +208,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	9	half	\N	\N	\N	f	category	\N	\N
 150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	10	half	\N	\N	\N	f	category	\N	\N
 151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	11	half	\N	\N	\N	f	category	\N	\N
-152	projects	articles	cast-json	list	{"fields":[{"field":"title","name":"title","type":"json","meta":{"field":"title","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}},{"field":"url","name":"url","type":"json","meta":{"field":"url","type":"json","interface":"input-code","required":true,"options":{"language":"JSON","lineNumber":false}}}]}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
@@ -280,6 +282,20 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
 561	menu_items_filters	index	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
+562	articles	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
+565	articles	article_translations	translations	translations	{"defaultOpenSplitView":true,"defaultLanguage":"en-US","userLanguage":true}	\N	\N	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+566	articles_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+567	articles_translations	articles_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+568	articles_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+569	articles_translations	title	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
+570	articles_translations	slug	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+571	articles_translations	body	\N	input-rich-text-html	{"toolbar":["undo","redo","bold","italic","underline","h1","h2","h3","numlist","bullist","removeformat","cut","copy","paste","blockquote","customLink","customImage","customMedia","hr","code","fullscreen"],"tinymceOverrides":{"entity_encoding":"raw"}}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	t	\N	\N	\N
+573	projects	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"id":{"_eq":"{{id}}"}}}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+574	projects_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+575	projects_articles	projects_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+576	projects_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+577	projects_articles	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -522,6 +538,18 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 239	fields_translations	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 240	fields_translations	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 241	fields_translations	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+242	articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+243	articles_translations	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+244	projects_articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+245	articles	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,article_translations,project_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+246	articles	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,article_translations,project_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+247	articles	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+248	articles_translations	read	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,title,articles_id,slug,languages_code,body	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+249	articles_translations	update	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,title,articles_id,slug,languages_code,body	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+250	articles_translations	delete	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+251	projects_articles	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,index,projects_id,articles_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+252	projects_articles	update	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,index,projects_id,articles_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+253	projects_articles	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 \.
 
 
@@ -575,6 +603,11 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 68	filters	property_begin	fields	\N	\N	\N	\N	\N	nullify
 69	filters	property_end	fields	\N	\N	\N	\N	\N	nullify
 70	filters	number_range_property	fields	\N	\N	\N	\N	\N	nullify
+71	articles_translations	languages_code	languages	\N	\N	\N	articles_id	\N	nullify
+72	articles_translations	articles_id	articles	article_translations	\N	\N	languages_code	\N	delete
+73	articles	project_id	projects	\N	\N	\N	\N	\N	nullify
+74	projects_articles	articles_id	articles	\N	\N	\N	projects_id	\N	nullify
+75	projects_articles	projects_id	projects	articles	\N	\N	articles_id	index	delete
 \.
 
 
@@ -649,7 +682,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 561, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 577, true);
 
 
 --
@@ -663,7 +696,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 241, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 253, true);
 
 
 --
@@ -677,7 +710,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 70, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 75, true);
 
 
 --
