@@ -134,7 +134,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 17	projects	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 20	projects	attributions	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-22	projects	bbox_line	\N	\N	\N	\N	\N	f	t	8	full	\N	\N	\N	f	\N	\N	\N
+22	projects	bbox_line	\N	\N	\N	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 23	sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 24	sources	project_id	\N	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 25	sources	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N

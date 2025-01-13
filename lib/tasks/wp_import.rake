@@ -57,16 +57,17 @@ def load_project(project_slug, datasources_slug, url)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec(
       '
-      INSERT INTO projects(slug, datasources_slug, icon_font_css_url, polygon, polygons_extra, default_country, default_country_state_opening_hours)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO projects(slug, datasources_slug, icon_font_css_url, polygon, bbox_line, polygons_extra, default_country, default_country_state_opening_hours)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       ON CONFLICT (slug)
       DO UPDATE SET
         datasources_slug = $2,
         icon_font_css_url = $3,
         polygon = $4,
-        polygons_extra = $5,
-        default_country = $6,
-        default_country_state_opening_hours = $7
+        bbox_line = $5,
+        polygons_extra = $6,
+        default_country = $7,
+        default_country_state_opening_hours = $8
       RETURNING
         id
       ',
@@ -75,6 +76,7 @@ def load_project(project_slug, datasources_slug, url)
         datasources_slug,
         icon_font_css_url,
         settings['polygon']['data'].to_json,
+        settings['bbox_line'].to_json,
         settings['polygons_extra']&.transform_values{ |polygon| polygon['data'].split('/')[-1].split('.')[0].to_i }&.to_json,
         settings['default_country'],
         settings['default_country_state_opening_hours'],

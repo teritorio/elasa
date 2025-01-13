@@ -22,21 +22,22 @@ def new_project(slug, datasources_slug, osm_id, theme, css, website)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec('
-      INSERT INTO projects(icon_font_css_url, polygon, slug, datasources_slug, articles, default_country, default_country_state_opening_hours, polygons_extra)
+      INSERT INTO projects(icon_font_css_url, polygon, bbox_line, slug, datasources_slug, default_country, default_country_state_opening_hours, polygons_extra)
       VALUES (
         $1,
         ST_Force2D(ST_GeomFromGeoJSON($2)),
-        $3, $4, $5, $6, $7, $8
+        st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
+        $3, $4, $5, $6, $7
       )
       ON CONFLICT (slug)
       DO UPDATE SET
         icon_font_css_url = $1,
         polygon = ST_Force2D(ST_GeomFromGeoJSON($2)),
+        bbox_line = st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
         datasources_slug = $4,
-        articles = $5,
-        default_country = $6,
-        default_country_state_opening_hours = $7,
-        polygons_extra = $8
+        default_country = $5,
+        default_country_state_opening_hours = $6,
+        polygons_extra = $7
       RETURNING id
     ', [
       css,

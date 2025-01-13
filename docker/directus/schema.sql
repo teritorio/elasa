@@ -1438,7 +1438,7 @@ CREATE TABLE public.projects (
     id integer NOT NULL,
     icon_font_css_url character varying NOT NULL,
     polygon public.geometry(Geometry,4326),
-    bbox_line public.geometry(LineString,4326) GENERATED ALWAYS AS (public.st_makeline(public.st_makepoint(public.st_xmin((polygon)::public.box3d), public.st_ymin((polygon)::public.box3d)), public.st_makepoint(public.st_xmax((polygon)::public.box3d), public.st_ymax((polygon)::public.box3d)))) STORED NOT NULL,
+    bbox_line public.geometry(LineString,4326),
     slug character varying(255) NOT NULL,
     default_country character varying(255),
     default_country_state_opening_hours character varying(255),
