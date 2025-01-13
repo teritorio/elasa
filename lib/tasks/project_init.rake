@@ -17,8 +17,11 @@ LANGS = {
 }
 
 def new_project(slug, datasources_slug, osm_id, theme, css, website)
-  osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
-  geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
+  if !osm_id.nil?
+    osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
+    osm_name = osm_tags['name']
+    geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
+  end
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     project_id = conn.exec('
@@ -41,10 +44,9 @@ def new_project(slug, datasources_slug, osm_id, theme, css, website)
       RETURNING id
     ', [
       css,
-      geojson.to_json,
+      geojson&.to_json,
       slug,
       datasources_slug,
-      [].to_json,
       'fr',
       'Nouvelle-Aquitaine',
       nil,
@@ -65,7 +67,7 @@ def new_project(slug, datasources_slug, osm_id, theme, css, website)
     ', [
       project_id,
       'fr-FR',
-      osm_tags['name'],
+      osm_name,
     ])
 
     theme_id = conn.exec('
@@ -109,8 +111,8 @@ def new_project(slug, datasources_slug, osm_id, theme, css, website)
     ', [
       theme_id,
       'fr-FR',
-      osm_tags['name'],
-      osm_tags['name'],
+      osm_name,
+      osm_name,
       website,
       website,
       nil, # keyword
@@ -542,7 +544,7 @@ namespace :project do
   task :new, [] => :environment do
     set_default_languages
 
-    slug, osm_id, theme, ontology, datasources_slug, website = ARGV[2..]
+    slug, osm_id, theme, ontology, datasources_slug, website = ARGV[2..].collect(&:presence)
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
@@ -551,14 +553,18 @@ namespace :project do
     role_uuid, policy_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
-    metadatas = load_from_source("#{datasource_url}/data", slug).first
-    i18ns = fetch_json("#{datasource_url}/data/#{slug}/i18n.json")
-    load_i18n(slug, i18ns)
-    schema = fetch_json("#{datasource_url}/data/#{slug}/schema.json")
-    filters = new_filter(project_id, schema, i18ns)
+    if !datasources_slug.nil?
+      metadatas = load_from_source("#{datasource_url}/data", slug).first
+      i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
+      load_i18n(slug, i18ns)
+      schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/schema.json")
+      filters = new_filter(project_id, schema, i18ns)
+    end
     root_menu_id = new_root_menu(project_id)
-    new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
-    new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
+    if !datasources_slug.nil?
+      new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
+      new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
+    end
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
