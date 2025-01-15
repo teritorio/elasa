@@ -35,7 +35,7 @@ class Api01Controller < ApplicationController
       return
     end
 
-    articles = JSON.parse(row_project)['articles']
+    articles = JSON.parse(row_project)['articles'] || []
     respond_to do |format|
       format.json {
         render json: articles
