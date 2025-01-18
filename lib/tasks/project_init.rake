@@ -169,8 +169,12 @@ def insert_menu_item(conn, **args)
   menu_item_id
 end
 
-def insert_menu_group(conn, project_id, parent_id, class_path, css_parser, classs, index)
-  icon = css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3]
+def find_icon(css_parser, icons)
+  icons.compact.reverse.find{ |icon| css_parser.find_rule_sets([".teritorio-#{icon}:before"]).first }
+end
+
+def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser, classs, index)
+  icon = find_icon(css_parser, icons)
   insert_menu_item(
     conn,
     project_id: project_id,
@@ -189,7 +193,7 @@ def insert_menu_group(conn, project_id, parent_id, class_path, css_parser, class
 end
 
 def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
-  group_ids = classs['osm_tags_extra'].collect{ |group|
+  group_ids = classs['properties_extra'].collect{ |group|
     next if group.include?('i18n')
 
     begin
@@ -199,8 +203,8 @@ def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids
       raise
     end
   }.compact
-  fields = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last.keys }.compact.flatten
-  field_ids = classs['osm_tags_extra'].collect{ |group| group_fields_ids[group].last.values }.compact.flatten
+  fields = classs['properties_extra'].collect{ |group| group_fields_ids[group].last.keys }.compact.flatten
+  field_ids = classs['properties_extra'].collect{ |group| group_fields_ids[group].last.values }.compact.flatten
 
   popup_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
@@ -228,8 +232,8 @@ def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids
   [fields, popup_fields_id, details_fields_id]
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, css_parser, classs, index, group_fields_ids, _filters)
-  if classs['osm_tags_extra'] == ['all']
+def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, group_fields_ids, _filters)
+  if classs['properties_extra'] == ['all']
     fields = group_fields_ids.values.last.last.keys
     popup_fields_id = group_fields_ids.values.first.first
     details_fields_id = group_fields_ids.values.first.first
@@ -237,7 +241,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
     fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
   end
 
-  icon = (class_path.nil? ? nil : (css_parser.find_rule_sets([".teritorio-#{class_path[-1]}:before"]).first ? class_path[-1] : css_parser.find_rule_sets([".teritorio-#{class_path[-2]}:before"]).first ? class_path[-2] : class_path[-3])) || 'extra-point'
+  icon = find_icon(css_parser, icons)
   category_id = insert_menu_item(
     conn,
     project_id: project_id,
@@ -293,8 +297,8 @@ def insert_menu_category(conn, project_id, parent_id, class_path, source_slug, c
 end
 
 def insert_group_fields(conn, project_id, ontology)
-  osm_tags_extra = ontology['osm_tags_extra']
-  osm_tags_extra.to_h{ |group_id, fields|
+  properties_extra = ontology['properties_extra']
+  properties_extra.to_h{ |group_id, fields|
     group_field_id = conn.exec(
       'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
       [project_id, 'group', group_id, 'standard']
@@ -383,7 +387,13 @@ def new_root_menu(project_id)
 end
 
 def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
-  ontology = fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json") if %w[tourism city].include?(theme)
+  ontology =
+    if theme == 'bpe'
+      fetch_json('https://datasources.teritorio.xyz/0.1/config/insee_bpe-ontology-2023.json')
+    elsif %w[tourism city].include?(theme)
+      fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json")
+    end
+
   return if ontology.nil?
 
   css_parser = CssParser::Parser.new
@@ -407,30 +417,32 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
 
     group_fields_ids = insert_group_fields(conn, project_id, ontology)
 
-    ontology['superclass'].each_with_index{ |id_superclass, superclass_index|
+    ontology['group'].each_with_index{ |id_superclass, superclass_index|
       superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
-      superclass_menu_id = insert_menu_group(conn, project_id, poi_menu_id, [superclass_id], css_parser, superclass, superclass_index)
-      superclass['class'].each_with_index{ |id_class, class_index|
+      superclass_menu_id = insert_menu_group(conn, project_id, poi_menu_id, [superclass_id], [superclass['icon']], css_parser, superclass, superclass_index)
+      superclass['group'].each_with_index{ |id_class, class_index|
         class_id, classs = id_class
         classs['color_fill'] = superclass['color_fill']
         classs['color_line'] = superclass['color_line']
         classs['display_mode'] = 'large'
-        if classs.key?('subclass')
-          class_menu_id = insert_menu_group(conn, project_id, superclass_menu_id, [superclass_id, class_id], css_parser, classs, class_index)
-          classs['subclass'].each_with_index{ |id_subclass, subclass_index|
+        if classs.key?('group')
+          class_menu_id = insert_menu_group(conn, project_id, superclass_menu_id, [superclass_id, class_id], [superclass['icon'], classs['icon']], css_parser, classs, class_index)
+          classs['group'].each_with_index{ |id_subclass, subclass_index|
             subclass_id, subclass = id_subclass
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
             subclass['display_mode'] = 'large'
             class_path = [superclass_id, class_id, subclass_id]
             source_slug = class_path.join('-')
-            insert_menu_category(conn, project_id, class_menu_id, class_path, source_slug, css_parser, subclass, subclass_index, group_fields_ids, filters)
+            icons = [superclass['icon'], classs['icon'], subclass['icon']]
+            insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, group_fields_ids, filters)
           }
         else
           class_path = [superclass_id, class_id]
           source_slug = class_path.join('-')
-          insert_menu_category(conn, project_id, superclass_menu_id, class_path, source_slug, css_parser, classs, class_index, group_fields_ids, filters)
+          icons = [superclass['icon'], classs['icon']]
+          insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, group_fields_ids, filters)
         end
       }
     }
@@ -442,13 +454,13 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
   css_parser.load_uri!("/srv/app/public#{css}")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    osm_tags_extra = {
+    properties_extra = {
       'all' => schema['properties'].to_h{ |key, _sch|
         [key, nil]
       },
     }
 
-    group_fields_ids = insert_group_fields(conn, project_id, { 'osm_tags_extra' => osm_tags_extra })
+    group_fields_ids = insert_group_fields(conn, project_id, { 'properties_extra' => properties_extra })
 
     poi_menu_id = insert_menu_item(
       conn,
@@ -473,10 +485,10 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
         'color_line' => '#ff0000',
         'display_mode' => 'compact',
         'zoom' => 16,
-        'osm_tags_extra' => ['all'],
+        'properties_extra' => ['all'],
       }
 
-      insert_menu_category(conn, project_id, poi_menu_id, nil, slug, css_parser, subclass, index, group_fields_ids, filters)
+      insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, group_fields_ids, filters)
     }
   }
 end
@@ -561,9 +573,10 @@ namespace :project do
       filters = new_filter(project_id, schema, i18ns)
     end
     root_menu_id = new_root_menu(project_id)
-    if !datasources_slug.nil?
-      new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
+    if datasources_slug.nil?
       new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
+    else
+      new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
     end
 
     exit 0 # Beacause of manually deal with rake command line arguments
