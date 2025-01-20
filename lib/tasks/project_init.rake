@@ -390,7 +390,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
     if theme == 'bpe'
       fetch_json('https://datasources.teritorio.xyz/0.1/config/insee_bpe-ontology-2023.json')
     elsif %w[tourism city].include?(theme)
-      fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-1.0.json")
+      fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-2.0.json")
     end
 
   return if ontology.nil?
