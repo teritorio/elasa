@@ -10,12 +10,6 @@ require_relative 'commons'
 require_relative 'sources_load'
 
 
-LANGS = {
-  'fr' => 'fr-FR',
-  'en' => 'en-US',
-  'es' => 'es-ES',
-}
-
 def new_project(slug, datasources_slug, osm_id, theme, css, website)
   if !osm_id.nil?
     osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
@@ -159,7 +153,7 @@ def insert_menu_item(conn, **args)
       VALUES ($1, $2, $3, $4, $5)
       ', [
         menu_item_id,
-        LANGS[lang.to_s],
+        lang.to_s,
         args.dig(:slugs, lang),
         args.dig(:name, lang),
         args.dig(:name_singular, lang),
@@ -178,12 +172,12 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
   insert_menu_item(
     conn,
     project_id: project_id,
-    slugs: { en: classs['label']['en']&.slugify, fr: classs['label']['fr']&.slugify }.compact,
+    slugs: { 'en-US' => classs['label']['en-US']&.slugify, 'fr-FR' => classs['label']['fr-FR']&.slugify }.compact,
     index_order: index,
     parent_id: parent_id,
     type: 'menu_group',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact,
+    name: { 'en-US' => classs['label']['en-US']&.upcase_first, 'fr-FR' => classs['label']['fr-FR']&.upcase_first || classs['label']['en-US']&.upcase_first }.compact,
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
@@ -250,7 +244,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
     parent_id: parent_id,
     type: 'category',
     ###### TODO recup trad fr
-    name: { en: classs['label']['en']&.upcase_first, fr: classs['label']['fr']&.upcase_first || classs['label']['en']&.upcase_first }.compact,
+    name: { 'en-US' => classs['label']['en-US']&.upcase_first, 'fr-FR' => classs['label']['fr-FR']&.upcase_first || classs['label']['en-US']&.upcase_first }.compact,
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
@@ -341,10 +335,10 @@ def new_root_menu(project_id)
     root_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
-      slugs: { en: 'root', fr: 'racine', es: 'raiz' },
+      slugs: { 'en-US' => 'root', 'fr-FR' => 'racine', 'es-ES' => 'raiz' },
       index_order: 1,
       type: 'menu_group',
-      name: { en: 'Root Menu', fr: 'Menu racine', es: 'Menú raíz' }.compact,
+      name: { 'en-US' => 'Root Menu', 'fr-FR' => 'Menu racine', 'es-ES' => 'Menú raíz' }.compact,
       display_mode: 'compact',
       icon: 'teritorio teritorio-extra-point',
       color_fill:	'#ff0000',
@@ -370,11 +364,11 @@ def new_root_menu(project_id)
     insert_menu_item(
       conn,
       project_id: project_id,
-      slugs: { en: 'search', fr: 'search', es: 'búsqueda' },
+      slugs: { 'en-US' => 'search', 'fr-FR' => 'search', 'es-ES' => 'búsqueda' },
       parent_id: root_menu_id,
       index_order: 1,
       type: 'search',
-      name: { en: 'Search', fr: 'Recherche', es: 'Búsqueda' }.compact,
+      name: { 'en-US' => 'Search', 'fr-FR' => 'Recherche', 'es-ES' => 'Búsqueda' }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-extra-point',
@@ -403,11 +397,11 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
-      slugs: { en: 'pois', fr: 'poi', es: 'poi' },
+      slugs: { 'en-US' => 'pois', 'fr-FR' => 'poi', 'es-ES' => 'poi' },
       parent_id: root_menu_id,
       index_order: 2,
       type: 'menu_group',
-      name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
+      name: { 'en-US' => 'POIs', 'fr-FR' => 'POI', 'es-ES' => 'PDI' }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-extra-point',
@@ -465,11 +459,11 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
-      slugs: { en: 'pois', fr: 'poi', es: 'poi' },
+      slugs: { 'en-US' => 'pois', 'fr-FR' => 'poi', 'es-ES' => 'poi' },
       parent_id: root_menu_id,
       index_order: 2,
       type: 'menu_group',
-      name: { en: 'POIs', fr: 'POI', es: 'PDI' }.compact,
+      name: { 'en-US' => 'POIs', 'fr-FR' => 'POI', 'es-ES' => 'PDI' }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-extra-point',
@@ -504,7 +498,7 @@ def new_filter(project_id, schema, i18ns)
         spec['enum']
       end
     }.compact.except('tactile_paving', 'pastry', 'mobile_phone:repair', 'computer:repair', 'sport', 'access', 'dispensing').collect{ |key, enum|
-      name = i18ns.dig(key, '@default') || { 'en' => key }
+      name = i18ns.dig(key, '@default') || { 'en-US' => key }
 
       field_id = conn.exec(
         '
@@ -543,7 +537,7 @@ def new_filter(project_id, schema, i18ns)
       name.keys.each{ |lang|
         conn.exec(
           'INSERT INTO filters_translations(filters_id, languages_code, name) VALUES ($1, $2, $3)',
-          [filter_id, LANGS[lang], name[lang]]
+          [filter_id, lang, name[lang]]
         )
       }
       [key, filter_id]

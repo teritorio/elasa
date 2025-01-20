@@ -602,8 +602,8 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       'menu_group' => {
         'id' => 0,
         'name' => {
-          'en' => 'Root',
-          'fr' => 'Racine',
+          'en-US' => 'Root',
+          'fr-FR' => 'Racine',
         },
         'icon' => 'teritorio teritorio-beef00',
         'color_fill' => '#beef00',

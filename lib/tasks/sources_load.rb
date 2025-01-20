@@ -37,7 +37,7 @@ def load_source(conn, project_slug, metadatas)
     metadatas.each{ |id, metadata|
       conn.put_copy_data([
         id,
-        metadata['name'].transform_keys{ |k| { 'fr' => 'fr-FR', 'en' => 'en-US' }[k] }.to_json,
+        metadata['name'].to_json,
         metadata['attribution']
       ])
     }
@@ -292,7 +292,7 @@ def load_i18n(project_slug, i18ns)
       WITH translations_import AS (
         SELECT
           fields.id AS field_id,
-          translations_import.field_translations::json->'@default'->>'fr' as field_translations
+          translations_import.field_translations::json->'@default'->>'fr-FR' as field_translations
         FROM
           translations_import
           JOIN projects ON
@@ -301,7 +301,7 @@ def load_i18n(project_slug, i18ns)
             fields.project_id = projects.id AND
             fields.field = translations_import.field
         WHERE
-          translations_import.field_translations::json->'@default'->>'fr' IS NOT NULL
+          translations_import.field_translations::json->'@default'->>'fr-FR' IS NOT NULL
       )
       MERGE INTO
         fields_translations

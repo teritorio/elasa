@@ -99,7 +99,7 @@ DROP FUNCTION IF EXISTS id_from_slugs_menu_item;
 CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint AS $$
     SELECT
         coalesce(
-            CASE WHEN slugs->>'fr' ~ E'^\\d+$' THEN (slugs->>'fr')::bigint END,
+            CASE WHEN slugs->>'fr-FR' ~ E'^\\d+$' THEN (slugs->>'fr-FR')::bigint END,
             id
         )
     ;
@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION project(
         jsonb_strip_nulls(
             to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' ||
             jsonb_build_object(
-                'name', projects.name->'fr',
+                'name', projects.name->'fr-FR',
                 'polygon', jsonb_build_object(
                     'type', 'geojson',
                     'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
@@ -148,8 +148,8 @@ CREATE OR REPLACE FUNCTION project(
                 'articles', (
                     SELECT
                         jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
-                            'title', articles.title->'fr'
+                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr-FR') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
+                            'title', articles.title->'fr-FR'
                         )) ORDER BY projects_articles.index)
                     FROM
                         projects_articles
@@ -168,7 +168,7 @@ CREATE OR REPLACE FUNCTION project(
                                 - 'explorer_mode' - 'favorites_mode' ||
                             jsonb_build_object(
                                 'title', themes.name,
-                                'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
+                                'keywords', nullif(coalesce(themes.keywords->>'fr-FR', ''), ''),
                                 'logo_url', _base_url || '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
                                 'favicon_url', _base_url || '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
@@ -203,7 +203,7 @@ CREATE OR REPLACE FUNCTION article(
 ) AS $$
     SELECT
         '<!DOCTYPE html>
-<html lang="fr">
+<html lang="fr-FR">
 <title>' || articles_translations.title || '</title>
 <body>
 <h1>' || articles_translations.title || '</h1>
@@ -654,7 +654,7 @@ CREATE OR REPLACE FUNCTION menu(
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
+                        -- 'slug', menu_items.slug->'fr-FR',
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
@@ -664,7 +664,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
+                        -- 'slug', menu_items.slug->'fr-FR',
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
@@ -679,7 +679,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
+                        -- 'slug', menu_items.slug->'fr-FR',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
@@ -940,16 +940,16 @@ CREATE OR REPLACE FUNCTION pois(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            coalesce(menu_items.name_singular->>'fr', menu_items.name->>'fr') AS name_singular,
+            coalesce(menu_items.name_singular->>'fr-FR', menu_items.name->>'fr-FR') AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             jsonb_build_object(
                 'popup_fields', menu_items.popup_fields,
                 'details_fields', menu_items.details_fields,
                 'list_fields', menu_items.list_fields,
-                'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                'class_label', jsonb_build_object('fr', menu_items.name->'fr-FR'),
+                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr-FR'),
+                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr-FR')
                 -- 'unavoidable', menu_items.unavoidable -- TODO -------
             ) AS editorial,
             jsonb_build_object(
@@ -1007,7 +1007,7 @@ CREATE OR REPLACE FUNCTION pois(
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
                     coalesce(
                         CASE jsonb_typeof(pois.properties->'tags'->'route')
-                            WHEN 'object' THEN json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr'))
+                            WHEN 'object' THEN json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr-FR'))
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
@@ -1015,23 +1015,23 @@ CREATE OR REPLACE FUNCTION pois(
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
-                            pois.properties->'tags'->'name'->>'fr',
-                            pois.properties->'natives'->'name'->>'fr',
+                            pois.properties->'tags'->'name'->>'fr-FR',
+                            pois.properties->'natives'->'name'->>'fr-FR',
                             menu.name_singular
                         ),
-                        'official_name', pois.properties->'tags'->'official_name'->'fr',
-                        'loc_name', pois.properties->'tags'->'loc_name'->'fr',
-                        'alt_name', pois.properties->'tags'->'alt_name'->'fr',
+                        'official_name', pois.properties->'tags'->'official_name'->'fr-FR',
+                        'loc_name', pois.properties->'tags'->'loc_name'->'fr-FR',
+                        'alt_name', pois.properties->'tags'->'alt_name'->'fr-FR',
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
                             WHEN 'true' THEN short_description(coalesce(
-                                pois.properties->'tags'->'description'->>'fr',
-                                pois.properties->'natives'->'description'->>'fr'
+                                pois.properties->'tags'->'description'->>'fr-FR',
+                                pois.properties->'natives'->'description'->>'fr-FR'
                             ), 130)
                             ELSE coalesce(
-                                pois.properties->'tags'->'description'->>'fr',
-                                pois.properties->'natives'->'description'->>'fr'
+                                pois.properties->'tags'->'description'->>'fr-FR',
+                                pois.properties->'natives'->'description'->>'fr-FR'
                             )
                             END,
                         'metadata', jsonb_build_object(
@@ -1054,7 +1054,7 @@ CREATE OR REPLACE FUNCTION pois(
                             'website:details', coalesce(
                                 pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
-                                    pois.properties->'tags'->'website:details'->>'fr',
+                                    pois.properties->'tags'->'website:details'->>'fr-FR',
                                     pois.properties->'natives'->>'website:details'
                                 ) END,
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
@@ -1159,15 +1159,15 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     SELECT
         jsonb_strip_nulls(jsonb_object_agg(
             key, jsonb_build_object(
-                'label', CASE WHEN key_translations->'@default'->>'fr' IS NOT NULL THEN jsonb_build_object(
-                    _lang, capitalize(key_translations->'@default'->>_lang)
+                'label', CASE WHEN key_translations->'@default'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
+                    'fr', capitalize(key_translations->'@default'->>'fr-FR')
                 ) END,
                 'values', (
                     SELECT
                         jsonb_object_agg(
                             key, jsonb_build_object(
                                 'label', jsonb_build_object(
-                                    _lang, capitalize(value->'@default:full'->>_lang)
+                                    'fr', capitalize(value->'@default:full'->>'fr-FR')
                                 )
                             )
                         )
