@@ -151,6 +151,11 @@ def insert_menu_item(conn, **args)
       '
       INSERT INTO menu_items_translations(menu_items_id, languages_code, slug, name, name_singular)
       VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (menu_items_id, languages_code)
+      DO UPDATE SET
+        slug = $3,
+        name = $4,
+        name_singular = $5
       ', [
         menu_item_id,
         lang.to_s,
