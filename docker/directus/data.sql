@@ -451,9 +451,9 @@ COPY public.directus_panels (id, dashboard, name, icon, color, show_header, note
 
 COPY public.directus_permissions (id, collection, action, permissions, validation, presets, fields, policy) FROM stdin;
 1	directus_files	create	{}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-2	directus_files	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-3	directus_files	update	{"_and":[{"_or":[{"uploaded_by":{"_eq":"$CURRENT_USER.id"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-4	directus_files	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+2	directus_files	read	{"_and":[{"_or":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}},{"_and":[{"project_id":{"_null":true}},{"uploaded_by":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}]}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+3	directus_files	update	{"_and":[{"_or":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}},{"_and":[{"project_id":{"_null":true}},{"uploaded_by":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}]}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+4	directus_files	delete	{"_and":[{"_or":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}},{"_and":[{"project_id":{"_null":true}},{"uploaded_by":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}]}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 5	directus_dashboards	create	{}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 6	directus_dashboards	read	{}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 7	directus_dashboards	update	{}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
