@@ -117,7 +117,7 @@ CREATE OR REPLACE FUNCTION project(
         jsonb_strip_nulls(
             to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' ||
             jsonb_build_object(
-                'name', projects.name->'fr-FR',
+                'name', projects.name->'fr',
                 'polygon', jsonb_build_object(
                     'type', 'geojson',
                     'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
@@ -148,8 +148,8 @@ CREATE OR REPLACE FUNCTION project(
                 'articles', (
                     SELECT
                         jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr-FR') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
-                            'title', articles.title->'fr-FR'
+                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
+                            'title', articles.title->'fr'
                         )) ORDER BY projects_articles.index)
                     FROM
                         projects_articles
@@ -168,7 +168,7 @@ CREATE OR REPLACE FUNCTION project(
                                 - 'explorer_mode' - 'favorites_mode' ||
                             jsonb_build_object(
                                 'title', themes.name,
-                                'keywords', nullif(coalesce(themes.keywords->>'fr-FR', ''), ''),
+                                'keywords', nullif(coalesce(themes.keywords->>'fr', ''), ''),
                                 'logo_url', _base_url || '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
                                 'favicon_url', _base_url || '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
@@ -654,7 +654,7 @@ CREATE OR REPLACE FUNCTION menu(
                 'selected_by_default', menu_items.selected_by_default,
                 'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr-FR',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
@@ -664,7 +664,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr-FR',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
@@ -679,7 +679,7 @@ CREATE OR REPLACE FUNCTION menu(
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
                     jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr-FR',
+                        -- 'slug', menu_items.slug->'fr',
                         'name', menu_items.name,
                         'href', menu_items.href,
                         'icon', menu_items.icon,
@@ -940,16 +940,16 @@ CREATE OR REPLACE FUNCTION pois(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            coalesce(menu_items.name_singular->>'fr-FR', menu_items.name->>'fr-FR') AS name_singular,
+            coalesce(menu_items.name_singular->>'fr', menu_items.name->>'fr') AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             jsonb_build_object(
                 'popup_fields', menu_items.popup_fields,
                 'details_fields', menu_items.details_fields,
                 'list_fields', menu_items.list_fields,
-                'class_label', jsonb_build_object('fr', menu_items.name->'fr-FR'),
-                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr-FR'),
-                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr-FR')
+                'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
+                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
                 -- 'unavoidable', menu_items.unavoidable -- TODO -------
             ) AS editorial,
             jsonb_build_object(
