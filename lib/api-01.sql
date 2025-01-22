@@ -290,7 +290,7 @@ BEGIN
             j AS (
                 SELECT
                     pois_id AS id,
-                    substring(languages_code, 1, 2) AS languages_code,
+                    languages_code AS languages_code,
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).key,
                     (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).value
                 FROM
