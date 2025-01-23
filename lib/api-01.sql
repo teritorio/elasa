@@ -989,7 +989,13 @@ CREATE OR REPLACE FUNCTION pois(
                         WHEN 0 THEN pois.geom
                         ELSE ST_PointOnSurface(pois.geom)
                         END
-                    WHEN 'bbox' THEN ST_Envelope(pois.geom)
+                    WHEN 'bbox' THEN -- ST_Envelope(pois.geom)
+                        -- When require bbox, geom should stay a point,
+                        -- while using the dedicated bbox geojson attrib for bbox
+                        CASE ST_Dimension(pois.geom)
+                        WHEN 0 THEN pois.geom
+                        ELSE ST_PointOnSurface(pois.geom)
+                        END
                     WHEN 'point_or_bbox' THEN
                         CASE ST_Dimension(pois.geom)
                         WHEN 0 THEN pois.geom
@@ -998,6 +1004,7 @@ CREATE OR REPLACE FUNCTION pois(
                     ELSE pois.geom
                     END
                 )::jsonb,
+                'bbox', CASE WHEN ST_Dimension(ST_Envelope(pois.geom)) > 0 THEN ST_Envelope(pois.geom) END,
                 'properties',
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
