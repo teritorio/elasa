@@ -36,6 +36,7 @@ services:
   directus:
     build:
       context: docker/directus/
+    image: ghcr.io/teritorio/elasa-directus:master
     ports:
       - 8055:8055
     volumes:
@@ -76,6 +77,7 @@ services:
   api:
     build:
       context: .
+    image: ghcr.io/teritorio/elasa-api:master
     environment:
       <<: *common-environment
       # RAILS_ENV: ${RAILS_ENV:-production}
