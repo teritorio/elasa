@@ -875,10 +875,13 @@ components:
               description: CSS icon.
             color_fill:
               type: string
-              description: CSS color.
+              description: CSS color for fill and background.
             color_line:
               type: string
-              description: CSS color.
+              description: CSS color for line and border.
+            color_text:
+              type: string
+              description: CSS color for text over background of color_fill.
             filter_property:
               type: string
               description: Only for `type=menu_item`. Property to filter on.

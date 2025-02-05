@@ -1009,7 +1009,8 @@ CREATE OR REPLACE FUNCTION pois(
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
                         - 'description' - 'website:details'
-                        - 'addr' - 'ref' - 'route' - 'source' ||
+                        - 'addr' - 'ref' - 'route' - 'source'
+                        - 'colour' - 'colour:text' ||
                     coalesce(json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
                     coalesce(
@@ -1067,7 +1068,11 @@ CREATE OR REPLACE FUNCTION pois(
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
                             )
                         ),
-                        'display', menu.display
+                        'display', menu.display || jsonb_strip_nulls(jsonb_build_object(
+                            'color_fill', pois.properties->'tags'->'colour',
+                            'color_line', pois.properties->'tags'->'colour',
+                            'color_text', pois.properties->'tags'->'colour:text'
+                        ))
                     )
             )) AS feature
         FROM
