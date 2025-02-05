@@ -169,6 +169,8 @@ def insert_menu_item(conn, **args)
 end
 
 def find_icon(css_parser, icons)
+  return if icons.nil?
+
   icons.compact.reverse.find{ |icon| css_parser.find_rule_sets([".teritorio-#{icon}:before"]).first }
 end
 
@@ -564,7 +566,11 @@ namespace :project do
     role_uuid, policy_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
-    if !datasources_slug.nil?
+    if datasources_slug.nil?
+      metadatas = {}
+      schema = {}
+      filters = {}
+    else
       metadatas = load_from_source("#{datasource_url}/data", slug).first
       i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
       load_i18n(slug, i18ns)
@@ -572,11 +578,10 @@ namespace :project do
       filters = new_filter(project_id, schema, i18ns)
     end
     root_menu_id = new_root_menu(project_id)
-    if datasources_slug.nil?
-      new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
-    else
+    if !datasources_slug.nil?
       new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
     end
+    new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
