@@ -1138,7 +1138,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
             coalesce(fields.group, fields.field) AS key,
             CASE WHEN fields_translations.name IS NULL THEN NULL ELSE json_build_object(
                 '@default', json_build_object(
-                    substring(languages_code, 1, 2), fields_translations.name
+                    languages_code, fields_translations.name
                 )
             ) END AS key_translations,
             values_translations
