@@ -1123,6 +1123,12 @@ CREATE OR REPLACE FUNCTION pois(
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
+CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
+(
+    sfunc = jsonb_concat,
+    stype = jsonb,
+    initcond = '{}'
+);
 
 DROP FUNCTION IF EXISTS attribute_translations;
 CREATE OR REPLACE FUNCTION attribute_translations(
@@ -1167,6 +1173,19 @@ CREATE OR REPLACE FUNCTION attribute_translations(
         WHERE
             directus_fields.collection LIKE 'local-' || _project_slug || '-%' AND
             translations IS NOT NULL
+    ),
+    translation AS (
+        SELECT
+            key,
+            jsonb_merge_agg(coalesce(key_translations::jsonb, '{}'::jsonb)) AS key_translations,
+            jsonb_merge_agg(coalesce(values_translations::jsonb, '{}'::jsonb)) AS values_translations
+        FROM (
+            SELECT * FROM translation_fields
+            UNION ALL
+            SELECT * FROM translations_local
+        )
+        GROUP BY
+            key
     )
     SELECT
         jsonb_strip_nulls(jsonb_object_agg(
@@ -1184,14 +1203,11 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                             )
                         )
                     FROM
-                        json_each(values_translations)
+                        jsonb_each(values_translations)
                 )
             )
         ORDER BY key))::text
-    FROM (
-        SELECT * FROM translation_fields
-        UNION ALL
-        SELECT * FROM translations_local
-    ) AS translations
+    FROM
+        translation
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
