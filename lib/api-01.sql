@@ -473,7 +473,9 @@ CREATE OR REPLACE FUNCTION filter_values(
             jsonb_agg(
                 jsonb_build_object(
                     'value', value,
-                    'name', fields.values_translations->value->'@default:full'
+                    'name', jsonb_build_object(
+                        'fr', capitalize(fields.values_translations->value->'@default:full'->>'fr-FR')
+                    )
                 )
             )
         ) AS filter_values
