@@ -148,7 +148,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}}	related-values	{"template":null}	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":null}	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
@@ -161,7 +161,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
 71	menu_items	style_merge	cast-boolean	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	category	\N	\N
 73	menu_items	zoom	\N	slider	{"minValue":12,"maxValue":18}	\N	\N	f	f	6	half	\N	\N	\N	f	category	\N	\N
-74	menu_items	sources	m2m	list-m2m	{"template":"{{sources_id.slug}}","enableLink":true}	\N	\N	f	f	1	full	\N	\N	\N	f	category	\N	\N
+74	menu_items	sources	m2m	list-m2m	{"template":"{{sources_id.slug}}","enableLink":true,"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	1	full	\N	\N	\N	f	category	\N	\N
 75	menu_items_sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 76	menu_items_sources	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 77	menu_items_sources	sources_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
