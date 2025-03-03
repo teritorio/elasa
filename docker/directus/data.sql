@@ -112,7 +112,6 @@ COPY public.directus_dashboards (id, name, icon, note, date_created, user_create
 
 COPY public.directus_extensions (enabled, id, folder, source, bundle) FROM stdin;
 t	5006d916-20a3-4706-8f31-583e8cfe74cb	directus-extension-hook	local	\N
-t	b5c3eb95-61a6-4b41-9396-17087fe20254	directus-extension-schema-sync	module	\N
 t	a4b66d1b-c7fe-4bc2-bd22-6c3d3ab0e83f	directus-extension-create-local-table	local	\N
 \.
 
