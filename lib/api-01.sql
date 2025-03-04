@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION project(
 ) AS $$
     SELECT
         jsonb_strip_nulls(
-            to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' ||
+            to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' - 'api_key' - 'datasources_slug' ||
             jsonb_build_object(
                 'name', projects.name->'fr',
                 'polygon', jsonb_build_object(
@@ -291,8 +291,8 @@ BEGIN
                 SELECT
                     pois_id AS id,
                     languages_code AS languages_code,
-                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).key,
-                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''' || source.local_id || ''')).value
+                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''pois_id'')).key,
+                    (jsonb_each_text(row_to_json(t.*)::jsonb - ''id'' - ''languages_code'' - ''pois_id'')).value
                 FROM
                     "' || source.table_name_t || '" AS t
             ),
