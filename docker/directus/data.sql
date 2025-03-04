@@ -129,7 +129,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 7	themes	project_id	\N	select-dropdown-m2o	\N	related-values	{"template":"{{slug}}"}	t	t	2	full	\N	\N	\N	f	\N	\N	\N
 8	themes	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 15	themes	id	\N	\N	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
-16	projects	themes	o2m	list-o2m	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+16	projects	themes	o2m	list-o2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 17	projects	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 20	projects	attributions	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 21	projects	icon_font_css_url	\N	\N	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
