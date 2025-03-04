@@ -636,6 +636,8 @@ components:
           enum: ['Feature']
         geometry:
           type: object
+        bbox:
+          type: object
         properties:
           type: object
           additionalProperties:

@@ -17,7 +17,7 @@ def schema_for(path)
 end
 
 def validate(url_base)
-  schema = YAML.safe_load_file('public/elasa-0.1.swagger.yaml')
+  schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/settings.json"), fragment: schema_for('settings.json')) and puts 'settings.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/articles.json"), fragment: schema_for('articles.json')) and puts 'articles.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/menu.json"), fragment: schema_for('menu.json')) and puts 'menu.json [valid]'

@@ -16,7 +16,7 @@ class Api01ControllerTest < ActionController::TestCase
     conn.exec(File.new('tests/elasa-fixtures.sql').read)
     conn.exec(File.new('lib/api-01.sql').read)
   }
-  @@schema = YAML.safe_load_file('public/elasa-0.1.swagger.yaml')
+  @@schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
 
   def schema_for(path)
     path = "/{project}/{theme}/#{path}".gsub('/', '~1')
