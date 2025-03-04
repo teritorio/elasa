@@ -208,8 +208,6 @@ def load_pois(conn, project_slug, source_slug, pois)
 end
 
 def load_from_source(datasource_url, project_slug)
-  projects = fetch_json("#{datasource_url}.json")
-
   # Output a table of current connections to the DB
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec_params('SELECT slug, datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
