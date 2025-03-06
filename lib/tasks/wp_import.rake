@@ -341,6 +341,27 @@ def load_fields(conn, project_id, pois, menu_items, i18ns)
     puts "[ERROR] Mutiple fields configuration for categrories #{multiple_config} - IGNORED"
   end
 
+  invalid_fields = fields.collect{ |f| [f[1], f[2]&.pluck('fields')&.flatten(1), f[3]].flatten(1) }.flatten(2).compact.select{ |field| /[ \t=]/.match?(field['field']) }.uniq
+  if !invalid_fields.empty?
+    puts "[ERROR] Invalid field name [ \t=] #{invalid_fields.join(', ')}"
+  end
+
+  field_list_with_label = fields.pluck(3).flatten(1).compact.select{ |f| !f['label'].nil? }.uniq
+  if !field_list_with_label.empty?
+    puts "[ERROR] Fields list with label #{field_list_with_label.join(', ')}"
+  end
+
+  # details_fields
+  field_with_multiple_label_popup_confg = fields.collect{ |f| f[2]&.pluck('fields')&.flatten(1) }.flatten(1).compact.group_by{ |field| field['field'] }.select{ |_key, group| group.pluck('label').uniq.size > 1 }.collect(&:first)
+  if !field_with_multiple_label_popup_confg.empty?
+    puts "[ERROR] Fields with multiple popup details configurations #{field_with_multiple_label_popup_confg.join(', ')}"
+  end
+
+  field_with_multiple_label_detail_confg = fields.collect{ |f| f[2]&.pluck('fields')&.flatten(1) }.flatten(1).compact.group_by{ |field| field['field'] }.select{ |_key, group| group.pluck('label').uniq.size > 1 }.collect(&:first)
+  if !field_with_multiple_label_detail_confg.empty?
+    puts "[ERROR] Fields with multiple label details configurations #{field_with_multiple_label_detail_confg.join(', ')}"
+  end
+
   puts "fields: #{fields.size}"
   fields.select{ |field|
     !multiple_config.include?(field[0])

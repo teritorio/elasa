@@ -153,8 +153,8 @@ def compare_menu(url_old, url_new)
   }
   only_in_0 = ids[0] - ids[1]
   only_in_1 = ids[1] - ids[0]
-  puts "Ids only on 0\n#{only_in_0.inspect}" if !only_in_0.empty?
-  puts "Ids only on 1\n#{only_in_1.inspect}" if !only_in_1.empty?
+  puts "Category ids only on 0\n#{only_in_0.inspect}" if !only_in_0.empty?
+  puts "Category ids only on 1\n#{only_in_1.inspect}" if !only_in_1.empty?
 
   common_ids = Set.new(ids[0] & ids[1])
   hashes = hashes.collect{ |h| h.select{ |menu| common_ids.include?(menu['id']) } }
@@ -257,6 +257,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'].delete('image:thumbnail')
 
       poi.delete('geometry') # TMP, approx commp are 0.0001, and WP geom not the same
+      poi.delete('bbox') # Only Elasa
 
       poi['properties']['route:bicycle:duration'] = poi['properties']['route:bicycle:duration']&.to_i # Buggy WP
       poi['properties']['route:road:duration'] = poi['properties']['route:road:duration']&.to_i # Buggy WP
@@ -326,10 +327,19 @@ def compare_pois(url_old, url_new, category_ids)
 
   # From WP pois.geojson, pois in multiple categories are missing.
   # Use menu_sources.json to get missing categories fields.
-  remove_category_ids = missing_category_ids(fetch_json("#{url_old}/menu_sources.json"), hashes[0])
+  # remove_category_ids = missing_category_ids(fetch_json("#{url_old}/menu_sources.json"), hashes[0])
   # hashes[1] = hashes[1].select{ |poi| (remove_category_ids & poi['properties']['metadata']['category_ids']).empty? }
 
-  puts "Diff size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
+  puts "Diff POI size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
+
+  hashes_by_category_ids = hashes.collect{ |hash|
+    hash.group_by{ |poi| poi['properties']['metadata']['category_ids'] }
+  }
+  puts "Diff POI's Category size: #{hashes_by_category_ids[0].size} != #{hashes_by_category_ids[1].size}" if hashes_by_category_ids[0].size != hashes_by_category_ids[1].size
+  if hashes_by_category_ids[0].keys.sort != hashes_by_category_ids[1].keys.sort
+    puts "POI's Category only on 0", (hashes_by_category_ids[0].keys - hashes_by_category_ids[1].keys).sort.inspect
+    puts "POI's Category only on 1", (hashes_by_category_ids[1].keys - hashes_by_category_ids[0].keys).sort.inspect
+  end
 
   ids = hashes.collect{ |h|
     h.collect{ |poi|
