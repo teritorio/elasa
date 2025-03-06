@@ -702,7 +702,8 @@ $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS fields;
 CREATE OR REPLACE FUNCTION fields(
-    _root_field_id integer
+    _root_field_id integer,
+    include_label_field boolean
 ) RETURNS jsonb AS $$
     WITH
     -- Recursive down
@@ -713,7 +714,7 @@ CREATE OR REPLACE FUNCTION fields(
             NULL::integer AS "index",
             jsonb_strip_nulls(jsonb_build_object(
                 -- 'field', null,
-                'label', nullif(fields.label, false),
+                'label', nullif(CASE include_label_field WHEN false THEN false ELSE fields.label END, false),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
                 'icon', fields.icon
@@ -731,7 +732,7 @@ CREATE OR REPLACE FUNCTION fields(
             fields_fields."index",
             jsonb_strip_nulls(jsonb_build_object(
                 'field', fields.field,
-                'label', nullif(fields.label, false),
+                'label', nullif(CASE include_label_field WHEN false THEN false ELSE fields.label END, false),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
                 'icon', fields.icon
@@ -965,9 +966,9 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT
                     *,
-                    fields(menu_items.popup_fields_id)->'fields' AS popup_fields,
-                    fields(menu_items.details_fields_id)->'fields' AS details_fields,
-                    fields(menu_items.list_fields_id)->'fields' AS list_fields
+                    fields(menu_items.popup_fields_id, false)->'fields' AS popup_fields,
+                    fields(menu_items.details_fields_id, true)->'fields' AS details_fields,
+                    fields(menu_items.list_fields_id, false)->'fields' AS list_fields
                 FROM
                     menu_items_join AS menu_items
             ) AS menu_items ON
