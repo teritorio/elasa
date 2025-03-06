@@ -1290,8 +1290,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
 
     conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\"")
     conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\"")
-    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_i"[..62]])
-    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table}_t"[..62]])
+    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_i"])
+    conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_t"])
 
     fields += [['id', nil, nil, 'varchar'], ['project_id', ->(_, _) { project_id }, nil, 'integer NOT NULL'], ['geom', nil, nil, 'json NOT NULL']]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
@@ -1301,13 +1301,13 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         ['id', nil, nil, 'varchar'], ['pois_id', nil, nil, 'integer NOT NULL', "\"#{table}\"(id) ON DELETE CASCADE"],
         ['languages_code', nil, nil, 'varchar(255)', 'languages(code) ON DELETE CASCADE']
       ]
-      load_local_table(conn, source_name, name, "#{table}_t"[..62], table, fields_translations, ps, i18ns, policy_uuid)
-      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table}_t"[..62]])
+      load_local_table(conn, source_name, name, "#{table[..60]}_t", table, fields_translations, ps, i18ns, policy_uuid)
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table[..60]}_t"])
       conn.exec('
         INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
         table[..62],
-        "#{source_name}_translations"[..62],
+        "#{source_name[..50]}_translations",
         'translations',
         'translations',
         '{"languageField":"name","defaultLanguage":"en-US","defaultOpenSplitView":true,"userLanguage":true}',
@@ -1316,7 +1316,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
-        "#{table}_t"[..62],
+        "#{table[..60]}_t",
         'languages_code',
         'languages',
         nil,
@@ -1326,10 +1326,10 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
-        "#{table}_t"[..62],
+        "#{table[..60]}_t",
         'pois_id',
         table[..62],
-        "#{source_name}_translations"[..62],
+        "#{source_name[..50]}_translations",
         'languages_code',
         'nullify',
       ])
@@ -1341,7 +1341,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       }.to_h
       directus_files = load_images(conn, project_id, user_uuid, image_urls.values.flatten.uniq, name)
 
-      table_i = "#{table}_i"[..62]
+      table_i = "#{table[..60]}_i"
       conn.exec("DROP TABLE IF EXISTS \"#{table_i}\"")
       conn.exec("
         CREATE TABLE \"#{table_i}\"(

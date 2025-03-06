@@ -261,13 +261,13 @@ BEGIN
             JOIN sources ON
                 sources.project_id = projects.id
             JOIN information_schema.tables ON
-                tables.table_name = 'local-' || _project_slug || '-' || sources.slug
+                tables.table_name = substring('local-' || _project_slug || '-' || sources.slug, 1, 63)
             -- Translations
             LEFT JOIN information_schema.tables AS tables_t ON
-                tables_t.table_name = tables.table_name || '_t'
+                tables_t.table_name = substring(tables.table_name, 1, 63 - 2) || '_t'
             -- Many files fields
             LEFT JOIN information_schema.tables AS tables_i ON
-                tables_i.table_name = tables.table_name || '_i'
+                tables_i.table_name = substring(tables.table_name, 1, 63 - 2) || '_i'
             -- One file fields
             LEFT JOIN information_schema.table_constraints ON
                 table_constraints.table_name = tables.table_name AND
