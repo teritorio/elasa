@@ -1142,7 +1142,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       translations = $2
   ', [
     table[..62],
-    [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+    !table.end_with?('_t') && !table.end_with?('_i') ? [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json : nil,
     table.end_with?('_t'),
     'pin_drop',
     table.end_with?('_t') ? table_aprent[..62] : 'local_sources',
