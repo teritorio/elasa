@@ -343,7 +343,7 @@ BEGIN
                     ''source'', NULL,
                     ''updated_at'', NULL,
                     ''natives'', jsonb_strip_nulls(
-                        row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
+                        row_to_json(t.*)::jsonb - ''id'' - ''project_id'' - ''geom'' || ' ||
                         CASE WHEN source.table_name_i IS NULL THEN '''{}''::jsonb' ELSE '
                         jsonb_build_object(
                             ''image'', pois_files.image
