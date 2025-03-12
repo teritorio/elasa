@@ -1149,7 +1149,6 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   ])
   conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..62]])
   fields.each{ |key, _, interface, _|
-    # TODO: It does not support other types of labels like label_details
     name = i18ns.dig(key, 'label', 'fr')
 
     conn.exec('
@@ -1158,7 +1157,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       table[..62],
       key[..62],
       interface == 'files' ? 'files' : nil,
-      nil.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
+      name.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
       key == 'project_id' || (table.end_with?('_t') && %w[id pois_id languages_code].include?(key)),
       nil,
