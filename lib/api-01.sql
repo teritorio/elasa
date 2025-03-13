@@ -1053,12 +1053,19 @@ CREATE OR REPLACE FUNCTION pois(
                             -- TODO strip html tags before substr
                             WHEN 'true' THEN short_description(coalesce(
                                 pois.properties->'tags'->'description'->>'fr-FR',
+                                pois.properties->'natives'->'short_description'->>'fr-FR',
                                 pois.properties->'natives'->'description'->>'fr-FR'
                             ), 130)
                             ELSE coalesce(
                                 pois.properties->'tags'->'description'->>'fr-FR',
-                                pois.properties->'natives'->'description'->>'fr-FR'
+                                pois.properties->'natives'->'description'->>'fr-FR',
+                                pois.properties->'natives'->'short_description'->>'fr-FR'
                             )
+                            END,
+                        'short_description',
+                            CASE _short_description
+                            WHEN 'false' THEN
+                                pois.properties->'natives'->'short_description'->>'fr-FR'
                             END,
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
