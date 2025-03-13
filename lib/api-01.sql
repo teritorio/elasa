@@ -700,10 +700,13 @@ CREATE OR REPLACE FUNCTION menu(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
+DROP TYPE IF EXISTS field_size_t CASCADE;
+CREATE TYPE field_size_t AS ENUM ('small', 'large');
+
 DROP FUNCTION IF EXISTS fields;
 CREATE OR REPLACE FUNCTION fields(
     _root_field_id integer,
-    include_label_field boolean
+    field_size field_size_t
 ) RETURNS jsonb AS $$
     WITH
     -- Recursive down
@@ -714,7 +717,13 @@ CREATE OR REPLACE FUNCTION fields(
             NULL::integer AS "index",
             jsonb_strip_nulls(jsonb_build_object(
                 -- 'field', null,
-                'label', nullif(CASE include_label_field WHEN false THEN false ELSE fields.label END, false),
+                'label', nullif(
+                    CASE field_size
+                        WHEN 'small'::field_size_t THEN fields.label_small
+                        WHEN 'large'::field_size_t THEN fields.label_large
+                    END,
+                    false
+                ),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
                 'icon', fields.icon
@@ -732,7 +741,13 @@ CREATE OR REPLACE FUNCTION fields(
             fields_fields."index",
             jsonb_strip_nulls(jsonb_build_object(
                 'field', fields.field,
-                'label', nullif(CASE include_label_field WHEN false THEN false ELSE fields.label END, false),
+                'label', nullif(
+                    CASE field_size
+                        WHEN 'small'::field_size_t THEN fields.label_small
+                        WHEN 'large'::field_size_t THEN fields.label_large
+                    END,
+                    false
+                ),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
                 'icon', fields.icon
@@ -966,9 +981,9 @@ CREATE OR REPLACE FUNCTION pois(
             JOIN (
                 SELECT
                     *,
-                    fields(menu_items.popup_fields_id, false)->'fields' AS popup_fields,
-                    fields(menu_items.details_fields_id, true)->'fields' AS details_fields,
-                    fields(menu_items.list_fields_id, false)->'fields' AS list_fields
+                    fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
+                    fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
+                    fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields
                 FROM
                     menu_items_join AS menu_items
             ) AS menu_items ON
@@ -1148,6 +1163,15 @@ CREATE OR REPLACE FUNCTION attribute_translations(
             CASE WHEN fields_translations.name IS NULL THEN NULL ELSE json_build_object(
                 '@default', json_build_object(
                     languages_code, fields_translations.name
+                ),
+                '@small', json_build_object(
+                    languages_code, fields_translations.name_small
+                ),
+                '@large', json_build_object(
+                    languages_code, fields_translations.name_large
+                ),
+                '@title', json_build_object(
+                    languages_code, fields_translations.name_title
                 )
             ) END AS key_translations,
             values_translations
@@ -1195,6 +1219,15 @@ CREATE OR REPLACE FUNCTION attribute_translations(
             key, jsonb_build_object(
                 'label', CASE WHEN key_translations->'@default'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
                     'fr', capitalize(key_translations->'@default'->>'fr-FR')
+                ) END,
+                'label_popup', CASE WHEN key_translations->'@small'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
+                    'fr', capitalize(key_translations->'@small'->>'fr-FR')
+                ) END,
+                'label_details', CASE WHEN key_translations->'@large'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
+                    'fr', capitalize(key_translations->'@large'->>'fr-FR')
+                ) END,
+                'label_list', CASE WHEN key_translations->'@title'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
+                    'fr', capitalize(key_translations->'@title'->>'fr-FR')
                 ) END,
                 'values', (
                     SELECT

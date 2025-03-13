@@ -250,7 +250,7 @@ end
 
 @fields = {}
 
-def load_field_group(conn, project_id, group, i18ns)
+def load_field_group(conn, project_id, group, i18ns, size_context)
   group_key = group.except('group')
   if @fields[group_key]
     @fields[group_key]
@@ -261,17 +261,18 @@ def load_field_group(conn, project_id, group, i18ns)
         puts "[ERROR] Duplicate field in group #{group['group']}: #{duplicate_fields.join(', ')}"
       end
       ids = (group['fields'] || []).collect{ |f|
-        load_field_group(conn, project_id, f, i18ns)
+        load_field_group(conn, project_id, f, i18ns, size_context)
       }
     end
 
     id = conn.exec(
       '
-    INSERT INTO fields(project_id, type, field, label, "group", display_mode, icon)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    INSERT INTO fields(project_id, type, field, label_small, label_large, "group", display_mode, icon)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
     ON CONFLICT (project_id, field)
     DO UPDATE SET
-      label = EXCLUDED.label,
+      label_small = fields.label_small OR EXCLUDED.label_small,
+      label_large = fields.label_large OR EXCLUDED.label_large,
       field = EXCLUDED.field,
       "group" = EXCLUDED."group",
       display_mode = EXCLUDED.display_mode,
@@ -282,7 +283,8 @@ def load_field_group(conn, project_id, group, i18ns)
         project_id,
         group['group'] ? 'group' : 'field',
         group['field'],
-        group['label'],
+        size_context == 'small' ? group['label'] || false : false,
+        size_context == 'large' ? group['label'] || false : false,
         group['group'],
         group['display_mode'],
         group['icon'],
@@ -292,18 +294,31 @@ def load_field_group(conn, project_id, group, i18ns)
     }
 
     label = i18ns.dig(group['group'], 'label', 'fr') || i18ns.dig(group['field'], 'label', 'fr')
+    label_popup = i18ns.dig(group['group'], 'label_popup', 'fr') || i18ns.dig(group['field'], 'label_popup', 'fr')
+    label_popup = nil if label_popup == label
+    label_details = i18ns.dig(group['group'], 'label_details', 'fr') || i18ns.dig(group['field'], 'label_details', 'fr')
+    label_details = nil if label_details == label
+    label_list = i18ns.dig(group['group'], 'label_list', 'fr') || i18ns.dig(group['field'], 'label_list', 'fr')
+    label_list = nil if label_list == label
+
     if !label.nil?
       conn.exec(
         '
-      INSERT INTO fields_translations(fields_id, languages_code, name)
-      VALUES ($1, $2, $3)
+      INSERT INTO fields_translations(fields_id, languages_code, name, name_small, name_large, name_title)
+      VALUES ($1, $2, $3, $4, $5, $6)
       ON CONFLICT (fields_id, languages_code)
       DO UPDATE SET
-        name = $3
+        name = $3,
+        name_small = $4,
+        name_large = $5,
+        name_title = $6
       ', [
           id,
           'fr-FR',
           label,
+          label_popup,
+          label_details,
+          label_list,
         ]
       )
     end
@@ -370,7 +385,7 @@ def load_fields(conn, project_id, pois, menu_items, i18ns)
       load_field_group(conn, project_id, {
         'group' => "#{menu_items[field[0]]&.dig('category', 'name', 'fr')} #{mode}",
         'fields' => f,
-      }, i18ns)
+      }, i18ns, mode == 'details' ? 'large' : mode == 'popup' ? 'small' : nil)
     }
   }
 end

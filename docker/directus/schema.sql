@@ -944,8 +944,9 @@ CREATE TABLE public.fields (
     display_mode character varying(255),
     icon character varying(255),
     project_id integer NOT NULL,
-    label boolean DEFAULT false,
-    values_translations json
+    label_large boolean DEFAULT false NOT NULL,
+    values_translations json,
+    label_small boolean DEFAULT false NOT NULL
 );
 
 
@@ -1017,7 +1018,10 @@ CREATE TABLE public.fields_translations (
     id integer NOT NULL,
     fields_id integer,
     languages_code character varying(255),
-    name character varying(255)
+    name character varying(255),
+    name_small character varying(255),
+    name_large character varying(255),
+    name_title character varying(255)
 );
 
 

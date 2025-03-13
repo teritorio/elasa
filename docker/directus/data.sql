@@ -197,9 +197,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 136	fields	field	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	field_block	\N	\N
 138	fields	group	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	group_block	\N	\N
 139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
-140	fields	icon	\N	input	\N	\N	\N	f	f	3	half	\N	\N	\N	f	group_block	\N	\N
+140	fields	icon	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	group_block	\N	\N
 141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	5	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	5	full	\N	\N	\N	f	group_block	\N	\N
+144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	6	full	\N	\N	\N	f	group_block	\N	\N
 145	fields_fields	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 146	fields_fields	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 147	fields_fields	related_fields_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -295,6 +295,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 575	projects_articles	projects_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 576	projects_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 577	projects_articles	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
+578	fields	label_small	\N	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	group_block	\N	\N
+579	fields	label_large	\N	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	group_block	\N	\N
+580	fields_translations	name_small	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+581	fields_translations	name_large	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+582	fields_translations	name_title	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -503,8 +508,8 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 83	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs,override,image,website_details	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 84	fields	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 85	fields_fields	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-86	fields	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,accordion-9juoos,group_block,fields,project_id,icon,group,field,type,display_mode,label,fields_translations,field_block,values_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-87	fields	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,accordion-9juoos,group_block,display_mode,icon,group,field,type,project_id,fields,label,field_block,values_translations,fields_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+86	fields	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+87	fields	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 88	fields	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 89	fields_fields	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 90	fields_fields	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,related_fields_id,index,fields_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -534,8 +539,8 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 236	pois_files	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 237	directus_files	read	{}	{}	\N	*	abf8a154-5b1c-4a46-ac9c-7300570f4f17
 238	fields_translations	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-239	fields_translations	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-240	fields_translations	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,fields_id,languages_code,name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+239	fields_translations	read	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+240	fields_translations	update	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 241	fields_translations	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 242	articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 243	articles_translations	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
