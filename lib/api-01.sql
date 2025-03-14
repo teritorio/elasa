@@ -1027,9 +1027,29 @@ CREATE OR REPLACE FUNCTION pois(
             pois_join AS pois
         WHERE
             (
+                _poi_ids IS NULL OR
+                pois.slug_id = ANY(_poi_ids)
+            ) AND
+            (
                 (SELECT geom FROM cliping_polygon) IS NULL OR
                 ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
             )
+    ),
+    pois_with_deps AS (
+        SELECT
+            *
+        FROM
+            pois_selected
+
+        UNION
+
+        SELECT DISTINCT ON (pois_join.id)
+            pois_join.*
+        FROM
+            pois_selected
+            JOIN pois_join ON
+                _with_deps = true AND
+                pois_join.id = ANY(pois_selected.properties->'refs')
     ),
     json_pois AS (
         SELECT
@@ -1138,13 +1158,9 @@ CREATE OR REPLACE FUNCTION pois(
             )) AS feature
         FROM
             menu
-            JOIN pois_selected AS pois ON
+            JOIN pois_with_deps AS pois ON
                 pois.source_id = menu.source_id
         WHERE
-            (_poi_ids IS NULL OR (
-                pois.slug_id = ANY(_poi_ids) OR
-                (_with_deps = true AND pois.properties->>'id' = ANY (SELECT jsonb_array_elements_text(properties->'refs') FROM pois WHERE pois.slugs->>'original_id' = ANY(_poi_ids::text[])))
-            )) AND
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
         ORDER BY
