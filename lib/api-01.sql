@@ -74,6 +74,31 @@ GROUP BY
     filters.id
 ;
 
+DROP VIEW IF EXISTS pois_join;
+CREATE VIEW pois_join AS
+SELECT
+    pois.*,
+    nullif(jsonb_agg(to_jsonb(
+        _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+    ) ORDER BY pois_files.index), '[null]') AS image,
+    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
+FROM
+    pois
+    LEFT JOIN pois_files ON
+        pois_files.pois_id = pois.id
+    LEFT JOIN directus_files ON
+        directus_files.id = pois_files.directus_files_id
+GROUP BY
+    pois.id
+UNION ALL
+SELECT
+    *,
+    NULL::text AS website_details,
+    NULL::jsonb AS image,
+    id AS slug_id
+FROM
+    pois_local(_base_url, _project_slug)
+;
 
 DROP FUNCTION IF EXISTS capitalize;
 CREATE FUNCTION capitalize(str text) RETURNS text AS $$
@@ -995,6 +1020,17 @@ CREATE OR REPLACE FUNCTION pois(
                 sources.project_id = projects.id AND
                 sources.id = menu_items_sources.sources_id
     ),
+    pois_selected AS (
+        SELECT
+            *
+        FROM
+            pois_join AS pois
+        WHERE
+            (
+                (SELECT geom FROM cliping_polygon) IS NULL OR
+                ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
+            )
+    ),
     json_pois AS (
         SELECT
             row_number() OVER (PARTITION BY pois.slug_id) = 1 AS first_one,
@@ -1102,29 +1138,8 @@ CREATE OR REPLACE FUNCTION pois(
             )) AS feature
         FROM
             menu
-            JOIN (
-                SELECT
-                    pois.*,
-                    nullif(jsonb_agg(to_jsonb(
-                        _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-                    ) ORDER BY pois_files.index), '[null]') AS image,
-                    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
-                FROM
-                    pois
-                    LEFT JOIN pois_files ON
-                        pois_files.pois_id = pois.id
-                    LEFT JOIN directus_files ON
-                        directus_files.id = pois_files.directus_files_id
-                GROUP BY
-                    pois.id
-                UNION ALL
-                SELECT *, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id FROM pois_local(_base_url, _project_slug)
-            ) AS pois ON
-                pois.source_id = menu.source_id AND
-                (
-                    (SELECT geom FROM cliping_polygon) IS NULL OR
-                    ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
-                )
+            JOIN pois_selected AS pois ON
+                pois.source_id = menu.source_id
         WHERE
             (_poi_ids IS NULL OR (
                 pois.slug_id = ANY(_poi_ids) OR
