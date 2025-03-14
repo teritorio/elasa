@@ -1,6 +1,36 @@
 CREATE SCHEMA IF NOT EXISTS api01;
 SET search_path TO api01,public;
 
+DROP FUNCTION IF EXISTS capitalize;
+CREATE FUNCTION capitalize(str text) RETURNS text AS $$
+    SELECT
+        upper(substring(str from 1 for 1)) ||
+        substring(str from 2 for length(str))
+    ;
+$$ LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS id_from_slugs CASCADE;
+CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
+    SELECT
+        coalesce(
+            (slugs->>'original_id')::bigint,
+            id
+        )
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS id_from_slugs_menu_item CASCADE;
+CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint AS $$
+    SELECT
+        coalesce(
+            CASE WHEN slugs->>'fr' ~ E'^\\d+$' THEN (slugs->>'fr')::bigint END,
+            id
+        )
+    ;
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
 DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
 SELECT
@@ -119,37 +149,6 @@ GROUP BY
     pois.image,
     pois.slug_id
 ;
-
-DROP FUNCTION IF EXISTS capitalize;
-CREATE FUNCTION capitalize(str text) RETURNS text AS $$
-    SELECT
-        upper(substring(str from 1 for 1)) ||
-        substring(str from 2 for length(str))
-    ;
-$$ LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE;
-
-
-DROP FUNCTION IF EXISTS id_from_slugs;
-CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
-    SELECT
-        coalesce(
-            (slugs->>'original_id')::bigint,
-            id
-        )
-    ;
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
-
-
-DROP FUNCTION IF EXISTS id_from_slugs_menu_item;
-CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint AS $$
-    SELECT
-        coalesce(
-            CASE WHEN slugs->>'fr' ~ E'^\\d+$' THEN (slugs->>'fr')::bigint END,
-            id
-        )
-    ;
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
-
 
 DROP FUNCTION IF EXISTS project;
 CREATE OR REPLACE FUNCTION project(
