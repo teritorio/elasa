@@ -268,10 +268,11 @@ CREATE OR REPLACE FUNCTION article(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS pois_local;
-CREATE OR REPLACE FUNCTION pois_local(
+DROP FUNCTION IF EXISTS pois_local_table;
+CREATE OR REPLACE FUNCTION pois_local_table(
     _base_url text,
-    _project_slug text
+    _sources_id integer,
+    _table_name text
 ) RETURNS TABLE (
     id integer,
     geom geometry(Geometry,4326),
@@ -284,28 +285,15 @@ DECLARE
     poi record;
 BEGIN
     FOR source IN
-        WITH
-        projects AS (
-            SELECT
-                *
-            FROM
-                projects
-            WHERE
-                slug = _project_slug
-        )
         SELECT
-            sources.id,
+            _sources_id AS id,
             tables.table_name,
             regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
             tables_t.table_name AS table_name_t,
             tables_i.table_name AS table_name_i,
             array_agg(key_column_usage.column_name) AS file_fields
         FROM
-            projects
-            JOIN sources ON
-                sources.project_id = projects.id
-            JOIN information_schema.tables ON
-                tables.table_name = substring('local-' || _project_slug || '-' || sources.slug, 1, 63)
+            information_schema.tables
             -- Translations
             LEFT JOIN information_schema.tables AS tables_t ON
                 tables_t.table_name = substring(tables.table_name, 1, 63 - 2) || '_t'
@@ -322,8 +310,9 @@ BEGIN
                 key_column_usage.table_schema = 'public' AND
                 key_column_usage.table_name = tables.table_name AND
                 key_column_usage.column_name != 'project_id'
+        WHERE
+            tables.table_name = _table_name
         GROUP BY
-            sources.id,
             tables.table_name,
             tables_t.table_name,
             tables_i.table_name
@@ -424,6 +413,38 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS pois_local;
+CREATE OR REPLACE FUNCTION pois_local(
+    _base_url text,
+    _project_slug text
+) RETURNS TABLE (
+    id integer,
+    geom geometry(Geometry,4326),
+    properties jsonb,
+    source_id integer,
+    slugs json
+) AS $$
+    SELECT
+        pois.id,
+        pois.geom,
+        pois.properties,
+        sources.id AS source_id,
+        pois.slugs
+    FROM
+        projects
+        JOIN sources ON
+            sources.project_id = projects.id
+        JOIN LATERAL pois_local_table(
+                _base_url,
+                sources.id,
+                substring('local-' || _project_slug || '-' || sources.slug, 1, 63)
+            ) AS pois ON true
+    WHERE
+        projects.slug = _project_slug
+END;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
 DROP FUNCTION IF EXISTS filter_values;
