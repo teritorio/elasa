@@ -268,25 +268,19 @@ CREATE OR REPLACE FUNCTION article(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS pois_local_table;
-CREATE OR REPLACE FUNCTION pois_local_table(
-    _base_url text,
-    _sources_id integer,
+DROP FUNCTION IF EXISTS create_pois_local_view;
+CREATE OR REPLACE FUNCTION create_pois_local_view(
+    _source_id integer,
     _table_name text
-) RETURNS TABLE (
-    id integer,
-    geom geometry(Geometry,4326),
-    properties jsonb,
-    source_id integer,
-    slugs json
+) RETURNS TABLE(
+    name text
 ) AS $$
 DECLARE
     source record;
-    poi record;
 BEGIN
     FOR source IN
         SELECT
-            _sources_id AS id,
+            _source_id AS id,
             tables.table_name,
             regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
             tables_t.table_name AS table_name_t,
@@ -317,7 +311,10 @@ BEGIN
             tables_t.table_name,
             tables_i.table_name
     LOOP
-        FOR poi IN EXECUTE '
+        -- Required if the schema changes
+        -- EXECUTE 'DROP VIEW public."' || substring(source.table_name, 1, 63 - 2) || '_v" CASCADE';
+        EXECUTE '
+            CREATE OR REPLACE VIEW public."' || substring(source.table_name, 1, 63 - 2) || '_v" AS
             WITH ' ||
             CASE WHEN source.table_name_t IS NULL THEN '' ELSE '
             j AS (
@@ -357,7 +354,7 @@ BEGIN
                 SELECT
                     pois_id,
                     nullif(jsonb_agg(to_jsonb(
-                        ''' || _base_url || '/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
+                        ''__base_url__/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
                     ) ORDER BY pois_files.index), ''[null]'') AS image
                 FROM
                     "' || source.table_name_i || '" AS pois_files
@@ -369,13 +366,14 @@ BEGIN
             ' END || '
             z AS (SELECT 0)
             SELECT
+                t.project_id,
                 t.id,
                 geom,
                 jsonb_strip_nulls(jsonb_build_object(
                     ''id'', t.id,
                     ''source'', NULL,
                     ''updated_at'', NULL,
-                    ''natives'', jsonb_strip_nulls(
+                    ''natives'', (SELECT jsonb_object_agg(replace(key, ''___'', '':''), value) FROM jsonb_each(jsonb_strip_nulls(
                         row_to_json(t.*)::jsonb - ''id'' - ''project_id'' - ''geom'' || ' ||
                         CASE WHEN source.table_name_i IS NULL THEN '''{}''::jsonb' ELSE '
                         jsonb_build_object(
@@ -384,10 +382,12 @@ BEGIN
                         CASE WHEN source.table_name_t IS NULL THEN '''{}''::jsonb' ELSE '
                         trans.jsonb' END || ' ||
                         jsonb_build_object(' ||
-                            (SELECT array_to_string(array_agg('''' || f || ''', ''' || _base_url || '/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                            (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
                         ')
-                    )
-                )) AS properties
+                    )))
+                )) AS properties,
+                ' || _source_id || ' AS source_id,
+                json_build_object(''original_id'', t.id) AS slugs
             FROM
                 "' || source.table_name || '" AS t ' ||
                 CASE WHEN source.table_name_i IS NULL THEN '' ELSE '
@@ -399,52 +399,85 @@ BEGIN
                     trans.id = t.id
                 ' END ||
                 (SELECT array_to_string(array_agg('LEFT JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = "' || f || '"'), ' ') FROM unnest(source.file_fields) AS fields(f)) ||
-        ''
-        LOOP
-            id := poi.id;
-            geom := poi.geom;
-            properties := (SELECT poi.properties || jsonb_build_object('natives',
-                (SELECT jsonb_object_agg(replace(key, '___', ':'), value) FROM jsonb_each(poi.properties->'natives'))
-            ));
-            source_id := source.id;
-            slugs := jsonb_build_object('original_id', poi.id);
-            RETURN NEXT;
-        END LOOP;
+        '';
+        name :=  substring(source.table_name, 1, 63 - 2) || '_v';
+        RETURN NEXT;
     END LOOP;
 END;
-$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS pois_local;
-CREATE OR REPLACE FUNCTION pois_local(
-    _base_url text,
+DROP FUNCTION IF EXISTS create_project_pois_local_view;
+CREATE OR REPLACE FUNCTION create_project_pois_local_view(
     _project_slug text
-) RETURNS TABLE (
-    id integer,
-    geom geometry(Geometry,4326),
-    properties jsonb,
-    source_id integer,
-    slugs json
+) RETURNS TABLE(
+    project_id integer,
+    name text
 ) AS $$
-    SELECT
-        pois.id,
-        pois.geom,
-        pois.properties,
-        sources.id AS source_id,
-        pois.slugs
-    FROM
-        projects
-        JOIN sources ON
-            sources.project_id = projects.id
-        JOIN LATERAL pois_local_table(
-                _base_url,
-                sources.id,
-                substring('local-' || _project_slug || '-' || sources.slug, 1, 63)
-            ) AS pois ON true
-    WHERE
-        projects.slug = _project_slug
+DECLARE
+    locale_viewes record;
+BEGIN
+    FOR locale_viewes IN
+        SELECT
+            projects.id AS id,
+            projects.slug AS slug,
+            string_agg(
+                '(SELECT * FROM "' || view.name || '" WHERE source_id = ' || sources.id || ')',
+                ' UNION ALL '
+            ) AS sql
+        FROM
+            projects
+            JOIN sources ON
+                sources.project_id = projects.id
+            JOIN LATERAL create_pois_local_view(
+                    sources.id,
+                    substring('local-' || projects.slug || '-' || sources.slug, 1, 63)
+                ) AS view ON true
+        WHERE
+            _project_slug IS NULL OR projects.slug = _project_slug
+        GROUP BY
+            projects.id
+    LOOP
+        -- Required if the schema changes
+        -- EXECUTE 'DROP VIEW public."local-' || locale_viewes.slug || '_v" CASCADE';
+        EXECUTE 'CREATE OR REPLACE VIEW public."local-' || locale_viewes.slug || '_v" AS ' || locale_viewes.sql;
+        project_id := locale_viewes.id;
+        name := 'local-' || locale_viewes.slug || '_v';
+        RETURN NEXT;
+    END LOOP;
 END;
-$$ LANGUAGE sql STABLE PARALLEL SAFE;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS create_all_project_pois_local_view;
+CREATE OR REPLACE FUNCTION create_all_project_pois_local_view() RETURNS void AS $$
+DECLARE
+    locale_viewes record;
+BEGIN
+    FOR locale_viewes IN
+        SELECT
+            string_agg(
+                '(SELECT * FROM "' || name || '" WHERE project_id = ' || project_id || ')',
+                ' UNION ALL '
+            ) AS sql
+        FROM
+            create_project_pois_local_view(NULL) AS view
+    LOOP
+        -- Required if the schema changes
+        -- EXECUTE 'DROP VIEW public."pois_local_v" CASCADE';
+        EXECUTE 'CREATE OR REPLACE VIEW public."pois_local_v" AS ' || (
+            CASE
+            WHEN locale_viewes.sql IS NOT NULL THEN
+                locale_viewes.sql
+            ELSE
+                'SELECT NULL::integer AS project_id, 0 AS id, NULL::geometry(Geometry,4326) AS geom, NULL::jsonb AS properties, NULL::integer AS source_id, NULL::json AS slugs, NULL::text AS website_details LIMIT 0'
+            END
+        );
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+
+SELECT create_all_project_pois_local_view();
 
 
 DROP FUNCTION IF EXISTS filter_values;
@@ -484,12 +517,17 @@ CREATE OR REPLACE FUNCTION filter_values(
         SELECT
             sources.project_id,
             sources.menu_items_id,
-            pois_local.*,
+            pois_local_v.id,
+            pois_local_v.geom,
+            pois_local_v.properties,
+            pois_local_v.source_id,
+            pois_local_v.slugs,
             NULL::text AS website_details
         FROM
             sources
-            JOIN pois_local(_base_url, _project_slug) AS pois_local ON
-                pois_local.source_id = sources.id
+            JOIN pois_local_v ON
+                pois_local_v.project_id = sources.project_id AND
+                pois_local_v.source_id = sources.id
     ),
     properties_values AS (
         SELECT
@@ -976,10 +1014,10 @@ END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS pois;
-CREATE OR REPLACE FUNCTION pois(
+DROP FUNCTION IF EXISTS pois_;
+CREATE OR REPLACE FUNCTION pois_(
     _base_url text,
-    _project_slug text,
+    _project_id integer,
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
@@ -993,29 +1031,20 @@ CREATE OR REPLACE FUNCTION pois(
     d text
 ) AS $$
     WITH
-    projects AS (
-        SELECT
-            *
-        FROM
-            projects
-        WHERE
-            slug = _project_slug
-    ),
     cliping_polygon AS (
         SELECT
             geom
         FROM
-            projects
-            JOIN sources ON
-                sources.project_id = projects.id
+            sources
             JOIN (
                 SELECT * FROM pois
                 UNION ALL
-                SELECT *, NULL::text AS website_details FROM pois_local(_base_url, _project_slug)
+                SELECT pois_local_v.id, pois_local_v.geom, pois_local_v.properties, pois_local_v.source_id, pois_local_v.slugs, NULL::text AS website_details FROM pois_local_v WHERE pois_local_v.project_id = _project_id
             ) AS pois ON
                 pois.source_id = sources.id AND
-                pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects)
+                pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects WHERE id = _project_id)
             WHERE
+                sources.project_id = _project_id AND
                 _cliping_polygon_slug IS NOT NULL
     ),
     menu AS (
@@ -1042,8 +1071,7 @@ CREATE OR REPLACE FUNCTION pois(
                 'style_class', array_to_json(menu_items.style_class)
             ) AS display
         FROM
-            projects
-            JOIN (
+            (
                 SELECT
                     *,
                     fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
@@ -1051,35 +1079,27 @@ CREATE OR REPLACE FUNCTION pois(
                     fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields
                 FROM
                     menu_items_join AS menu_items
-            ) AS menu_items ON
-                menu_items.project_id = projects.id AND
-                (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
+            ) AS menu_items
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
-                sources.project_id = projects.id AND
+                sources.project_id = _project_id AND
                 sources.id = menu_items_sources.sources_id
+        WHERE
+            menu_items.project_id = _project_id AND
+            (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
     ),
     pois_selected AS (
         SELECT
-            *
-        FROM (
-            SELECT * FROM pois_join
-
-            UNION ALL
-
-            SELECT
-                id,
-                geom,
-                source_id,
-                properties,
-                NULL::text AS website_details,
-                NULL::jsonb AS image,
-                id AS slug_id,
-                NULL::bigint[] AS dep_ids
-            FROM
-                pois_local(_base_url, _project_slug)
-            ) AS pois
+            pois.*
+        FROM
+            menu
+            JOIN LATERAL (
+                SELECT * FROM pois_join
+                UNION ALL
+                SELECT id, geom, source_id, properties, NULL::text AS website_details, NULL::jsonb AS image, NULL::bigint AS slug_id, NULL::integer[] AS dep_ids FROM pois_local_v WHERE pois_local_v.project_id = 4 AND pois_local_v.source_id = menu.source_id
+            ) AS pois ON
+                menu.source_id = pois.source_id
         WHERE
             (
                 _poi_ids IS NULL OR
@@ -1234,6 +1254,26 @@ CREATE OR REPLACE FUNCTION pois(
         first_one
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+DROP FUNCTION IF EXISTS pois;
+CREATE OR REPLACE FUNCTION pois(
+    _base_url text,
+    _project_slug text,
+    _theme_slug text,
+    _category_id bigint,
+    _poi_ids bigint[],
+    _geometry_as text,
+    _short_description boolean,
+    _start_date text,
+    _end_date text,
+    _with_deps boolean,
+    _cliping_polygon_slug text
+) RETURNS TABLE (
+    d text
+) AS $$
+    SELECT * FROM pois_(_base_url, (SELECT id FROM projects WHERE slug = _project_slug), _theme_slug, _category_id, _poi_ids, _geometry_as, _short_description, _start_date, _end_date, _with_deps, _cliping_polygon_slug)
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
 
 CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
 (
