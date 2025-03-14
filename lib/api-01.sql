@@ -76,28 +76,48 @@ GROUP BY
 
 DROP VIEW IF EXISTS pois_join;
 CREATE VIEW pois_join AS
+WITH
+pois AS (
+    SELECT
+        pois.*,
+        nullif(jsonb_agg(to_jsonb(
+            -- _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+            '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+        ) ORDER BY pois_files.index), '[null]') AS image,
+        id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
+    FROM
+        pois
+        LEFT JOIN pois_files ON
+            pois_files.pois_id = pois.id
+        LEFT JOIN directus_files ON
+            directus_files.id = pois_files.directus_files_id
+    GROUP BY
+        pois.id
+)
 SELECT
-    pois.*,
-    nullif(jsonb_agg(to_jsonb(
-        _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-    ) ORDER BY pois_files.index), '[null]') AS image,
-    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
+    pois.id,
+    pois.geom,
+    pois.source_id,
+    pois.properties,
+    pois.website_details,
+    pois.image,
+    pois.slug_id,
+    nullif(
+        array_agg(pois_pois.children_pois_id ORDER BY index),
+        ARRAY[NULL::integer]
+    ) AS dep_ids
 FROM
     pois
-    LEFT JOIN pois_files ON
-        pois_files.pois_id = pois.id
-    LEFT JOIN directus_files ON
-        directus_files.id = pois_files.directus_files_id
+    LEFT JOIN pois_pois ON
+        pois_pois.parent_pois_id = pois.id
 GROUP BY
-    pois.id
-UNION ALL
-SELECT
-    *,
-    NULL::text AS website_details,
-    NULL::jsonb AS image,
-    id AS slug_id
-FROM
-    pois_local(_base_url, _project_slug)
+    pois.id,
+    pois.geom,
+    pois.source_id,
+    pois.properties,
+    pois.website_details,
+    pois.image,
+    pois.slug_id
 ;
 
 DROP FUNCTION IF EXISTS capitalize;
@@ -1023,8 +1043,23 @@ CREATE OR REPLACE FUNCTION pois(
     pois_selected AS (
         SELECT
             *
-        FROM
-            pois_join AS pois
+        FROM (
+            SELECT * FROM pois_join
+
+            UNION ALL
+
+            SELECT
+                id,
+                geom,
+                source_id,
+                properties,
+                NULL::text AS website_details,
+                NULL::jsonb AS image,
+                id AS slug_id,
+                NULL::bigint[] AS dep_ids
+            FROM
+                pois_local(_base_url, _project_slug)
+            ) AS pois
         WHERE
             (
                 _poi_ids IS NULL OR
@@ -1049,7 +1084,7 @@ CREATE OR REPLACE FUNCTION pois(
             pois_selected
             JOIN pois_join ON
                 _with_deps = true AND
-                pois_join.id = ANY(pois_selected.properties->'refs')
+                pois_join.id = ANY(pois_selected.dep_ids)
     ),
     json_pois AS (
         SELECT
@@ -1137,7 +1172,8 @@ CREATE OR REPLACE FUNCTION pois(
                                     WHEN 'w' THEN 'way'
                                     WHEN 'r' THEN 'relation'
                                     END
-                                END
+                                END,
+                            'dep_ids', dep_ids
                         ),
                         'editorial', menu.editorial || jsonb_build_object(
                             'website:details', coalesce(
