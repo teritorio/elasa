@@ -80,6 +80,7 @@ menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	menu_ite
 menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	menu_items	open	\N	f
 pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N	f
 pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	pois	open	\N	f
+pois_pois	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	pois	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
 projects_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
 projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
@@ -300,6 +301,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 580	fields_translations	name_small	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 581	fields_translations	name_large	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 582	fields_translations	name_title	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+583	pois	parent_pois_id	m2m	list-m2m	{"enableCreate":false,"enableSelect":false,"enableLink":true}	\N	\N	t	f	7	full	\N	\N	\N	t	\N	\N	\N
+584	pois_pois	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+585	pois_pois	parent_pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+586	pois_pois	children_pois_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+587	pois_pois	index	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -554,6 +560,8 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 251	projects_articles	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,index,projects_id,articles_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 252	projects_articles	update	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,index,projects_id,articles_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 253	projects_articles	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+254	pois_pois	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+255	pois_pois	read	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 \.
 
 
@@ -612,6 +620,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 73	articles	project_id	projects	\N	\N	\N	\N	\N	nullify
 74	projects_articles	articles_id	articles	\N	\N	\N	projects_id	\N	nullify
 75	projects_articles	projects_id	projects	articles	\N	\N	articles_id	index	delete
+76	pois_pois	children_pois_id	pois	\N	\N	\N	parent_pois_id	\N	nullify
+77	pois_pois	parent_pois_id	pois	parent_pois_id	\N	\N	children_pois_id	index	delete
 \.
 
 
@@ -686,7 +696,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 577, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 587, true);
 
 
 --
@@ -700,7 +710,7 @@ SELECT pg_catalog.setval('public.directus_notifications_id_seq', 1, false);
 -- Name: directus_permissions_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_permissions_id_seq', 253, true);
+SELECT pg_catalog.setval('public.directus_permissions_id_seq', 255, true);
 
 
 --
@@ -714,7 +724,7 @@ SELECT pg_catalog.setval('public.directus_presets_id_seq', 1, true);
 -- Name: directus_relations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_relations_id_seq', 75, true);
+SELECT pg_catalog.setval('public.directus_relations_id_seq', 77, true);
 
 
 --

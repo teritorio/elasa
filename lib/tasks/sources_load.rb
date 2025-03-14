@@ -222,12 +222,51 @@ def load_from_source(datasource_url, project_slug)
 
         load_source(conn, project_slug, metadatas)
 
+        conn.exec_params(
+          "
+          DELETE FROM
+            pois_pois
+          USING
+            pois
+            JOIN projects ON
+              projects.slug = $1
+            JOIN sources ON
+              sources.project_id = projects.id
+          WHERE
+            pois_pois.parent_pois_id = pois.id
+          ",
+          [project_slug]
+        )
+
         metadatas.each_key{ |source_slug|
           pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
           load_pois(conn, project_slug, source_slug, pois['features'])
           puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
         }
         puts ''
+
+        conn.exec_params(
+          "
+          INSERT INTO
+            pois_pois(parent_pois_id, children_pois_id, index)
+          SELECT
+            parent_pois.id AS parent_pois_id,
+            children_pois.id AS children_pois_id,
+            index
+          FROM
+            projects
+            JOIN sources ON
+              sources.project_id = projects.id
+            JOIN pois AS parent_pois ON
+              parent_pois.source_id = sources.id
+            JOIN LATERAL jsonb_array_elements(parent_pois.properties->'refs') WITH ORDINALITY AS parent_pois_refs(ref, index) ON true
+            JOIN pois AS children_pois ON
+              children_pois.properties->'id' = parent_pois_refs.ref
+          WHERE
+              projects.slug = $1
+          ",
+          [project_slug]
+        )
 
         metadatas
       }
