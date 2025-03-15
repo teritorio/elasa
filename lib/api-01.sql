@@ -1094,16 +1094,32 @@ CREATE OR REPLACE FUNCTION pois_(
             pois.*
         FROM
             menu
-            JOIN LATERAL (
-                SELECT * FROM pois_join
-                UNION ALL
-                SELECT id, geom, source_id, properties, NULL::text AS website_details, NULL::jsonb AS image, NULL::bigint AS slug_id, NULL::integer[] AS dep_ids FROM pois_local_v WHERE pois_local_v.project_id = 4 AND pois_local_v.source_id = menu.source_id
-            ) AS pois ON
+            JOIN pois_join AS pois ON
                 menu.source_id = pois.source_id
         WHERE
             (
                 _poi_ids IS NULL OR
                 pois.slug_id = ANY(_poi_ids)
+            ) AND
+            (
+                (SELECT geom FROM cliping_polygon) IS NULL OR
+                ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
+            )
+
+        UNION ALL
+
+        SELECT
+            id, geom, pois.source_id, properties, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id, NULL::integer[] AS dep_ids
+        FROM
+            menu
+            JOIN pois_local_v AS pois ON
+                pois.project_id = _project_id AND
+                pois.source_id = menu.source_id AND
+                menu.source_id = pois.source_id
+        WHERE
+            (
+                _poi_ids IS NULL OR
+                pois.id = ANY(_poi_ids)
             ) AND
             (
                 (SELECT geom FROM cliping_polygon) IS NULL OR
