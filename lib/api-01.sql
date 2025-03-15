@@ -1026,27 +1026,11 @@ CREATE OR REPLACE FUNCTION pois_(
     _start_date text,
     _end_date text,
     _with_deps boolean,
-    _cliping_polygon_slug text
+    _cliping_polygon geometry(Geometry, 4326)
 ) RETURNS TABLE (
     d text
 ) AS $$
     WITH
-    cliping_polygon AS (
-        SELECT
-            geom
-        FROM
-            sources
-            JOIN (
-                SELECT * FROM pois
-                UNION ALL
-                SELECT pois_local_v.id, pois_local_v.geom, pois_local_v.properties, pois_local_v.source_id, pois_local_v.slugs, NULL::text AS website_details FROM pois_local_v WHERE pois_local_v.project_id = _project_id
-            ) AS pois ON
-                pois.source_id = sources.id AND
-                pois.slugs->>'original_id' = (SELECT polygons_extra->>_cliping_polygon_slug FROM projects WHERE id = _project_id)
-            WHERE
-                sources.project_id = _project_id AND
-                _cliping_polygon_slug IS NOT NULL
-    ),
     menu AS (
         SELECT
             sources.id AS source_id,
@@ -1102,8 +1086,8 @@ CREATE OR REPLACE FUNCTION pois_(
                 pois.slug_id = ANY(_poi_ids)
             ) AND
             (
-                (SELECT geom FROM cliping_polygon) IS NULL OR
-                ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
+                _cliping_polygon IS NULL OR
+                ST_Intersects(pois.geom, _cliping_polygon)
             )
 
         UNION ALL
@@ -1122,8 +1106,8 @@ CREATE OR REPLACE FUNCTION pois_(
                 pois.id = ANY(_poi_ids)
             ) AND
             (
-                (SELECT geom FROM cliping_polygon) IS NULL OR
-                ST_Intersects(pois.geom, (SELECT geom FROM cliping_polygon))
+                _cliping_polygon IS NULL OR
+                ST_Intersects(pois.geom, _cliping_polygon)
             )
     ),
     pois_with_deps AS (
@@ -1287,7 +1271,40 @@ CREATE OR REPLACE FUNCTION pois(
 ) RETURNS TABLE (
     d text
 ) AS $$
-    SELECT * FROM pois_(_base_url, (SELECT id FROM projects WHERE slug = _project_slug), _theme_slug, _category_id, _poi_ids, _geometry_as, _short_description, _start_date, _end_date, _with_deps, _cliping_polygon_slug)
+    WITH
+    projects AS (
+        SELECT
+            id,
+            polygons_extra
+        FROM
+            projects
+        WHERE
+            slug = _project_slug
+    ),
+    cliping_polygon AS (
+        SELECT
+            geom
+        FROM
+            projects
+            JOIN sources ON
+                sources.project_id = projects.id
+            JOIN (
+                SELECT * FROM pois
+                UNION ALL
+                SELECT pois_local_v.id, pois_local_v.geom, pois_local_v.properties, pois_local_v.source_id, pois_local_v.slugs, NULL::text AS website_details FROM pois_local_v WHERE pois_local_v.project_id = (SELECT id FROM projects)
+            ) AS pois ON
+                pois.source_id = sources.id AND
+                pois.slugs->>'original_id' = projects.polygons_extra->>_cliping_polygon_slug
+            WHERE
+                _cliping_polygon_slug IS NOT NULL
+        LIMIT 1
+    )
+    SELECT * FROM pois_(
+        _base_url,
+        (SELECT id FROM projects),
+        _theme_slug, _category_id, _poi_ids, _geometry_as, _short_description, _start_date, _end_date, _with_deps,
+        (SELECT geom FROM cliping_polygon)
+    )
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
