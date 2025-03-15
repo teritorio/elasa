@@ -36,8 +36,8 @@ export default {
 
       sources.forEach(async (source) => {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
-        const tableNameT = `local-${projects.slug}-${source.slug}_t`.slice(-63);
-        const tableNameI = `local-${projects.slug}-${source.slug}_i`.slice(-63);
+        const tableNameT = tableName.slice(-63+2) + '_t';
+        const tableNameI = tableName.slice(-63+2) +'_i';
         let tableExtraFields = {};
         if (withAddr) { tableExtraFields = Object.assign(tableExtraFields, { "addr___housenumber": "String", "addr___street": "String", "addr___place": "String", "addr___postcode": "String", "addr___city": "String" }); }
         if (withContact) { tableExtraFields = Object.assign(tableExtraFields, { "website": "Array", "phone": "Array", "email": "Array", "facebook": "String", "instagram": "String" }); }
@@ -46,6 +46,7 @@ export default {
           fields = `, ${fields}`;
         }
         await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE, geom geometry(Geometry,4326) NOT NULL ${fields})`);
+        await database.raw(`CREATE INDEX "${tableName.slice(-63+9)}_idx_geom" ON "${tableName}" USING gist(geom)`);
         console.info(`Table ${tableName} created`);
         if (withTranslations) {
           let fields = "";

@@ -1129,6 +1129,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
                  .gsub(' json', ' jsonb')
   conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
   conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
+  conn.exec("CREATE INDEX \"#{table[..(63 - 9)]}_idx_geom\" ON \"#{table}\" USING gist(geom)") if create_table.include?('geom geometry(Geometry,4326)')
   conn.exec("
     INSERT INTO \"#{table}\"(\"#{fields_table.collect(&:first).join('", "')}\")
     SELECT
