@@ -216,12 +216,6 @@ def load_from_source(datasource_url, project_slug)
         datasource_project = row.fetch('datasources_slug')
         next if datasource_project.nil?
 
-        metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
-
-        puts "source #{project_slug} (#{metadatas.size})"
-
-        load_source(conn, project_slug, metadatas)
-
         conn.exec_params(
           "
           DELETE FROM
@@ -237,6 +231,12 @@ def load_from_source(datasource_url, project_slug)
           ",
           [project_slug]
         )
+
+        metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
+
+        puts "source #{project_slug} (#{metadatas.size})"
+
+        load_source(conn, project_slug, metadatas)
 
         metadatas.each_key{ |source_slug|
           pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
