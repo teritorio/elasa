@@ -1075,20 +1075,22 @@ CREATE OR REPLACE FUNCTION pois_(
     ),
     pois_selected AS (
         SELECT
-            pois.*
+            pois_join.*
         FROM
             menu
-            JOIN pois_join AS pois ON
-                menu.source_id = pois.source_id
-        WHERE
-            (
-                _poi_ids IS NULL OR
-                pois.slug_id = ANY(_poi_ids)
-            ) AND
-            (
-                _cliping_polygon IS NULL OR
-                ST_Intersects(pois.geom, _cliping_polygon)
-            )
+            JOIN pois ON
+                menu.source_id = pois.source_id AND
+                (
+                    _cliping_polygon IS NULL OR
+                    ST_Intersects(pois.geom, _cliping_polygon)
+                )
+            JOIN pois_join ON
+                pois_join.source_id = menu.source_id AND
+                pois_join.id = pois.id AND
+                (
+                    _poi_ids IS NULL OR
+                    pois_join.slug_id = ANY(_poi_ids)
+                )
 
         UNION ALL
 
@@ -1099,16 +1101,15 @@ CREATE OR REPLACE FUNCTION pois_(
             JOIN pois_local_v AS pois ON
                 pois.project_id = _project_id AND
                 pois.source_id = menu.source_id AND
-                menu.source_id = pois.source_id
-        WHERE
-            (
-                _poi_ids IS NULL OR
-                pois.id = ANY(_poi_ids)
-            ) AND
-            (
-                _cliping_polygon IS NULL OR
-                ST_Intersects(pois.geom, _cliping_polygon)
-            )
+                menu.source_id = pois.source_id AND
+                (
+                    _poi_ids IS NULL OR
+                    pois.id = ANY(_poi_ids)
+                ) AND
+                (
+                    _cliping_polygon IS NULL OR
+                    ST_Intersects(pois.geom, _cliping_polygon)
+                )
     ),
     pois_with_deps AS (
         SELECT
@@ -1121,10 +1122,10 @@ CREATE OR REPLACE FUNCTION pois_(
         SELECT DISTINCT ON (pois_join.id)
             pois_join.*
         FROM
-            pois_selected
+            pois_selected AS pois
             JOIN pois_join ON
                 _with_deps = true AND
-                pois_join.id = ANY(pois_selected.dep_ids)
+                pois_join.id = ANY(pois.dep_ids)
     ),
     json_pois AS (
         SELECT
