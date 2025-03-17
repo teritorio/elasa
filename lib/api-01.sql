@@ -1174,7 +1174,10 @@ CREATE OR REPLACE FUNCTION pois_(
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
                     coalesce(
                         CASE jsonb_typeof(pois.properties->'tags'->'route')
-                            WHEN 'object' THEN json_flat('route', (pois.properties->'tags'->'route') - 'pdf' || jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr-FR'))
+                            WHEN 'object' THEN json_flat('route',
+                                    (pois.properties->'tags'->'route') - 'pdf' - 'waypoint:type' ||
+                                    jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr-FR')
+                                )
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
@@ -1208,6 +1211,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             WHEN 'false' THEN
                                 pois.properties->'natives'->'short_description'->>'fr-FR'
                             END,
+                        'route:point:type',  replace(pois.properties->'tags'->'route'->>'waypoint:type', 'waypoint', 'way_point'),
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
                             -- cartocode
