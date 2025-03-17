@@ -1075,6 +1075,7 @@ CREATE OR REPLACE FUNCTION pois_(
     ),
     pois_selected AS (
         SELECT
+            menu_id,
             pois_join.*
         FROM
             menu
@@ -1095,6 +1096,7 @@ CREATE OR REPLACE FUNCTION pois_(
         UNION ALL
 
         SELECT
+            menu_id,
             id, geom, pois.source_id, properties, NULL::text AS website_details, NULL::jsonb AS image, id AS slug_id, NULL::integer[] AS dep_ids
         FROM
             menu
@@ -1120,12 +1122,19 @@ CREATE OR REPLACE FUNCTION pois_(
         UNION
 
         SELECT DISTINCT ON (pois_join.id)
+            coalesce(menu_items.id, (SELECT menu_id FROM menu LIMIT 1)) AS menu_id,
             pois_join.*
         FROM
             pois_selected AS pois
             JOIN pois_join ON
                 _with_deps = true AND
                 pois_join.id = ANY(pois.dep_ids)
+            JOIN sources ON
+                sources.id = pois_join.source_id
+            LEFT JOIN menu_items_sources ON
+                menu_items_sources.sources_id = sources.id
+            LEFT JOIN menu_items ON
+                menu_items.id = menu_items_sources.menu_items_id
     ),
     json_pois AS (
         SELECT
@@ -1236,7 +1245,7 @@ CREATE OR REPLACE FUNCTION pois_(
         FROM
             menu
             JOIN pois_with_deps AS pois ON
-                pois.source_id = menu.source_id
+                pois.menu_id = menu.menu_id
         WHERE
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
