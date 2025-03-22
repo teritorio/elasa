@@ -1103,7 +1103,6 @@ CREATE OR REPLACE FUNCTION pois_(
             JOIN pois_local_v AS pois ON
                 pois.project_id = _project_id AND
                 pois.source_id = menu.source_id AND
-                menu.source_id = pois.source_id AND
                 (
                     _poi_ids IS NULL OR
                     pois.id = ANY(_poi_ids)
