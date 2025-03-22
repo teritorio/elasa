@@ -1324,8 +1324,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       end
     }
 
-    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\"")
-    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\"")
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\" CASCADE")
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\" CASCADE")
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_i"])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_t"])
 
@@ -1378,7 +1378,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       directus_files = load_images(conn, project_id, user_uuid, image_urls.values.flatten.uniq, name)
 
       table_i = "#{table[..60]}_i"
-      conn.exec("DROP TABLE IF EXISTS \"#{table_i}\"")
+      conn.exec("DROP TABLE IF EXISTS \"#{table_i}\" CASCADE")
       conn.exec("
         CREATE TABLE \"#{table_i}\"(
           id SERIAL PRIMARY KEY,
@@ -1436,6 +1436,9 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         'nullify',
       ])
     end
+
+    # Create trigger and fill pois_local table
+    conn.exec('SELECT api01.create_pois_local_view($1, $2)', [source_id, table])
 
     source_id
   }

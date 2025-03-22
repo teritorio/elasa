@@ -269,6 +269,8 @@ export default {
           });
         }
       });
+
+      await database.raw('SELECT api01.create_pois_local_view(?, ?)', [source_id, table]);
     } catch (error) {
       console.error(error);
       throw error;
