@@ -1260,7 +1260,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           [k, Hash]
         elsif v.is_a?(Integer) || v.to_i.to_s == v
           [k, Integer]
-        elsif v.is_a?(String) && v.include?('</')
+        elsif v.is_a?(String) && (v.include?('</') || v.match?(/&[a-z]{2-10};/))
           [k, :html]
         else
           [k, v.is_a?(String) ? v.size <= 15 ? v : v.size >= 255 ? '...' : nil : v.presence]
@@ -1277,7 +1277,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
       fk = nil
-      i = if %w[name description].include?(key)
+      i = if %w[name description short_description].include?(key)
             f = ->(i, _j) { i }
             interface = 'input-rich-text-html' if stats&.keys&.include?(:html)
             'text'
@@ -1317,7 +1317,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       if !i.nil? && !stats.keys.include?(nil) && stats.keys.size == ps.size
         i += ' NOT NULL'
       end
-      if %w[name description].include?(key)
+      if %w[name description short_description].include?(key)
         fields_translations << [key, f, interface, i, fk]
       else
         fields << [key, f, interface, i, fk]

@@ -1063,10 +1063,10 @@ CREATE OR REPLACE FUNCTION pois_(
     _category_id bigint,
     _poi_ids bigint[],
     _geometry_as text,
-    _short_description boolean,
+    _short_description text,
     _start_date text,
     _end_date text,
-    _with_deps boolean,
+    _with_deps text,
     _cliping_polygon geometry(Geometry, 4326)
 ) RETURNS TABLE (
     d text
@@ -1169,7 +1169,7 @@ CREATE OR REPLACE FUNCTION pois_(
         FROM
             pois_selected AS pois
             JOIN pois_join ON
-                _with_deps = true AND
+                _with_deps = 'true' AND
                 pois_join.id = ANY(pois.dep_ids)
             JOIN sources ON
                 sources.id = pois_join.source_id
@@ -1249,8 +1249,8 @@ CREATE OR REPLACE FUNCTION pois_(
                             )
                             END,
                         'short_description',
-                            CASE _short_description
-                            WHEN 'false' THEN
+                            CASE _short_description = 'false' OR _short_description IS NULL
+                            WHEN true THEN
                                 pois.properties->'natives'->'short_description'->>'fr-FR'
                             END,
                         'route:point:type',  replace(pois.properties->'tags'->'route'->>'waypoint:type', 'waypoint', 'way_point'),
@@ -1319,10 +1319,10 @@ CREATE OR REPLACE FUNCTION pois(
     _category_id bigint,
     _poi_ids bigint[],
     _geometry_as text,
-    _short_description boolean,
+    _short_description text,
     _start_date text,
     _end_date text,
-    _with_deps boolean,
+    _with_deps text,
     _cliping_polygon_slug text
 ) RETURNS TABLE (
     d text
