@@ -245,6 +245,7 @@ def compare_pois(url_old, url_new, category_ids)
 
       poi['properties'].delete('partenaire_fiche') # Buggy WP
       poi['properties'].delete('partenaire_url') # Buggy WP
+      poi['properties'].delete('classic-editor-remember')
 
       poi['properties'].delete('website') # Buggy WP, wrong values including ";"
 
