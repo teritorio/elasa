@@ -111,8 +111,7 @@ pois AS (
     SELECT
         pois.*,
         nullif(jsonb_agg(to_jsonb(
-            -- _base_url || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-            '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+            '__base_url__' || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
         ) ORDER BY pois_files.index), '[null]') AS image,
         id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
     FROM
@@ -529,7 +528,6 @@ SELECT * FROM create_project_pois_local_view(NULL);
 
 DROP FUNCTION IF EXISTS filter_values;
 CREATE OR REPLACE FUNCTION filter_values(
-    _base_url text,
     _project_slug text,
     _property text
 )  RETURNS TABLE (
@@ -547,7 +545,8 @@ CREATE OR REPLACE FUNCTION filter_values(
         FROM
             menu_items_sources
             JOIN sources ON
-                sources.id = menu_items_sources.sources_id
+                sources.id = menu_items_sources.sources_id AND
+                sources.project_id = (SELECT id FROM projects WHERE slug = _project_slug)
     ),
     pois AS (
         SELECT
@@ -639,7 +638,6 @@ $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS menu;
 CREATE OR REPLACE FUNCTION menu(
-    _base_url text,
     _project_slug text,
     _theme_slug text
 ) RETURNS TABLE (
@@ -711,7 +709,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', fields_multiselection.field,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -719,7 +717,7 @@ CREATE OR REPLACE FUNCTION menu(
                     jsonb_build_object(
                         'property', fields_checkboxes_list.field,
                         'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_base_url, _project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            (SELECT filter_values FROM filter_values(_project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
                             '[]'::jsonb
                         )
                     )
@@ -1302,10 +1300,10 @@ CREATE OR REPLACE FUNCTION pois_(
             pois.slug_id
     )
     SELECT
-        jsonb_build_object(
+        replace(jsonb_build_object(
             'type', 'FeatureCollection',
             'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
-        )::text
+        )::text, '__base_url__', _base_url)
     FROM
         json_pois
     WHERE

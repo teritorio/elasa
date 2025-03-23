@@ -65,7 +65,7 @@ class Api01Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('menu($1, $2, $3)', [base_url, project_slug, theme_slug])
+    menu_items = query('menu($1, $2)', [project_slug, theme_slug])
 
     if menu_items.nil?
       render status: :not_found
