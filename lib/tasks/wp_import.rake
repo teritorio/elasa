@@ -22,7 +22,6 @@ end
 
 def fetch_json(url)
   response = HTTP.follow.get(url)
-  return [] if response.status.code == 404
   raise "[ERROR] #{url} => #{response.status}" if !response.status.success?
 
   JSON.parse(response)

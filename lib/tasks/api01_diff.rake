@@ -8,10 +8,6 @@ require 'hash_diff'
 require 'damerau-levenshtein'
 
 
-def fetch_json(url)
-  JSON.parse(HTTP.follow.get(url))
-end
-
 class Object
   def compact_blank_deep
     self
