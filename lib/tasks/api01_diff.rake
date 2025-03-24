@@ -335,8 +335,11 @@ def compare_pois(url_old, url_new, category_ids)
   }
   puts "Diff POI's Category size: #{hashes_by_category_ids[0].size} != #{hashes_by_category_ids[1].size}" if hashes_by_category_ids[0].size != hashes_by_category_ids[1].size
   if hashes_by_category_ids[0].keys.sort != hashes_by_category_ids[1].keys.sort
-    puts "POI's Category only on 0", (hashes_by_category_ids[0].keys - hashes_by_category_ids[1].keys).sort.inspect
-    puts "POI's Category only on 1", (hashes_by_category_ids[1].keys - hashes_by_category_ids[0].keys).sort.inspect
+    p0 = hashes_by_category_ids[0].keys.collect(&:first)
+    intersect = hashes_by_category_ids[1].keys.select{ |pp1| pp1.intersection(p0).empty? }
+    if intersect.any?
+      puts "Diff POI's Category #{intersect.join(' ')}"
+    end
   end
 
   ids = hashes.collect{ |h|
