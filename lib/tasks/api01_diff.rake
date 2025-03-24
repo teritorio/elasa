@@ -252,6 +252,7 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties']['metadata'].delete('refs') # WP does not support refs
 
       poi['properties'].delete('image:thumbnail')
+      poi['properties'].delete('colour') # Elasa remove the colour toavoid conflict with the category colour
 
       poi.delete('geometry') # TMP, approx commp are 0.0001, and WP geom not the same
       poi.delete('bbox') # Only Elasa
