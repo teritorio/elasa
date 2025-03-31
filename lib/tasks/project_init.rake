@@ -294,7 +294,8 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   }
   return unless id.nil?
 
-  puts "[ERROR] Fails link source to menu_item: (#{source_slug})"
+  puts "[ERROR] Fails link source to menu_item: (#{source_slug}) -- delete the menu entry"
+  conn.exec('DELETE FROM menu_items WHERE id = $1', [category_id])
 end
 
 def insert_group_fields(conn, project_id, ontology)
