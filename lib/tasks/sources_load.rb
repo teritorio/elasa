@@ -221,12 +221,13 @@ def load_from_source(datasource_url, project_slug)
           DELETE FROM
             pois_pois
           USING
-            pois
-            JOIN projects ON
-              projects.slug = $1
+            projects
             JOIN sources ON
               sources.project_id = projects.id
+            JOIN pois ON
+              pois.source_id = sources.id
           WHERE
+            projects.slug = $1 AND
             pois_pois.parent_pois_id = pois.id
           ",
           [project_slug]
