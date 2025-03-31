@@ -250,7 +250,7 @@ end
 @fields = {}
 
 def load_field_group(conn, project_id, group, i18ns, size_context)
-  group_key = group.except('group')
+  group_key = [group.except('group'), size_context]
   if @fields[group_key]
     @fields[group_key]
   else
