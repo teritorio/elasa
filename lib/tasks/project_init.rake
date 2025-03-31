@@ -387,6 +387,12 @@ def new_root_menu(project_id)
   }
 end
 
+def new_ontologies_menu(project_id, root_menu_id, themes, css, filters)
+  themes.each{ |theme|
+    new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+  }
+end
+
 def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   ontology =
     if theme == 'bpe'
@@ -404,11 +410,11 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
-      slugs: { 'en-US' => 'pois', 'fr-FR' => 'poi', 'es-ES' => 'poi' },
+      slugs: { 'en-US' => "pois #{theme}", 'fr-FR' => "poi #{theme}", 'es-ES' => "poi #{theme}" },
       parent_id: root_menu_id,
       index_order: 2,
       type: 'menu_group',
-      name: { 'en-US' => 'POIs', 'fr-FR' => 'POI', 'es-ES' => 'PDI' }.compact,
+      name: { 'en-US' => "POIs #{theme}", 'fr-FR' => "POI #{theme}", 'es-ES' => "PDI #{theme}" }.compact,
       display_mode: 'compact',
 
       icon: 'teritorio teritorio-extra-point',
@@ -557,7 +563,8 @@ namespace :project do
   task :new, [] => :environment do
     set_default_languages
 
-    slug, osm_id, theme, ontology, datasources_slug, website = ARGV[2..].collect(&:presence)
+    slug, osm_id, theme, ontologies, datasources_slug, website = ARGV[2..].collect(&:presence)
+    ontologies = ontologies&.split(',')
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
@@ -579,7 +586,7 @@ namespace :project do
     end
     root_menu_id = new_root_menu(project_id)
     if !datasources_slug.nil?
-      new_ontology_menu(project_id, root_menu_id, ontology, css, filters)
+      new_ontologies_menu(project_id, root_menu_id, ontologies, css, filters)
     end
     new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
 
