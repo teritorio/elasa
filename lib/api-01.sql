@@ -163,7 +163,7 @@ CREATE OR REPLACE FUNCTION project(
                 'name', projects.name->'fr',
                 'polygon', jsonb_build_object(
                     'type', 'geojson',
-                    'data', ST_AsGeoJSON(projects.polygon)::jsonb - 'crs'
+                    'data', ST_AsGeoJSON(projects.polygon, 9, 0)::jsonb
                 ),
                 'polygons_extra', (
                     SELECT
@@ -177,7 +177,7 @@ CREATE OR REPLACE FUNCTION project(
                     FROM
                         json_each_text(polygons_extra)
                 ),
-                'bbox_line', ST_AsGeoJSON(projects.bbox_line)::jsonb - 'crs',
+                'bbox_line', ST_AsGeoJSON(projects.bbox_line, 9, 0)::jsonb,
                 'icon_font_css_url', _base_url || projects.icon_font_css_url,
                 'attributions', coalesce((
                     SELECT
@@ -1203,9 +1203,9 @@ CREATE OR REPLACE FUNCTION pois_(
                         ELSE ST_Envelope(pois.geom)
                         END
                     ELSE pois.geom
-                    END
-                )::jsonb,
-                'bbox', CASE WHEN ST_Dimension(ST_Envelope(pois.geom)) > 0 THEN ST_Envelope(pois.geom) END,
+                    END,
+                    9, 0)::jsonb,
+                'bbox', CASE WHEN ST_Dimension(ST_Envelope(pois.geom)) > 0 THEN ST_AsGeoJSON(ST_Envelope(pois.geom), 9, 1)::jsonb->'bbox' END,
                 'properties',
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
