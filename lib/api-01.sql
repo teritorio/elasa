@@ -267,14 +267,6 @@ CREATE OR REPLACE FUNCTION article(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
-DROP TABLE IF EXISTS pois_local;
-CREATE TABLE pois_local AS SELECT * FROM pois_join LIMIT 0;
-ALTER TABLE pois_local ADD CONSTRAINT pois_local_pkey PRIMARY KEY (id);
-ALTER TABLE pois_local ADD CONSTRAINT pois_local_source_id FOREIGN KEY (source_id) REFERENCES sources(id) ON DELETE CASCADE;
-CREATE INDEX pois_local_idx_geom ON pois_local USING gist(geom);
-CREATE INDEX pois_local_idx_source_id ON pois_local(source_id);
-CREATE INDEX pois_local_idx_slug_id ON pois_local(slug_id);
-
 -- trigger to replicate change of local-* table into pois_local
 CREATE OR REPLACE FUNCTION pois_local_trigger(
     _op text,
@@ -283,23 +275,60 @@ CREATE OR REPLACE FUNCTION pois_local_trigger(
 ) RETURNS VOID AS $$
 BEGIN
     IF _op = 'DELETE' THEN
-        DELETE FROM api01.pois_local WHERE id = _id;
+        DELETE FROM pois WHERE id = _id;
     ELSE
         EXECUTE '
             INSERT INTO
-                api01.pois_local(id, geom, source_id, properties, website_details, image, slug_id, dep_ids)
+                pois(id, geom, properties, source_id, slugs, website_details)
             SELECT
-                id, geom, source_id, properties, NULL AS website_details, image, slug_id, NULL AS dep_ids
+                id, geom, properties, source_id, jsonb_build_object(''original_id'', slug_id), NULL AS website_details
             FROM
                 "' || substring(_table, 1, 63 - 2) || '_v" WHERE id = ' || _id || '
             ON CONFLICT (id) DO UPDATE SET
                 geom = EXCLUDED.geom,
-                source_id = EXCLUDED.source_id,
                 properties = EXCLUDED.properties,
+                source_id = EXCLUDED.source_id,
                 website_details = EXCLUDED.website_details,
-                image = EXCLUDED.image,
-                slug_id = EXCLUDED.slug_id,
-                dep_ids = EXCLUDED.dep_ids
+                slugs = EXCLUDED.slugs
+        ';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pois_local_i_trigger(
+    _op text,
+    _table text,
+    _id bigint
+) RETURNS VOID AS $$
+BEGIN
+    IF _op = 'DELETE' THEN
+        DELETE FROM pois WHERE id = _id;
+    ELSE
+        EXECUTE '
+            INSERT INTO
+                pois_files(pois_id, directus_files_id, index)
+            SELECT
+                pois_files.pois_id, pois_files.directus_files_id, pois_files.index
+            FROM
+                "' || _table || '" AS pois
+                JOIN "' || substring(_table, 1, 63 - 2) || '_i" AS pois_files ON
+                    pois_files.pois_id = pois.id
+            ON CONFLICT (pois_id, directus_files_id) DO UPDATE SET
+                index = EXCLUDED.index
+        ';
+        EXECUTE '
+            DELETE FROM
+                pois_files
+            WHERE
+                pois_id = ' || _id || ' AND
+                directus_files_id NOT IN (
+                    SELECT
+                        directus_files_id
+                    FROM
+                        "' || substring(_table, 1, 63 - 2) || '_i" AS pois_files
+                    WHERE
+                        pois_files.pois_id = ' || _id || '
+                )
         ';
     END IF;
 END;
@@ -313,10 +342,18 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION pois_local_it_trigger()
+CREATE OR REPLACE FUNCTION pois_local_t_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
     PERFORM api01.pois_local_trigger(TG_OP, left(TG_TABLE_NAME, -2), coalesce(NEW.pois_id, OLD.pois_id));
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pois_local_i_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM api01.pois_local_trigger_i(TG_OP, left(TG_TABLE_NAME, -2), coalesce(NEW.pois_id, OLD.pois_id));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -400,21 +437,6 @@ BEGIN
                 GROUP BY
                     id
             ),
-            ' END ||
-            CASE WHEN source.table_name_i IS NULL THEN '' ELSE '
-            pois_files AS (
-                SELECT
-                    pois_id,
-                    nullif(jsonb_agg(to_jsonb(
-                        ''__base_url__/assets/'' || pois_files.directus_files_id::text || ''/'' || directus_files.filename_download
-                    ) ORDER BY pois_files.index), ''[null]'') AS image
-                FROM
-                    "' || source.table_name_i || '" AS pois_files
-                    LEFT JOIN directus_files ON
-                        directus_files.id = pois_files.directus_files_id
-                GROUP BY
-                    pois_id
-            ),
             ' END || '
             z AS (SELECT 0)
             SELECT
@@ -433,20 +455,12 @@ BEGIN
                             (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
                         ')
                     )))
-                )) AS properties, ' ||
-                CASE WHEN source.table_name_i IS NULL
-                THEN 'NULL::jsonb'
-                ELSE 'pois_files.image'
-                END || ' AS image,
+                )) AS properties,
                 ' || _source_id || ' AS source_id,
                 json_build_object(''original_id'', t.id) AS slugs,
                 t.id AS slug_id
             FROM
                 "' || source.table_name || '" AS t ' ||
-                CASE WHEN source.table_name_i IS NULL THEN '' ELSE '
-                LEFT JOIN pois_files ON
-                    pois_files.pois_id = t.id
-                ' END ||
                 CASE WHEN source.table_name_t IS NULL THEN '' ELSE '
                 LEFT JOIN trans ON
                     trans.id = t.id
@@ -471,7 +485,7 @@ BEGIN
                 AFTER INSERT OR UPDATE OR DELETE
                 ON "' || source.table_name_i || '"
                 FOR EACH ROW
-                EXECUTE FUNCTION api01.pois_local_it_trigger();
+                EXECUTE FUNCTION api01.pois_local_i_trigger();
             ';
         END IF;
 
@@ -482,11 +496,11 @@ BEGIN
                 AFTER INSERT OR UPDATE OR DELETE
                 ON "' || source.table_name_t || '"
                 FOR EACH ROW
-                EXECUTE FUNCTION api01.pois_local_it_trigger();
+                EXECUTE FUNCTION api01.pois_local_t_trigger();
             ';
         END IF;
 
-        -- Touch all data to force update of pois_local
+        -- Touch all data to force update of pois
         EXECUTE '
             UPDATE "' || source.table_name ||'" SET id = id
         ';
@@ -1133,27 +1147,6 @@ CREATE OR REPLACE FUNCTION pois_(
                     _poi_ids IS NULL OR
                     pois_join.slug_id = ANY(_poi_ids)
                 )
-
-        UNION ALL
-
-        SELECT
-            menu_id,
-            pois_join.*
-        FROM
-            menu
-            JOIN pois_local AS pois ON
-                menu.source_id = pois.source_id AND
-                (
-                    _cliping_polygon IS NULL OR
-                    ST_Intersects(pois.geom, _cliping_polygon)
-                )
-            JOIN pois_local AS pois_join ON
-                pois_join.source_id = menu.source_id AND
-                pois_join.id = pois.id AND
-                (
-                    _poi_ids IS NULL OR
-                    pois_join.slug_id = ANY(_poi_ids)
-                )
     ),
     pois_with_deps AS (
         SELECT
@@ -1351,8 +1344,6 @@ CREATE OR REPLACE FUNCTION pois(
                 sources.project_id = projects.id
             JOIN (
                 SELECT source_id, geom, slugs->>'original_id' AS slug_id FROM pois
-                UNION ALL
-                SELECT source_id, geom, slug_id::text FROM pois_local
             ) AS pois ON
                 pois.source_id = sources.id AND
                 pois.slug_id = projects.polygons_extra->>_cliping_polygon_slug
