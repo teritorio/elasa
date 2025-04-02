@@ -1126,7 +1126,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
                  .gsub('pois_id varchar', "\"#{source_name}_id\" SERIAL")
                  .gsub('geom json', 'geom geometry(Geometry,4326)')
                  .gsub(' json', ' jsonb')
-  conn.exec("DROP TABLE IF EXISTS \"#{table}\"")
+  conn.exec("DROP TABLE IF EXISTS \"#{table}\" CASCADE")
   conn.exec("CREATE TABLE \"#{table}\" (#{create_table})")
   conn.exec("CREATE INDEX \"#{table[..(63 - 9)]}_idx_geom\" ON \"#{table}\" USING gist(geom)") if create_table.include?('geom geometry(Geometry,4326)')
   conn.exec("
@@ -1149,6 +1149,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       \"t_#{table}\"
   ")
 
+  conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_p"])
   conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..62]])
   conn.exec('
     INSERT INTO directus_collections(collection, translations, hidden, icon, "group") VALUES ($1, $2, $3, $4, $5)
@@ -1252,6 +1253,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         p['properties']['website:details'] = website_details
       end
 
+      dep_ids = (p['properties'].delete('dep_ids') || p['properties']['metadata'].delete('dep_ids'))&.compact&.presence
+      if !dep_ids.nil?
+        p['properties']['dep_ids'] = dep_ids
+      end
+
       p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'image:thumbnail', 'classic-editor-remember').collect{ |k, v|
         if v.is_a?(Array)
           [k, Array]
@@ -1273,6 +1279,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     fields = []
     fields_translations = []
     fields_image = nil
+    fields_deps = nil
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
       fk = nil
@@ -1287,6 +1294,9 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             fields_image = key
             f = nil
             interface = 'files'
+            nil
+          elsif key == 'dep_ids'
+            fields_deps = true
             nil
           elsif ['route:gpx_trace', 'route:pdf'].include?(key)
             f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
@@ -1434,6 +1444,119 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         'index',
         'nullify',
       ])
+
+      conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table_i])
+      %w[create read update delete].each{ |action|
+        conn.exec('
+          INSERT INTO directus_permissions(policy, collection, action, permissions, fields)
+          VALUES ($1, $2, $3, $4, $5)
+        ', [
+          policy_uuid,
+          table_i,
+          action,
+          (action == 'create' ? {} :
+            { _and: [{ pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
+          ).to_json,
+          '*'
+        ])
+      }
+    end
+
+    if !fields_deps.nil?
+      deps_ids = ps.to_h{ |poi|
+        [poi['properties']['metadata']['id'], poi['properties']['dep_ids']]
+      }
+
+      table_p = "#{table[..60]}_p"
+      conn.exec("DROP TABLE IF EXISTS \"#{table_p}\" CASCADE")
+      conn.exec("
+        CREATE TABLE \"#{table_p}\"(
+          id SERIAL PRIMARY KEY,
+          parent_pois_id integer NOT NULL REFERENCES \"#{table}\"(id) ON DELETE CASCADE,
+          children_pois_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE,
+          index integer NOT NULL DEFAULT 1
+        )
+      ")
+      deps_ids.each{ |poi_id, dep_ids|
+        conn.exec_params("
+          INSERT INTO \"#{table_p}\"(parent_pois_id, children_pois_id, index)
+          SELECT
+            $1,
+            pois.id,
+            t.index
+          FROM
+            jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
+            JOIN pois ON
+              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id
+            JOIN sources ON
+              sources.id = pois.source_id AND
+              sources.project_id = $3
+          ", [
+          poi_id,
+          dep_ids.to_json,
+          project_id,
+        ])
+      }
+
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', [table_p])
+
+      conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table_p])
+      conn.exec('
+        INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
+      ', [
+        table[..62],
+        'parent_pois_id',
+        'm2m',
+        'list-m2m',
+        '{"enableCreate":false,"enableLink":true}',
+        nil,
+      ])
+      conn.exec('
+        INSERT INTO directus_collections(collection, hidden, icon, "group") VALUES ($1, $2, $3, $4)
+      ', [
+        table_p,
+        true,
+        'import_export',
+        table,
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_p,
+        'children_pois_id',
+        'pois',
+        nil,
+        'parent_pois_id',
+        nil,
+        'nullify',
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_p,
+        'parent_pois_id',
+        table[..62],
+        'parent_pois_id',
+        'children_pois_id',
+        'index',
+        'delete',
+      ])
+
+      conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table_p])
+      %w[create read update delete].each{ |action|
+        conn.exec('
+          INSERT INTO directus_permissions(policy, collection, action, permissions, fields)
+          VALUES ($1, $2, $3, $4, $5)
+        ', [
+          policy_uuid,
+          table_p,
+          action,
+          (action == 'create' ? {} :
+            { _and: [{ parent_pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
+          ).to_json,
+          '*'
+        ])
+      }
     end
 
     # Create trigger and fill pois_local table

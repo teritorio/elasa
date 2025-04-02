@@ -212,6 +212,11 @@ def compare_pois(url_old, url_new, category_ids)
       poi['properties'] = poi['properties'].transform_values{ |v|
         v.is_a?(String) ? v.strip : v
       }
+      poi['properties']['metadata']['dep_ids'] = poi['properties'].delete('dep_ids') if poi['properties'].key?('dep_ids') # Buggy WP
+      if poi['properties']['metadata'].key?('dep_ids')
+        poi['properties']['metadata']['dep_ids'] = poi['properties']['metadata']['dep_ids'].compact.presence
+        poi['properties']['metadata'].delete('dep_ids') if poi['properties']['metadata']['dep_ids'].nil?
+      end
       poi['properties']['metadata']&.delete('source_id')
       poi['properties']['metadata']&.delete('updated_at')
       poi['properties']['editorial']&.delete('hasfiche')
@@ -416,6 +421,11 @@ def compare_pois(url_old, url_new, category_ids)
     end
     if h[0]['properties']['editorial']['source:website:details'] == 'local'
       h[0]['properties']['editorial']&.delete('source:website:details')
+    end
+
+    # dep_ids is missing on WP for object from datasources
+    if h[0]['properties']['metadata']['dep_ids'].nil?
+      h[1]['properties']['metadata'].delete('dep_ids')
     end
 
     h.each{ |poi|
