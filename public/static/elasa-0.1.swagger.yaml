@@ -637,7 +637,9 @@ components:
         geometry:
           type: object
         bbox:
-          type: object
+          type: array
+          items:
+            type: number
         properties:
           type: object
           additionalProperties:
@@ -766,10 +768,13 @@ components:
                   description: CSS identifier of the icons.
                 color_fill:
                   type: string
-                  description: Web color identifier.
+                  description: Web color identifier. Main color, for background.
                 color_line:
                   type: string
-                  description: Web color identifier.
+                  description: Web color identifier. Main color, for line and text.
+                color_text:
+                  type: string
+                  description: Web color identifier. Text color over background of color_fill.
                 style_class:
                   type: array
                   items:
