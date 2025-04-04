@@ -194,8 +194,8 @@ def compare_pois(url_old, url_new, category_ids)
     "#{url_new}/pois.geojson",
   ].each_with_index.collect{ |url, index|
     array = fetch_json(url)['features']&.compact_blank_deep&.select{ |poi|
-              !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty?
-            }&.collect{ |poi|
+      !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
+    }&.collect{ |poi|
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
           poi['properties'][r] = poi['properties'][r].to_f.round(4)
@@ -426,6 +426,13 @@ def compare_pois(url_old, url_new, category_ids)
     # dep_ids is missing on WP for object from datasources
     if h[0]['properties']['metadata']['dep_ids'].nil?
       h[1]['properties']['metadata'].delete('dep_ids')
+    end
+
+    if h[0]['properties']['metadata']['dep_ids'].present?
+      h[0]['properties']['metadata']['dep_ids'] -= [-1]
+    end
+    if h[1]['properties']['metadata']['dep_ids'].present?
+      h[1]['properties']['metadata']['dep_ids'] = h[1]['properties']['metadata']['dep_ids'].select{ |id| id / 10_000 != 654_65 }
     end
 
     h.each{ |poi|

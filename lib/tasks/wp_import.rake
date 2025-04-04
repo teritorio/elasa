@@ -501,6 +501,65 @@ def add_missing_pois(menu_sources, pois)
   pois + equiv_pois
 end
 
+def add_waypoints(menu_items, pois, url_pois)
+  pois = pois.collect{ |poi|
+    dep_ids = (poi['properties'].delete('dep_ids') || poi['properties']['metadata'].delete('dep_ids'))&.compact&.presence
+    if !dep_ids.nil?
+      poi['properties']['dep_ids'] = dep_ids
+    end
+
+    poi
+  }
+
+  waypoint_id = 654_654_654 # Magic number to avoid collision with other pois
+  # Fetch waypoints from deps and add them as local pois
+  waypoints = pois.select{ |poi| poi['properties']['dep_ids']&.include?(-1) }.collect{ |poi|
+    poi_id = poi['properties']['metadata']['id']
+    wp_ids = []
+    wps = fetch_json(url_pois.gsub('/pois.json', "/poi/#{poi_id}/deps.geojson"))['features'].select{ |p|
+      p['properties'].key?('route:point:type')
+    }.each_with_index.collect{ |p, index|
+      id = (waypoint_id += 1)
+      wp_ids << id
+      p['properties'].delete('id')
+      p['properties']['metadata'] = {
+        'id' => id,
+        'category_ids' => [-1],
+        'source_id' => "#{poi_id}-#{index}"
+      }
+      p['properties']['name'] = p['properties']['name']['fr'] if p['properties']['name'].present?
+      p['properties']['description'] = p['properties']['description']['fr'] if p['properties']['description'].present?
+      p
+    }
+
+    poi['properties']['dep_ids'] = poi['properties']['dep_ids'].select{ |dep_id| dep_id != -1 } + wp_ids
+
+    wps
+  }.flatten(1)
+
+  waypoints_menu = {
+    'id' => -1,
+    'parent_id' => nil,
+    'selected_by_default' => false,
+    'hidden' => true,
+    'index_order' => 0,
+    'category' => {
+      'id' => -1,
+      'name' => {
+        'en' => 'Waypoints',
+        'fr' => 'Points de passage',
+      },
+      'icon' => 'teritorio teritorio-beef00',
+      'color_fill' => '#beef00',
+      'color_line' => '#beef00',
+      'style_class' => nil,
+      'display_mode' => 'compact'
+    },
+  }
+
+  [menu_items + [waypoints_menu], pois + waypoints]
+end
+
 def load_images(conn, project_id, user_uuid, image_urls, directory)
   folder_uuid = (
     if !directory.nil?
@@ -651,6 +710,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     pois = fetch_json(url_pois)['features']
     # Missing poi from buggy WP pois.geojson
     pois = add_missing_pois(menu_sources, pois)
+    menu_items, pois = add_waypoints(menu_items, pois, url_pois)
 
     fields = load_fields(conn, project_id, pois, menu_items, i18ns)
     fields_ids = fields.index_by(&:first)
@@ -879,7 +939,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 
     puts "pois slug update: #{pois.size}"
     slugs = pois.select{ |poi|
-      poi.dig('properties', 'metadata', 'source') != 'zone' && poi.dig('properties', 'metadata', 'source') != 'tis'
+      poi.dig('properties', 'metadata', 'source') != 'zone' && poi.dig('properties', 'metadata', 'source') != 'tis' && poi.dig('properties', 'metadata', 'category_ids') != [-1]
     }.collect{ |poi|
       id = poi.dig('properties', 'metadata', 'id')
       ref = poi.dig('properties', 'tis_id') || poi.dig('properties', 'metadata', 'source_id')
@@ -940,9 +1000,9 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     )
 
     # Categories not linked to datasource
-    local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) }
+    local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
-    categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }
+    categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }.sort_by{ |category_local| category_local['category']['id'] }
     source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
@@ -1253,11 +1313,6 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         p['properties']['website:details'] = website_details
       end
 
-      dep_ids = (p['properties'].delete('dep_ids') || p['properties']['metadata'].delete('dep_ids'))&.compact&.presence
-      if !dep_ids.nil?
-        p['properties']['dep_ids'] = dep_ids
-      end
-
       p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'image:thumbnail', 'classic-editor-remember').collect{ |k, v|
         if v.is_a?(Array)
           [k, Array]
@@ -1491,6 +1546,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             JOIN sources ON
               sources.id = pois.source_id AND
               sources.project_id = $3
+          ORDER BY
+            t.index
           ", [
           poi_id,
           dep_ids.to_json,
