@@ -1239,7 +1239,7 @@ CREATE OR REPLACE FUNCTION pois_(
         UNION
         (
         SELECT DISTINCT ON (pois_join.id)
-            coalesce(menu_items.id, (SELECT menu_id FROM menu LIMIT 1)) AS menu_id,
+            menu_items.id AS menu_id,
             pois_join.*
         FROM
             pois_selected AS pois
@@ -1337,7 +1337,7 @@ CREATE OR REPLACE FUNCTION pois_(
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
                             -- cartocode
-                            'category_ids', array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.slug_id),
+                            'category_ids', nullif(array_remove(array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.slug_id), NULL), ARRAY[]::bigint[]),
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
@@ -1351,7 +1351,7 @@ CREATE OR REPLACE FUNCTION pois_(
                                 END,
                             'dep_ids', dep_original_ids
                         ),
-                        'editorial', menu.editorial || jsonb_build_object(
+                        'editorial', nullif(coalesce(menu.editorial, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
                             'website:details', coalesce(
                                 pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
@@ -1360,18 +1360,18 @@ CREATE OR REPLACE FUNCTION pois_(
                                 ) END,
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
                             )
-                        ),
-                        'display', menu.display || jsonb_strip_nulls(jsonb_build_object(
+                        )), '{}'::jsonb),
+                        'display', nullif(coalesce(menu.display, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
                             'color_fill', pois.properties->'tags'->'colour',
                             'color_line', pois.properties->'tags'->'colour',
                             'color_text', pois.properties->'tags'->'colour:text'
-                        ))
+                        )), '{}'::jsonb)
                     )
             )) AS feature
         FROM
-            menu
-            JOIN pois_with_deps AS pois ON
-                pois.menu_id = menu.menu_id
+            pois_with_deps AS pois
+            LEFT JOIN menu ON
+                menu.menu_id = pois.menu_id
         WHERE
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
