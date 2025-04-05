@@ -733,6 +733,15 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         next
       end
 
+      # Categories not linked to datasource
+      local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
+      local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
+      categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }.sort_by{ |category_local| category_local['category']['id'] }
+      source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
+
+      # Skip menu for local waypoints
+      next if menu['id'] == -1
+
       fields_id = fields_ids[menu['id']]
       menu_item_id = conn.exec(
         '
@@ -998,12 +1007,6 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         pois.properties->>'id' = pois_slug_import.ref
       "
     )
-
-    # Categories not linked to datasource
-    local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
-    local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
-    categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }.sort_by{ |category_local| category_local['category']['id'] }
-    source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
 
     source_ids.zip(categories_local).each{ |source_id, categorie|
       id = conn.exec(
