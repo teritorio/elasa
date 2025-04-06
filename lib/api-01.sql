@@ -427,12 +427,19 @@ BEGIN
             INSERT INTO
                 pois_pois(parent_pois_id, children_pois_id, index)
             SELECT
-                pois.id, ' || _children_pois_id || ', ' || _index || '
+                parent_pois.id, children_pois.id, ' || _index || '
             FROM
                 "' || substring(_table, 1, 63 - 2) || '_v" AS local_pois
-                JOIN pois ON
-                    pois.source_id = local_pois.source_id AND
-                    (pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer
+                JOIN pois AS parent_pois ON
+                    parent_pois.source_id = local_pois.source_id AND
+                    (parent_pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer
+                JOIN sources AS parent_sources ON
+                    parent_sources.id = parent_pois.source_id
+                JOIN pois AS children_pois ON
+                    (children_pois.slugs->>''original_id'')::integer = ' || _children_pois_id || '
+                JOIN sources AS children_sources ON
+                    children_sources.id = children_pois.source_id AND
+                    children_sources.project_id = parent_sources.project_id
             WHERE
                 local_pois.id = ' || _parent_pois_id || '
             ON CONFLICT (parent_pois_id, children_pois_id) DO UPDATE SET

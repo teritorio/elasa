@@ -1626,12 +1626,13 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       # Waypoints
 
       table_w = "#{table[..60]}_w"
+      table_pdp = "local-#{project_slug}-points_de_passage"
       conn.exec("DROP TABLE IF EXISTS \"#{table_w}\" CASCADE")
       conn.exec("
         CREATE TABLE \"#{table_w}\"(
           id SERIAL PRIMARY KEY,
           parent_pois_id integer NOT NULL REFERENCES \"#{table}\"(id) ON DELETE CASCADE,
-          children_pois_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE,
+          children_pois_id integer NOT NULL REFERENCES \"#{table_pdp}\"(id) ON DELETE CASCADE,
           index integer NOT NULL DEFAULT 1
         )
       ")
@@ -1640,22 +1641,17 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           INSERT INTO \"#{table_w}\"(parent_pois_id, children_pois_id, index)
           SELECT
             $1,
-            pois.id,
-            t.index
+            dep_id::integer,
+            index
           FROM
             jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
-            JOIN pois ON
-              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
-              coalesce(pois.properties->'natives' ? 'route:point:type', false) = true
-            JOIN sources ON
-              sources.id = pois.source_id AND
-              sources.project_id = $3
+            JOIN \"#{table_pdp}\" AS w ON
+              w.id = dep_id::integer
           ORDER BY
-            t.index
+            index
           ", [
           poi_id,
           dep_ids.to_json,
-          project_id,
         ])
       }
 
@@ -1685,7 +1681,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       ', [
         table_w,
         'children_pois_id',
-        'pois',
+        table_pdp,
         nil,
         'parent_pois_id',
         nil,
