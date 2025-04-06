@@ -398,6 +398,50 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION pois_local_w_trigger(
+    _op text,
+    _table text,
+    _parent_pois_id bigint,
+    _children_pois_id bigint,
+    _index integer
+) RETURNS VOID AS $$
+BEGIN
+    IF _op = 'DELETE' THEN
+        EXECUTE '
+            DELETE FROM
+                pois_pois
+            USING
+                "' || substring(_table, 1, 63 - 2) || '_v" AS local_pois,
+                pois
+            WHERE
+                local_pois.id = ' || _parent_pois_id || ' AND
+
+                pois.source_id = local_pois.source_id AND
+                (pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer AND
+
+                pois_pois.parent_pois_id = pois.id AND
+                pois_pois.children_pois_id = ' || _children_pois_id || '
+        ';
+    ELSE
+        EXECUTE '
+            INSERT INTO
+                pois_pois(parent_pois_id, children_pois_id, index)
+            SELECT
+                pois.id, ' || _children_pois_id || ', ' || _index || '
+            FROM
+                "' || substring(_table, 1, 63 - 2) || '_v" AS local_pois
+                JOIN pois ON
+                    pois.source_id = local_pois.source_id AND
+                    (pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer
+            WHERE
+                local_pois.id = ' || _parent_pois_id || '
+            ON CONFLICT (parent_pois_id, children_pois_id) DO UPDATE SET
+                index = EXCLUDED.index
+        ';
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION pois_local_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -430,6 +474,14 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION pois_local_w_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM api01.pois_local_w_trigger(TG_OP, left(TG_TABLE_NAME, -2), coalesce(NEW.parent_pois_id, OLD.parent_pois_id), coalesce(NEW.children_pois_id, OLD.children_pois_id), NEW.index);
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
 DROP FUNCTION IF EXISTS create_pois_local_view;
 CREATE OR REPLACE FUNCTION create_pois_local_view(
     _source_id integer,
@@ -448,6 +500,7 @@ BEGIN
             tables_t.table_name AS table_name_t,
             tables_i.table_name AS table_name_i,
             tables_p.table_name AS table_name_p,
+            tables_w.table_name AS table_name_w,
             array_agg(key_column_usage.column_name) AS file_fields
         FROM
             information_schema.tables
@@ -460,6 +513,9 @@ BEGIN
             -- Deps pois
             LEFT JOIN information_schema.tables AS tables_p ON
                 tables_p.table_name = substring(tables.table_name, 1, 63 - 2) || '_p'
+            -- Deps waypoints
+            LEFT JOIN information_schema.tables AS tables_w ON
+                tables_w.table_name = substring(tables.table_name, 1, 63 - 2) || '_w'
             -- Many files fields
             -- One file fields
             LEFT JOIN information_schema.table_constraints ON
@@ -477,7 +533,8 @@ BEGIN
             tables.table_name,
             tables_t.table_name,
             tables_i.table_name,
-            tables_p.table_name
+            tables_p.table_name,
+            tables_w.table_name
     LOOP
         EXECUTE 'DROP VIEW IF EXISTS public."' || substring(source.table_name, 1, 63 - 2) || '_v" CASCADE';
         EXECUTE '
@@ -595,6 +652,20 @@ BEGIN
             ';
             EXECUTE '
                 UPDATE "' || source.table_name_p ||'" SET id = id
+            ';
+        END IF;
+
+        IF source.table_name_w IS NOT NULL THEN
+            EXECUTE '
+                DROP TRIGGER IF EXISTS "' || substring(source.table_name_w, 1, 63 - 2) || '_t" ON "' || source.table_name_p || '";
+                CREATE TRIGGER "' || substring(source.table_name_w, 1, 63 - 2) || '_t"
+                AFTER INSERT OR UPDATE OR DELETE
+                ON "' || source.table_name_w || '"
+                FOR EACH ROW
+                EXECUTE FUNCTION api01.pois_local_w_trigger();
+            ';
+            EXECUTE '
+                UPDATE "' || source.table_name_w ||'" SET id = id
             ';
         END IF;
 

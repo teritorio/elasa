@@ -1214,6 +1214,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   ")
 
   conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_p"])
+  conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_w"])
   conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table[..62]])
   conn.exec('
     INSERT INTO directus_collections(collection, translations, hidden, icon, "group") VALUES ($1, $2, $3, $4, $5)
@@ -1223,7 +1224,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   ', [
     table[..62],
     !table.end_with?('_t') && !table.end_with?('_i') ? [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json : nil,
-    table.end_with?('_t'),
+    table.end_with?('_t') || table.include?('-points_de_passage'),
     'pin_drop',
     table.end_with?('_t') ? table_aprent[..62] : 'local_sources',
   ])
@@ -1526,6 +1527,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         [poi['properties']['metadata']['id'], poi['properties']['dep_ids']]
       }
 
+      # Associated POI
+
       table_p = "#{table[..60]}_p"
       conn.exec("DROP TABLE IF EXISTS \"#{table_p}\" CASCADE")
       conn.exec("
@@ -1546,7 +1549,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           FROM
             jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
             JOIN pois ON
-              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id
+              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
+              coalesce(pois.properties->'natives' ? 'route:point:type', false) = false
             JOIN sources ON
               sources.id = pois.source_id AND
               sources.project_id = $3
@@ -1566,7 +1570,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
       ', [
         table[..62],
-        'parent_pois_id',
+        'associated_pois',
         'm2m',
         'list-m2m',
         '{"enableCreate":false,"enableLink":true}',
@@ -1597,7 +1601,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         table_p,
         'parent_pois_id',
         table[..62],
-        'parent_pois_id',
+        'associated_pois',
         'children_pois_id',
         'index',
         'delete',
@@ -1611,6 +1615,102 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         ', [
           policy_uuid,
           table_p,
+          action,
+          (action == 'create' ? {} :
+            { _and: [{ parent_pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
+          ).to_json,
+          '*'
+        ])
+      }
+
+      # Waypoints
+
+      table_w = "#{table[..60]}_w"
+      conn.exec("DROP TABLE IF EXISTS \"#{table_w}\" CASCADE")
+      conn.exec("
+        CREATE TABLE \"#{table_w}\"(
+          id SERIAL PRIMARY KEY,
+          parent_pois_id integer NOT NULL REFERENCES \"#{table}\"(id) ON DELETE CASCADE,
+          children_pois_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE,
+          index integer NOT NULL DEFAULT 1
+        )
+      ")
+      deps_ids.each{ |poi_id, dep_ids|
+        conn.exec_params("
+          INSERT INTO \"#{table_w}\"(parent_pois_id, children_pois_id, index)
+          SELECT
+            $1,
+            pois.id,
+            t.index
+          FROM
+            jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
+            JOIN pois ON
+              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
+              coalesce(pois.properties->'natives' ? 'route:point:type', false) = true
+            JOIN sources ON
+              sources.id = pois.source_id AND
+              sources.project_id = $3
+          ORDER BY
+            t.index
+          ", [
+          poi_id,
+          dep_ids.to_json,
+          project_id,
+        ])
+      }
+
+      conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', [table_w])
+
+      conn.exec('DELETE FROM directus_collections WHERE collection = $1', [table_w])
+      conn.exec('
+        INSERT INTO directus_fields(collection, field, special, interface, options, display) VALUES ($1, $2, $3, $4, $5, $6)
+      ', [
+        table[..62],
+        'waypoints',
+        'm2m',
+        'list-m2m',
+        '{"enableCreate":false,"enableLink":true}',
+        nil,
+      ])
+      conn.exec('
+        INSERT INTO directus_collections(collection, hidden, icon, "group") VALUES ($1, $2, $3, $4)
+      ', [
+        table_w,
+        true,
+        'import_export',
+        table,
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_w,
+        'children_pois_id',
+        'pois',
+        nil,
+        'parent_pois_id',
+        nil,
+        'nullify',
+      ])
+      conn.exec('
+        INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      ', [
+        table_w,
+        'parent_pois_id',
+        table[..62],
+        'waypoints',
+        'children_pois_id',
+        'index',
+        'delete',
+      ])
+
+      conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table_w])
+      %w[create read update delete].each{ |action|
+        conn.exec('
+          INSERT INTO directus_permissions(policy, collection, action, permissions, fields)
+          VALUES ($1, $2, $3, $4, $5)
+        ', [
+          policy_uuid,
+          table_w,
           action,
           (action == 'create' ? {} :
             { _and: [{ parent_pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
