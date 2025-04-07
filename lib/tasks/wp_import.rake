@@ -1656,7 +1656,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         'waypoints',
         'm2m',
         'list-m2m',
-        '{"enableCreate":false,"enableLink":true}',
+        '{"enableLink":true,"limit":200,"layout":"table","tableSpacing":"compact","fields":["index","children_pois_id.route___waypoint___type","children_pois_id.points_de_passage_translations.name"],"enableSelect":false}',
         nil,
       ])
       conn.exec('
