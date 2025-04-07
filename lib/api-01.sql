@@ -664,7 +664,7 @@ BEGIN
 
         IF source.table_name_w IS NOT NULL THEN
             EXECUTE '
-                DROP TRIGGER IF EXISTS "' || substring(source.table_name_w, 1, 63 - 2) || '_t" ON "' || source.table_name_p || '";
+                DROP TRIGGER IF EXISTS "' || substring(source.table_name_w, 1, 63 - 2) || '_t" ON "' || source.table_name_w || '";
                 CREATE TRIGGER "' || substring(source.table_name_w, 1, 63 - 2) || '_t"
                 AFTER INSERT OR UPDATE OR DELETE
                 ON "' || source.table_name_w || '"
@@ -1381,7 +1381,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
-                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details') ||
+                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details' - 'route:waypoint:type') ||
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
@@ -1411,7 +1411,10 @@ CREATE OR REPLACE FUNCTION pois_(
                             WHEN true THEN
                                 pois.properties->'natives'->'short_description'->>'fr-FR'
                             END,
-                        'route:point:type',  replace(pois.properties->'tags'->'route'->>'waypoint:type', 'waypoint', 'way_point'),
+                        'route:point:type',  replace(coalesce(
+                                pois.properties->'tags'->'route'->>'waypoint:type',
+                                pois.properties->'natives'->>'route:waypoint:type'
+                            ), 'waypoint', 'way_point'),
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
                             -- cartocode

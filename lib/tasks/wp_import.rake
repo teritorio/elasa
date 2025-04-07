@@ -527,6 +527,7 @@ def add_waypoints(menu_items, pois, url_pois)
         'category_ids' => [-1],
         'source_id' => "#{poi_id}-#{index}"
       }
+      p['properties']['route:waypoint:type'] = p['properties'].delete('route:point:type').gsub('way_point', 'waypoint')
       p['properties']['name'] = p['properties']['name']['fr'] if p['properties']['name'].present?
       p['properties']['description'] = p['properties']['description']['fr'] if p['properties']['description'].present?
       p
@@ -1550,7 +1551,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
             JOIN pois ON
               coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
-              coalesce(pois.properties->'natives' ? 'route:point:type', false) = false
+              coalesce(pois.properties->'natives' ? 'route:waypoint:type', false) = false
             JOIN sources ON
               sources.id = pois.source_id AND
               sources.project_id = $3
