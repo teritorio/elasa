@@ -1146,7 +1146,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 end
 
 def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i18ns, policy_uuid)
-  fields_table = fields.select{ |_, _, _, type| !type.nil? }.collect{ |field, t, _, type, fk| [field.gsub(':', '___'), t, _, type, fk] }
+  fields_table = fields.select{ |_, _, _, _, type, _| !type.nil? }.collect{ |field, t, interface, _options, type, fk| [field.gsub(':', '___'), t, interface, type, fk] }
   create_table = fields_table.collect{ |field, _, _, type, fk| [field, type, fk.nil? ? nil : "REFERENCES #{fk}"].compact.join(' ') }.join(",\n")
   conn.exec('SET client_min_messages TO WARNING')
   conn.exec("DROP TABLE IF EXISTS \"t_#{table}\"")
@@ -1228,17 +1228,17 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     table.end_with?('_t') ? table_aprent[..62] : 'local_sources',
   ])
   conn.exec('DELETE FROM directus_fields WHERE collection = $1', [table[..62]])
-  fields.each{ |key, _, interface, _|
+  fields.each{ |key, _, interface, options, _, _|
     name = i18ns.dig(key, 'label', 'fr')
 
     conn.exec('
       INSERT INTO directus_fields(collection, field, special, translations, options, readonly, hidden, sort, interface) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     ', [
       table[..62],
-      key[..62],
+      key[..62].gsub(':', '___'),
       interface == 'files' ? 'files' : nil,
       name.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
-      interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
+      options,
       key == 'id',
       table.end_with?('_t') && %w[id pois_id languages_code].include?(key),
       nil,
@@ -1338,6 +1338,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     fields_deps = nil
     value_stats.sort_by{ |_key, stats| -stats.values.sum }.each{ |key, stats|
       interface = nil
+      options = nil
       fk = nil
       i = if %w[name description short_description].include?(key)
             f = ->(i, _j) { i }
@@ -1350,10 +1351,16 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             fields_image = key
             f = nil
             interface = 'files'
+            options = '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}'
             nil
           elsif key == 'dep_ids'
             fields_deps = true
             nil
+          elsif key == 'route:waypoint:type'
+            f = ->(i, _j) { i }
+            interface = 'select-dropdown'
+            options = '{"choices":[{"text":"parking","value":"parking","icon":"parking"},{"text":"start","value":"start","icon":"flag"},{"text":"waypoint","value":"waypoint","icon":"pin_drop"},{"text":"end","value":"end","icon":"emoji_flags"}]}'
+            'varchar'
           elsif ['route:gpx_trace', 'route:pdf'].include?(key)
             f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
             interface = 'file'
@@ -1383,9 +1390,9 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         i += ' NOT NULL'
       end
       if %w[name description short_description].include?(key)
-        fields_translations << [key, f, interface, i, fk]
+        fields_translations << [key, f, interface, options, i, fk]
       else
-        fields << [key, f, interface, i, fk]
+        fields << [key, f, interface, options, i, fk]
       end
     }
 
@@ -1394,13 +1401,13 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_i"])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_t"])
 
-    fields += [['id', nil, nil, 'varchar'], ['geom', nil, nil, 'json NOT NULL']]
+    fields += [['id', nil, nil, nil, 'varchar', nil], ['geom', nil, nil, nil, 'json NOT NULL', nil]]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
 
     if !fields_translations.empty?
       fields_translations += [
-        ['id', nil, nil, 'varchar'], ['pois_id', nil, nil, 'integer NOT NULL', "\"#{table}\"(id) ON DELETE CASCADE"],
-        ['languages_code', nil, nil, 'varchar(255)', 'languages(code) ON DELETE CASCADE']
+        ['id', nil, nil, nil, 'varchar', nil], ['pois_id', nil, nil, nil, 'integer NOT NULL', "\"#{table}\"(id) ON DELETE CASCADE"],
+        ['languages_code', nil, nil, nil, 'varchar(255)', 'languages(code) ON DELETE CASCADE']
       ]
       load_local_table(conn, source_name, name, "#{table[..60]}_t", table, fields_translations, ps, i18ns, policy_uuid)
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', ["#{table[..60]}_t"])
