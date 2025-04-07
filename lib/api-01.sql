@@ -491,6 +491,7 @@ $$ LANGUAGE plpgsql;
 
 DROP FUNCTION IF EXISTS create_pois_local_view;
 CREATE OR REPLACE FUNCTION create_pois_local_view(
+    _project_id integer,
     _source_id integer,
     _table_name text
 ) RETURNS TABLE(
@@ -581,7 +582,7 @@ BEGIN
             ),' END || '
             z AS (SELECT 0)
             SELECT
-                t.project_id,
+                ' || _project_id || ' AS project_id,
                 t.id,
                 geom,
                 jsonb_strip_nulls(jsonb_build_object(
@@ -589,7 +590,7 @@ BEGIN
                     ''source'', NULL,
                     ''updated_at'', NULL,
                     ''natives'', (SELECT jsonb_object_agg(replace(key, ''___'', '':''), value) FROM jsonb_each(jsonb_strip_nulls(
-                        row_to_json(t.*)::jsonb - ''id'' - ''project_id'' - ''geom'' || ' ||
+                        row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
                         CASE WHEN source.table_name_t IS NOT NULL THEN 'trans.jsonb || ' ELSE '' END || '
                         jsonb_build_object(' ||
                             (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
@@ -698,6 +699,7 @@ CREATE OR REPLACE FUNCTION create_project_pois_local_view(
         JOIN sources ON
             sources.project_id = projects.id
         JOIN LATERAL create_pois_local_view(
+                projects.id,
                 sources.id,
                 substring('local-' || projects.slug || '-' || sources.slug, 1, 63)
             ) AS view ON true

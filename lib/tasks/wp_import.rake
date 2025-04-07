@@ -1200,8 +1200,6 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     " + fields_table.collect { |field, _, _, type|
       if %w[id pois_id].include?(field) || type.include?('bigint')
         "\"#{field}\"::bigint"
-      elsif field == 'project_id'
-        'project_id::integer'
       elsif type.include?('uuid')
         "\"#{field}\"::uuid"
       elsif field == 'geom'
@@ -1241,7 +1239,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       interface == 'files' ? 'files' : nil,
       name.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
-      key == 'project_id' || (table.end_with?('_t') && %w[id pois_id languages_code].include?(key)),
+      table.end_with?('_t') && %w[id pois_id languages_code].include?(key),
       nil,
       interface,
     ])
@@ -1256,11 +1254,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
       policy_uuid,
       table[..62],
       action,
-      (action == 'create' ? {} :
-        table.end_with?('_t') ?
-          { _and: [{ pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] } :
-          { _and: [{ project_id: { _eq: '$CURRENT_USER.project_id' } }] }
-      ).to_json,
+      {}.to_json,
       '*'
     ])
   }
@@ -1399,7 +1393,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_i"])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_t"])
 
-    fields += [['id', nil, nil, 'varchar'], ['project_id', ->(_, _) { project_id }, nil, 'integer NOT NULL'], ['geom', nil, nil, 'json NOT NULL']]
+    fields += [['id', nil, nil, 'varchar'], ['geom', nil, nil, 'json NOT NULL']]
     load_local_table(conn, source_name, name, table, nil, fields, ps, i18ns, policy_uuid)
 
     if !fields_translations.empty?
@@ -1515,9 +1509,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           policy_uuid,
           table_i,
           action,
-          (action == 'create' ? {} :
-            { _and: [{ pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
-          ).to_json,
+          {}.to_json,
           '*'
         ])
       }
@@ -1617,9 +1609,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           policy_uuid,
           table_p,
           action,
-          (action == 'create' ? {} :
-            { _and: [{ parent_pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
-          ).to_json,
+          {}.to_json,
           '*'
         ])
       }
@@ -1709,16 +1699,14 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           policy_uuid,
           table_w,
           action,
-          (action == 'create' ? {} :
-            { _and: [{ parent_pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } }] }
-          ).to_json,
+          {}.to_json,
           '*'
         ])
       }
     end
 
     # Create trigger and fill pois_local table
-    conn.exec('SELECT api01.create_pois_local_view($1, $2)', [source_id, table])
+    conn.exec('SELECT api01.create_pois_local_view($1, $2, $3)', [project_id, source_id, table])
 
     source_id
   }
