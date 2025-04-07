@@ -1232,13 +1232,14 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
     name = i18ns.dig(key, 'label', 'fr')
 
     conn.exec('
-      INSERT INTO directus_fields(collection, field, special, translations, options, hidden, sort, interface) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO directus_fields(collection, field, special, translations, options, readonly, hidden, sort, interface) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
     ', [
       table[..62],
       key[..62],
       interface == 'files' ? 'files' : nil,
       name.nil? ? nil : [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json,
       interface == 'files' ? '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}' : nil,
+      key == 'id',
       table.end_with?('_t') && %w[id pois_id languages_code].include?(key),
       nil,
       interface,
