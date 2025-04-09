@@ -1223,7 +1223,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   ', [
     table[..62],
     !table.end_with?('_t') && !table.end_with?('_i') ? [{ language: 'fr-FR', translation: uncapitalize(name) }].to_json : nil,
-    table.end_with?('_t') || table.include?('-points_de_passage'),
+    table.end_with?('_t') || table.include?('-waypoints'),
     'pin_drop',
     table.end_with?('_t') ? table_aprent[..62] : 'local_sources',
   ])
@@ -1264,7 +1264,7 @@ end
 def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, pois, i18ns, policy_uuid, url_base)
   slugs = []
   categories_local.collect{ |category_local|
-    name = category_local['category']['name']['fr']
+    name = category_local['category']['name']['en'] || category_local['category']['name']['fr']
     category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
     source_name = category_slug
     table = "local-#{project_slug}-#{source_name}"
@@ -1625,7 +1625,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       # Waypoints
 
       table_w = "#{table[..60]}_w"
-      table_pdp = "local-#{project_slug}-points_de_passage"
+      table_pdp = "local-#{project_slug}-waypoints"
       conn.exec("DROP TABLE IF EXISTS \"#{table_w}\" CASCADE")
       conn.exec("
         CREATE TABLE \"#{table_w}\"(
@@ -1664,7 +1664,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         'waypoints',
         'm2m',
         'list-m2m',
-        '{"enableLink":true,"limit":200,"layout":"table","tableSpacing":"compact","fields":["index","children_pois_id.route___waypoint___type","children_pois_id.points_de_passage_translations.name"],"enableSelect":false}',
+        '{"enableLink":true,"limit":200,"layout":"table","tableSpacing":"compact","fields":["index","children_pois_id.route___waypoint___type","children_pois_id.waypoints_translations.name"],"enableSelect":false}',
         nil,
       ])
       conn.exec('
