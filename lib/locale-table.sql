@@ -137,19 +137,11 @@ BEGIN
     IF _op = 'DELETE' THEN
         EXECUTE '
             DELETE FROM
-                pois_pois
-            USING
-                "' || substring(_table, 1, 63 - 2) || '_v" AS local_pois,
-                pois
+                "local-' || split_part(_table, '-', 2) || '-waypoints"
             WHERE
-                local_pois.id = ' || _parent_pois_id || ' AND
-
-                pois.source_id = local_pois.source_id AND
-                (pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer AND
-
-                pois_pois.parent_pois_id = pois.id AND
-                pois_pois.children_pois_id = ' || _children_pois_id || '
+                id = ' || _children_pois_id || '
         ';
+        -- Then the trigger will delete the coresponding pois and the cascade the pois_pois
     ELSE
         EXECUTE '
             INSERT INTO
