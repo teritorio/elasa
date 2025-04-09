@@ -9,7 +9,23 @@ CREATE OR REPLACE FUNCTION pois_local_trigger(
 ) RETURNS VOID AS $$
 BEGIN
     IF _op = 'DELETE' THEN
-        DELETE FROM pois WHERE id = _id;
+        EXECUTE '
+            DELETE FROM
+                pois
+            WHERE
+                (pois.slugs->>''original_id'')::integer = ' || _id || ' AND
+                pois.source_id = (
+                    SELECT
+                        sources.id
+                    FROM
+                        projects
+                        JOIN sources ON
+                            sources.project_id = project_id
+                    WHERE
+                        projects.slug = split_part(''' || _table || ''', ''-'', 2) AND
+                        sources.slug = split_part(''' || _table || ''', ''-'', 3)
+                )
+        ';
     ELSE
         EXECUTE '
             MERGE INTO
