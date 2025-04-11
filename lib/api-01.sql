@@ -104,25 +104,42 @@ GROUP BY
     filters.id
 ;
 
-DROP VIEW IF EXISTS pois_join;
+DROP VIEW IF EXISTS pois_join CASCADE;
 CREATE VIEW pois_join AS
-WITH
-pois AS (
-    SELECT
-        pois.*,
-        nullif(jsonb_agg(to_jsonb(
-            '__base_url__' || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-        ) ORDER BY pois_files.index), '[null]') AS image,
-        id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
-    FROM
-        pois
-        LEFT JOIN pois_files ON
-            pois_files.pois_id = pois.id
-        LEFT JOIN directus_files ON
-            directus_files.id = pois_files.directus_files_id
-    GROUP BY
-        pois.id
-)
+SELECT
+    pois.*,
+    nullif(jsonb_agg(to_jsonb(
+        '__base_url__' || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
+    ) ORDER BY pois_files.index), '[null]') AS image,
+    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
+FROM
+    pois
+    LEFT JOIN pois_files ON
+        pois_files.pois_id = pois.id
+    LEFT JOIN directus_files ON
+        directus_files.id = pois_files.directus_files_id
+GROUP BY
+    pois.id
+;
+
+DROP VIEW IF EXISTS pois_join_without_deps;
+CREATE VIEW pois_join_without_deps AS
+SELECT
+    pois.id,
+    pois.geom,
+    pois.source_id,
+    pois.properties,
+    pois.website_details,
+    pois.image,
+    pois.slug_id,
+    NULL::integer[] AS dep_ids,
+    NULL::integer[] AS dep_original_ids
+FROM
+    pois_join AS pois
+;
+
+DROP VIEW IF EXISTS pois_join_with_deps;
+CREATE VIEW pois_join_with_deps AS
 SELECT
     pois.id,
     pois.geom,
@@ -140,7 +157,7 @@ SELECT
         ARRAY[NULL::integer]
     ) AS dep_original_ids
 FROM
-    pois
+    pois_join AS pois
     LEFT JOIN pois_pois ON
         pois_pois.parent_pois_id = pois.id
     LEFT JOIN pois AS dep_pois ON
@@ -861,7 +878,7 @@ CREATE OR REPLACE FUNCTION pois_(
                     _cliping_polygon IS NULL OR
                     ST_Intersects(pois.geom, _cliping_polygon)
                 )
-            JOIN pois_join ON
+            JOIN pois_join_with_deps AS pois_join ON
                 pois_join.source_id = menu.source_id AND
                 pois_join.id = pois.id AND
                 (
@@ -882,7 +899,7 @@ CREATE OR REPLACE FUNCTION pois_(
             pois_join.*
         FROM
             pois_selected AS pois
-            JOIN pois_join ON
+            JOIN pois_join_without_deps AS pois_join ON
                 pois_join.id = ANY(pois.dep_ids)
             JOIN sources ON
                 sources.id = pois_join.source_id
