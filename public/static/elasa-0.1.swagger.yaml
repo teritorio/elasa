@@ -455,6 +455,7 @@ paths:
                       additionalProperties:
                         type: object
                         additionalProperties: false
+                        required: [label]
                         properties:
                           label:
                             $ref: '#/components/schemas/multilingual_string'
@@ -576,6 +577,7 @@ components:
         - $ref: '#/components/schemas/tile_source_geojson'
 
     multilingual_string:
+      minProperties: 1
       additionalProperties:
         type: string
       description: Language as keys, translation as values.

@@ -1176,7 +1176,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
     )
     SELECT
         jsonb_strip_nulls(jsonb_object_agg(
-            key, jsonb_build_object(
+            key, nullif(jsonb_strip_nulls(jsonb_build_object(
                 'label', CASE WHEN key_translations->'@default'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
                     'fr', capitalize(key_translations->'@default'->>'fr-FR')
                 ) END,
@@ -1189,19 +1189,19 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                 'label_list', CASE WHEN key_translations->'@title'->>'fr-FR' IS NOT NULL THEN jsonb_build_object(
                     'fr', capitalize(key_translations->'@title'->>'fr-FR')
                 ) END,
-                'values', (
+                'values', nullif(jsonb_strip_nulls((
                     SELECT
                         jsonb_object_agg(
-                            key, jsonb_build_object(
-                                'label', jsonb_build_object(
+                            key, nullif(jsonb_strip_nulls(jsonb_build_object(
+                                'label', nullif(jsonb_strip_nulls(jsonb_build_object(
                                     'fr', capitalize(value->'@default:full'->>'fr-FR')
-                                )
-                            )
+                                )), '{}'::jsonb)
+                            )), '{}'::jsonb)
                         )
                     FROM
                         jsonb_each(values_translations)
-                )
-            )
+                )), '{}'::jsonb)
+            )), '{}'::jsonb)
         ORDER BY key))::text
     FROM
         translation
