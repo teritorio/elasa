@@ -1745,7 +1745,7 @@ namespace :wp do
         '@default' => v['label'],
         'values' => v['values']&.transform_values{ |vv|
           {
-            '@default:full' => vv['label']
+            '@default:full' => { 'fr-FR' => vv['label']['fr'] }
           }.compact_blank
         }
       }.compact_blank
