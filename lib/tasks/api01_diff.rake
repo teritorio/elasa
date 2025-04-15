@@ -188,13 +188,9 @@ def missing_category_ids(menu_sources, pois)
   menu_sources_multi.values.flatten - category_ids_all
 end
 
-def compare_pois(url_old, url_new, category_ids)
-  hashes = [
-    "#{url_old}/pois.geojson",
-    "#{url_new}/pois.geojson",
-  ].each_with_index.collect{ |url, index|
-    array = fetch_json(url)['features']&.compact_blank_deep&.select{ |poi|
-      !(poi['properties']['metadata']['category_ids'] & category_ids[index]).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
+def clean_pois(pois, category_id)
+    array = pois&.select{ |poi|
+      !(poi['properties']['metadata']['category_ids'] & category_id).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
     }&.collect{ |poi|
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
@@ -325,7 +321,10 @@ def compare_pois(url_old, url_new, category_ids)
     }.sort_by{ |poi|
       poi['properties']['metadata']['id']
     }
-  }
+end
+
+def compare_pois(pois_old, pois_new)
+  hashes = [pois_old, pois_new]
 
   # From WP pois.geojson, pois in multiple categories are missing.
   # Use menu_sources.json to get missing categories fields.
@@ -445,6 +444,18 @@ def compare_pois(url_old, url_new, category_ids)
   puts JSON.dump(diff) if !diff.empty?
 end
 
+def compare_pois_geojson(url_old, url_new, category_ids)
+  hashes = [
+    "#{url_old}/pois.geojson",
+    "#{url_new}/pois.geojson",
+  ].each_with_index.collect{ |url, index|
+    pois = fetch_json(url)['features']&.compact_blank_deep
+    clean_pois(pois, category_ids[index])
+  }
+
+  compare_pois(hashes[0], hashes[1])
+end
+
 def compare_attribute_translations(url_old, url_new)
   hashes = [
     "#{url_old}/attribute_translations/fr.json",
@@ -495,7 +506,7 @@ namespace :api do
     compare_settings(url_old, url_new)
     compare_articles(url_old, url_new)
     category_ids = compare_menu(url_old, url_new)
-    compare_pois(url_old, url_new, category_ids)
+    compare_pois_geojson(url_old, url_new, category_ids)
     compare_attribute_translations(url_old, url_new)
 
     exit 0 # Beacause of manually deal with rake command line arguments
