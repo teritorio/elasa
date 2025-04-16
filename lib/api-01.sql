@@ -1030,7 +1030,8 @@ CREATE OR REPLACE FUNCTION pois_(
         FROM
             pois_with_deps AS pois
             LEFT JOIN menu ON
-                menu.menu_id = pois.menu_id
+                menu.menu_id = pois.menu_id AND
+                menu.source_id = pois.source_id
         WHERE
             (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
             (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
