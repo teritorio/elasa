@@ -190,7 +190,11 @@ end
 
 def clean_pois(pois, category_id)
     array = pois&.select{ |poi|
-      !(poi['properties']['metadata']['category_ids'] & category_id).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
+      if category_id.nil?
+        true
+      else
+        !(poi['properties']['metadata']['category_ids'] & category_id).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
+      end
     }&.collect{ |poi|
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
@@ -202,6 +206,9 @@ def clean_pois(pois, category_id)
           poi['properties'][i] = poi['properties'][i].to_i
         end
       }
+
+      poi['properties']['metadata'] = {'id' => poi['properties'].delete('id') } if poi['properties']['metadata'].nil?
+
       if !poi['properties']['metadata']['osm_id'].nil?
         poi['properties']['metadata']['osm_id'] = poi['properties']['metadata']['osm_id'].to_i
       end
@@ -239,6 +246,9 @@ def clean_pois(pois, category_id)
       poi['properties']['metadata']&.delete('source') # Buggy WP
       poi['properties'] = poi['properties'].select{ |k, _v| !k.start_with?('name:') } # API change
       poi['properties'] = poi['properties'].select{ |k, _v| !k.start_with?('description:') } # API change
+      poi['properties']['name'] = poi['properties']['name']['fr'] if poi.dig('properties', 'name').is_a?(Hash) && !poi.dig('properties', 'name', 'fr').nil? # WP waypoint
+      poi['properties']['name'] = poi['properties']['name'].strip if !poi['properties']['name'].nil?
+      poi['properties']['description'] = poi['properties']['description']['fr'] if poi.dig('properties', 'description').is_a?(Hash) && !poi.dig('properties', 'description', 'fr').nil? # WP waypoint
 
       poi['properties'].delete('partenaire_fiche') # Buggy WP
       poi['properties'].delete('partenaire_url') # Buggy WP
@@ -250,7 +260,7 @@ def clean_pois(pois, category_id)
       poi['properties']['display'].delete('color_fill') if poi['properties']['display']&.delete('color_fill') == '#beef00' # Values added as default on import from WP
       poi['properties']['display'].delete('color_line') if poi['properties']['display']&.delete('color_line') == '#beef00' # Values added as default on import from WP
 
-      poi['properties']['metadata'].delete('refs') # WP does not support refs
+      poi['properties']['metadata']&.delete('refs') # WP does not support refs
 
       poi['properties'].delete('colour') # Elasa remove the colour to avoid conflict with the category colour
 
@@ -309,12 +319,12 @@ def clean_pois(pois, category_id)
       ['route:gpx_trace', 'route:pdf'].each{ |k|
         poi['properties'][k] = poi['properties'][k].split('/').last if poi['properties'][k]
       }
-      poi['properties']['editorial']['website:details'] = poi['properties']['editorial']['website:details'].split('/')[3..].join('/') if poi['properties']['editorial']['website:details']
+      poi['properties']['editorial']['website:details'] = poi['properties']['editorial']['website:details'].split('/')[3..].join('/') if !poi.dig('properties', 'editorial', 'website:details').nil?
 
       poi
     } || []
     array.collect{ |poi|
-      poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids'].sort
+      poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids']&.sort
       poi
     }.uniq{ |poi|
       poi['properties']['metadata']['id']
@@ -332,18 +342,6 @@ def compare_pois(pois_old, pois_new)
   # hashes[1] = hashes[1].select{ |poi| (remove_category_ids & poi['properties']['metadata']['category_ids']).empty? }
 
   puts "Diff POI size: #{hashes[0].size} != #{hashes[1].size}" if hashes[0].size != hashes[1].size
-
-  hashes_by_category_ids = hashes.collect{ |hash|
-    hash.group_by{ |poi| poi['properties']['metadata']['category_ids'] }
-  }
-  puts "Diff POI's Category size: #{hashes_by_category_ids[0].size} != #{hashes_by_category_ids[1].size}" if hashes_by_category_ids[0].size != hashes_by_category_ids[1].size
-  if hashes_by_category_ids[0].keys.sort != hashes_by_category_ids[1].keys.sort
-    p0 = hashes_by_category_ids[0].keys.collect(&:first)
-    intersect = hashes_by_category_ids[1].keys.select{ |pp1| pp1.intersection(p0).empty? }
-    if intersect.any?
-      puts "Diff POI's Category #{intersect.join(' ')}"
-    end
-  end
 
   ids = hashes.collect{ |h|
     h.collect{ |poi|
@@ -367,18 +365,18 @@ def compare_pois(pois_old, pois_new)
     end
   }
   if !only_in_0.empty?
-    puts "Ids only on 0\n#{only_in_0.inspect}"
+    puts "POI ids only on 0\n#{only_in_0.inspect}"
     puts "    by category ids #{only_in_0.collect{ |id| ids[0][id] }.tally.inspect}"
   end
   if !only_in_1.empty?
-    puts "Ids only on 1\n#{only_in_1.inspect}"
+    puts "POI ids only on 1\n#{only_in_1.inspect}"
     puts "    by category ids #{only_in_1.collect{ |id| ids[1][id] }.tally.inspect}"
   end
 
   common_ids = Set.new(ids[0].keys & ids[1].keys)
   hashes = hashes.collect{ |h| h.select{ |poi| common_ids.include?(poi['properties']['metadata']['id']) } }
 
-  hashes[0].zip(hashes[1]).each{ |h|
+  dep_ids = hashes[0].zip(hashes[1]).each{ |h|
     # Ignore few changes on names
     a, b = h.collect{ |poi|
       poi.dig('properties', 'name')&.gsub('\\', '') # WP lost some \
@@ -404,24 +402,29 @@ def compare_pois(pois_old, pois_new)
     end
 
     # categories_ids
-    if !(h[0]['properties']['metadata']['category_ids'] | h[1]['properties']['metadata']['category_ids']).empty?
+    if !(
+      (h[0]['properties']['metadata']['category_ids'] || []) |
+      (h[1]['properties']['metadata']['category_ids'] || [])
+    ).empty?
       # Force WP categories_ids to contains all categories_ids
       h[1]['properties']['metadata']['category_ids'] = h[0]['properties']['metadata']['category_ids']
     end
 
-    if h[0]['properties']['metadata']['category_ids'].size >= 1
+    if !h[0]['properties']['metadata']['category_ids']&.empty?
       # Has it have multiple category_ids, could have different values, force to be the same
-      h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1]['properties']['display']['style_class'].nil?
-      h[0]['properties']['display']['details_fields'] = h[1]['properties']['display']['details_fields'] if !h[1]['properties']['display']['details_fields'].nil?
-      h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1]['properties']['display']['list_fields'].nil?
+      h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1].dig('properties', 'display', 'style_class').nil?
+      h[0]['properties']['display']['details_fields'] = h[1]['properties']['display']['details_fields'] if !h[1].dig('properties', 'display', 'details_fields').nil?
+      h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1].dig('properties', 'display', 'list_fields').nil?
     end
 
     if h[0]['properties']['source:image'] == 'local'
       h[0]['properties'].delete('source:image')
     end
-    if h[0]['properties']['editorial']['source:website:details'] == 'local'
+    if h[0].dig('properties', 'editorial', 'source:website:details') == 'local'
       h[0]['properties']['editorial']&.delete('source:website:details')
     end
+
+    dep_ids = h.collect{ |hh| hh['properties']['metadata']['dep_ids'] }.flatten.uniq
 
     # dep_ids is missing on WP for object from datasources
     if h[0]['properties']['metadata']['dep_ids'].nil?
@@ -439,11 +442,28 @@ def compare_pois(pois_old, pois_new)
       poi['properties']['metadata'].delete('cartocode')
       poi['properties'].delete('classe')
     }
+
+    dep_ids
+  }.flatten.uniq
+
+  hashes_by_category_ids = hashes.collect{ |hash|
+    hash.group_by{ |poi| poi['properties']['metadata']['category_ids'] || [] }
   }
+  puts "Diff POI's Category size: #{hashes_by_category_ids[0].size} != #{hashes_by_category_ids[1].size}" if hashes_by_category_ids[0].size != hashes_by_category_ids[1].size
+  if hashes_by_category_ids[0].keys.sort != hashes_by_category_ids[1].keys.sort
+    puts [hashes_by_category_ids[0].keys.sort, hashes_by_category_ids[1].keys.sort].inspect
+    p0 = hashes_by_category_ids[0].keys.collect(&:first)
+    intersect = hashes_by_category_ids[1].keys.select{ |pp1| pp1.intersection(p0).empty? }
+    if !intersect.empty?
+      puts "Diff POI's Category #{intersect.join(' ')}"
+    end
+  end
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
   diff = diff.diff.transform_keys{ |i| hashes.dig(0, i, 'properties', 'metadata', 'id') }
   puts JSON.dump(diff) if !diff.empty?
+
+  dep_ids
 end
 
 def compare_pois_geojson(url_old, url_new, category_ids)
@@ -454,8 +474,35 @@ def compare_pois_geojson(url_old, url_new, category_ids)
     pois = fetch_json(url)['features']&.compact_blank_deep
     clean_pois(pois, category_ids[index])
   }
+  dep_ids = compare_pois(hashes[0], hashes[1])
 
-  compare_pois(hashes[0], hashes[1])
+  poi_ids_with_deps = hashes.collect{ |pois|
+    pois.select{ |poi|
+      !poi['properties']['metadata']['dep_ids'].nil?
+    }.collect{ |poi|
+      poi['properties']['metadata']['id']
+    }
+  }.flatten.uniq
+  poi_ids_with_deps.each{ |poi_id|
+    begin
+      hashes = [
+        "#{url_old}/poi/#{poi_id}/deps.geojson",
+        "#{url_new}/poi/#{poi_id}/deps.geojson",
+      ].each_with_index.collect{ |url, index|
+        pois = fetch_json(url)['features'].compact_blank_deep
+        pois = clean_pois(pois, nil)
+        pois.sort_by{ |poi|
+          "#{poi['properties'].key?('route:point:type')}-%04d" % poi['properties']['metadata']['id']
+        }.each_with_index.collect{ |poi, i|
+          poi['properties']['metadata']['id'] = i
+          poi
+        }
+      }
+      hashes = compare_pois(hashes[0], hashes[1])
+    rescue StandardError => e
+      puts "POIS deps #{poi_id} FAILS ^^^"
+    end
+  }
 end
 
 def compare_attribute_translations(url_old, url_new)
