@@ -893,8 +893,8 @@ CREATE OR REPLACE FUNCTION pois_(
             pois_selected
 
         UNION
-        (
-        SELECT DISTINCT ON (pois_join.id)
+
+        SELECT
             menu_items.id AS menu_id,
             pois_join.*
         FROM
@@ -909,10 +909,6 @@ CREATE OR REPLACE FUNCTION pois_(
                 menu_items.id = menu_items_sources.menu_items_id
         WHERE
             _with_deps = 'true'
-        ORDER BY
-            pois_join.id,
-            menu_items.id NULLS LAST
-        )
     ),
     json_pois AS (
         SELECT
