@@ -182,7 +182,7 @@ def missing_category_ids(menu_sources, pois)
   }
 
   category_ids_all = pois.collect{ |poi|
-    poi.dig('properties', 'metadata', 'category_ids')&.select{ |id| id != 0 } # 0 from buggy WP
+    poi.dig('properties', 'metadata', 'category_ids')
   }.flatten.uniq
 
   menu_sources_multi.values.flatten - category_ids_all
