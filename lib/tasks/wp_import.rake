@@ -1396,8 +1396,8 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       end
     }
 
-    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\" CASCADE")
-    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\" CASCADE")
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_i\" CASCADE") if !fields_image.nil?
+    conn.exec("DROP TABLE IF EXISTS \"#{table[..60]}_t\" CASCADE") if !fields_translations.empty?
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_i"])
     conn.exec('DELETE FROM directus_collections WHERE collection = $1', ["#{table[..60]}_t"])
 
