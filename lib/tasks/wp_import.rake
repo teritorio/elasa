@@ -731,7 +731,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
     categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }.sort_by{ |category_local| category_local['category']['id'] }
-    source_ids = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
+    source_ids, deps = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
 
     until menu_entries.empty?
       menu = menu_entries.pop
@@ -1038,6 +1038,9 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       end
     }
 
+    # Make POI deps links from slug
+    links_local_pois_deps(conn, project_id, deps)
+
     # POI from datasource with local addon
 
     local_addon_raw = []
@@ -1263,7 +1266,8 @@ end
 
 def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, pois, i18ns, policy_uuid, url_base)
   slugs = []
-  categories_local.collect{ |category_local|
+  deps_ids_s = {}
+  source_ids = categories_local.collect{ |category_local|
     name = category_local['category']['name']['en'] || category_local['category']['name']['fr']
     category_slug = ActiveSupport::Inflector.transliterate(name).slugify.gsub('-', '_').gsub(/_+/, '_')
     source_name = category_slug
@@ -1540,29 +1544,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
           index integer NOT NULL DEFAULT 1
         )
       ")
-      deps_ids.each{ |poi_id, dep_ids|
-        conn.exec_params("
-          INSERT INTO \"#{table_p}\"(parent_pois_id, children_pois_id, index)
-          SELECT
-            $1,
-            pois.id,
-            t.index
-          FROM
-            jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
-            JOIN pois ON
-              coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
-              coalesce(pois.properties->'natives' ? 'route:waypoint:type', false) = false
-            JOIN sources ON
-              sources.id = pois.source_id AND
-              sources.project_id = $3
-          ORDER BY
-            t.index
-          ", [
-          poi_id,
-          dep_ids.to_json,
-          project_id,
-        ])
-      }
+      deps_ids_s[table_p] = deps_ids
 
       conn.exec('DELETE FROM directus_relations WHERE many_collection = $1', [table_p])
 
@@ -1717,6 +1699,36 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     conn.exec('SELECT api01.create_pois_local_view($1, $2, $3)', [project_id, source_id, table])
 
     source_id
+  }
+
+  [source_ids, deps_ids_s]
+end
+
+def links_local_pois_deps(conn, project_id, deps_ids_s)
+  deps_ids_s.each{ |table_p, deps_ids|
+    deps_ids.each{ |poi_id, dep_ids|
+    conn.exec_params("
+        INSERT INTO \"#{table_p}\"(parent_pois_id, children_pois_id, index)
+        SELECT
+          $1,
+          pois.id,
+          t.index
+        FROM
+          jsonb_array_elements_text($2::jsonb) WITH ORDINALITY AS t(dep_id, index)
+          JOIN pois ON
+            coalesce(pois.slugs->>'original_id', pois.id::text) = t.dep_id AND
+            coalesce(pois.properties->'natives' ? 'route:waypoint:type', false) = false
+          JOIN sources ON
+            sources.id = pois.source_id AND
+            sources.project_id = $3
+        ORDER BY
+          t.index
+        ", [
+        poi_id,
+        dep_ids.to_json,
+        project_id,
+      ])
+    }
   }
 end
 
