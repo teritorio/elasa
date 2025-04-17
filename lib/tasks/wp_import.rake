@@ -483,7 +483,7 @@ def add_missing_pois(menu_sources, pois)
   }.flatten.uniq
 
   missing_category_ids = menu_sources_multi.values.flatten - category_ids_all
-  puts "missing_category_ids: #{missing_category_ids.inspect}"
+  puts "missing_category_ids: #{missing_category_ids.inspect}" if !missing_category_ids.empty?
   equiv_pois = menu_sources_multi.collect{ |_source, menu_ids|
     equiv = menu_ids - missing_category_ids
     (menu_ids & missing_category_ids).collect{ |menu_id| [menu_id, equiv] }
