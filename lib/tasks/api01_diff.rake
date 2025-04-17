@@ -484,24 +484,21 @@ def compare_pois_geojson(url_old, url_new, category_ids)
     }
   }.flatten.uniq
   poi_ids_with_deps.each{ |poi_id|
-    begin
-      hashes = [
-        "#{url_old}/poi/#{poi_id}/deps.geojson",
-        "#{url_new}/poi/#{poi_id}/deps.geojson",
-      ].each_with_index.collect{ |url, index|
-        pois = fetch_json(url)['features'].compact_blank_deep
-        pois = clean_pois(pois, nil)
-        pois.sort_by{ |poi|
-          "#{poi['properties'].key?('route:point:type')}-%04d" % poi['properties']['metadata']['id']
-        }.each_with_index.collect{ |poi, i|
-          poi['properties']['metadata']['id'] = i
-          poi
-        }
+    # puts "POIS deps #{poi_id}"
+    hashes = [
+      "#{url_old}/poi/#{poi_id}/deps.geojson",
+      "#{url_new}/poi/#{poi_id}/deps.geojson",
+    ].each_with_index.collect{ |url, index|
+      pois = fetch_json(url)['features'].compact_blank_deep
+      pois = clean_pois(pois, nil)
+      pois.sort_by{ |poi|
+        "#{poi['properties'].key?('route:point:type')}-%04d" % poi['properties']['metadata']['id']
+      }.each_with_index.collect{ |poi, i|
+        poi['properties']['metadata']['id'] = i
+        poi
       }
-      hashes = compare_pois(hashes[0], hashes[1])
-    rescue StandardError => e
-      puts "POIS deps #{poi_id} FAILS ^^^"
-    end
+    }
+    hashes = compare_pois(hashes[0], hashes[1])
   }
 end
 
