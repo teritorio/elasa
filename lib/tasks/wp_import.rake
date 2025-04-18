@@ -268,7 +268,7 @@ def load_field_group(conn, project_id, group, i18ns, size_context)
       '
     INSERT INTO fields(project_id, type, field, label_small, label_large, "group", display_mode, icon)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-    ON CONFLICT (project_id, field)
+    ON CONFLICT (project_id, "group", field)
     DO UPDATE SET
       label_small = fields.label_small OR EXCLUDED.label_small,
       label_large = fields.label_large OR EXCLUDED.label_large,
@@ -847,7 +847,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
           '
           INSERT INTO fields(project_id, type, field)
           VALUES ($1, $2, $3)
-          ON CONFLICT (project_id, field)
+          ON CONFLICT (project_id, "group", field)
           DO UPDATE SET
             field = EXCLUDED.field -- Do nothing, but helps to return the id
           RETURNING

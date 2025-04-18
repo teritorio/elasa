@@ -2240,11 +2240,11 @@ ALTER TABLE ONLY public.fields_translations
 
 
 --
--- Name: fields fields_uniq_field; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: fields fields_uniq_field_group; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.fields
-    ADD CONSTRAINT fields_uniq_field UNIQUE (project_id, field);
+    ADD CONSTRAINT fields_uniq_field_group UNIQUE NULLS NOT DISTINCT (project_id, "group", field);
 
 
 --
