@@ -189,13 +189,21 @@ def missing_category_ids(menu_sources, pois)
 end
 
 def clean_pois(pois, category_id)
-    array = pois&.select{ |poi|
+    return [] if pois.nil?
+
+    array = pois.uniq{ |poi|
+      # Remove duplicate OSM objects in same catagory from WP API
+      [
+        poi['properties']['metadata']['category_ids'],
+        poi['properties']['metadata']['source_id'] || poi['properties']['metadata']['id']
+      ]
+    }.select{ |poi|
       if category_id.nil?
         true
       else
         !(poi['properties']['metadata']['category_ids'] & category_id).empty? && poi['properties']['metadata']['id'] / 10_000 != 654_65
       end
-    }&.collect{ |poi|
+    }.collect{ |poi|
       ['route:hiking:length', 'route:bicycle:length'].each{ |r|
         if poi.dig('properties', r)
           poi['properties'][r] = poi['properties'][r].to_f.round(4)
@@ -322,7 +330,7 @@ def clean_pois(pois, category_id)
       poi['properties']['editorial']['website:details'] = poi['properties']['editorial']['website:details'].split('/')[3..].join('/') if !poi.dig('properties', 'editorial', 'website:details').nil?
 
       poi
-    } || []
+    }
     array.collect{ |poi|
       poi['properties']['metadata']['category_ids'] = poi['properties']['metadata']['category_ids']&.sort
       poi
