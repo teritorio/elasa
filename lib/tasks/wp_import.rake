@@ -252,6 +252,22 @@ end
 def load_field_group(conn, project_id, group, i18ns, size_context)
   group_key = [group.except('group'), size_context]
   if @fields[group_key]
+
+    if group['group']
+      ids = (group['fields'] || []).collect{ |f|
+        load_field_group(conn, project_id, f, i18ns, size_context)
+      }
+
+      conn.exec('SELECT array_agg(related_fields_id ORDER BY index) AS ids FROM fields_fields WHERE fields_id = $1', [@fields[group_key]]) { |result|
+        if !result.first.nil?
+          db_ids = result.first['ids']
+          if !db_ids.nil? && ids.join(',') != db_ids[1..-2]
+            puts "[ERROR] Group fields \"#{group['group']}\" mismatch content"
+          end
+        end
+      }
+    end
+
     @fields[group_key]
   else
     if group['group']
