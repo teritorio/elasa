@@ -361,15 +361,13 @@ def compare_pois(pois_old, pois_new)
 
   only_in_0 = only_in_0.select{ |poi_id|
     poi = hashes[0].find{ |poi| poi_id == poi['properties']['metadata']['id'] }
-    if poi['properties']['metadata']['osm_id'].nil?
+    if poi['properties']['metadata']['osm_id'].nil? || poi['properties']['metadata']['osm_type'].nil?
       true
     else
       source_id = "#{poi['properties']['metadata']['osm_type'][0]}#{poi['properties']['metadata']['osm_id']}"
-      if source_id.nil?
-        true
-      else
-        hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
-      end
+      f = hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
+      puts "Missing OSM POI #{source_id} on 1" if !f
+      f
     end
   }
   if !only_in_0.empty?
