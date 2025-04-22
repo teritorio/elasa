@@ -807,6 +807,13 @@ END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
+CREATE OR REPLACE FUNCTION array_unique (a bigint[]) RETURNS bigint[] AS $$
+  SELECT ARRAY (
+    SELECT DISTINCT V FROM UNNEST(A) AS B(V) WHERE V IS NOT NULL
+  )
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS pois_;
 CREATE OR REPLACE FUNCTION pois_(
     _base_url text,
@@ -992,7 +999,7 @@ CREATE OR REPLACE FUNCTION pois_(
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
                             -- cartocode
-                            'category_ids', nullif(array_remove(array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.slug_id), NULL), ARRAY[]::bigint[]),
+                            'category_ids', nullif(array_unique(array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.slug_id)), ARRAY[]::bigint[]),
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
                             'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
