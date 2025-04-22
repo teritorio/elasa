@@ -1202,7 +1202,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
                                 )), '{}'::jsonb),
                                 'label_list', nullif(jsonb_strip_nulls(jsonb_build_object(
                                     'fr', capitalize(value->'@default:short'->>'fr-FR')
-                                )), '{}'::jsonb),
+                                )), '{}'::jsonb)
                             )), '{}'::jsonb)
                         )
                     FROM
