@@ -729,6 +729,20 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     pois = add_missing_pois(menu_sources, pois)
     menu_items, pois = add_waypoints(menu_items, pois, url_pois)
 
+    # Remove duplicate OSM objects in same catagory from WP API
+    pois = pois.group_by{ |poi|
+      if !poi['properties'].key?('metadata')
+        poi['properties']['id']
+      else
+        [
+          poi['properties']['metadata']['category_ids'],
+          poi['properties']['metadata']['source_id'] || poi['properties']['metadata']['id']
+        ]
+      end
+    }.values.collect{ |pois|
+      pois.min_by{ |poi| [poi['properties']['id'] || poi['properties']['metadata']['id']] }
+    }
+
     fields = load_fields(conn, project_id, pois, menu_items, i18ns)
     fields_ids = fields.index_by(&:first)
 

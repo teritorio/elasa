@@ -191,13 +191,21 @@ end
 def clean_pois(pois, category_id)
     return [] if pois.nil?
 
-    array = pois.uniq{ |poi|
-      # Remove duplicate OSM objects in same catagory from WP API
-      [
-        poi['properties']['metadata']['category_ids'],
-        poi['properties']['metadata']['source_id'] || poi['properties']['metadata']['id']
-      ]
-    }.select{ |poi|
+    # Remove duplicate OSM objects in same catagory from WP API
+    pois = pois.group_by{ |poi|
+      if !poi['properties'].key?('metadata')
+        poi['properties']['id']
+      else
+        [
+          poi['properties']['metadata']['category_ids'],
+          poi['properties']['metadata']['source_id'] || poi['properties']['metadata']['id']
+        ]
+      end
+    }.values.collect{ |pois|
+      pois.min_by{ |poi| [poi['properties']['id'] || poi['properties']['metadata']['id']] }
+    }
+
+    array = pois.select{ |poi|
       if category_id.nil?
         true
       else
