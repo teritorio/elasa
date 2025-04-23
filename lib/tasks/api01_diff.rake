@@ -374,7 +374,7 @@ def compare_pois(pois_old, pois_new)
     else
       source_id = "#{poi['properties']['metadata']['osm_type'][0]}#{poi['properties']['metadata']['osm_id']}"
       f = hashes[1].find{ |poi| source_id == "#{poi['properties']['metadata']['osm_type']&.[](0)}#{poi['properties']['metadata']['osm_id']}" }.nil?
-      puts "Missing OSM POI #{source_id} on 1" if !f
+      puts "Missing OSM POI id=#{poi_id} osm_id=#{source_id} on 1" if !f
       f
     end
   }
