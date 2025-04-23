@@ -74,7 +74,6 @@ junction_directus_roles_undefined	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\
 languages	\N	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	\N	open	\N	f
 local_sources	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	sources	open	\N	f
 menu_items	menu	\N	{{menu_items_translations.name}} ({{type}})	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	themes	open	\N	f
-menu_items_childrens	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	menu_items	open	\N	f
 menu_items_filters	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	menu_items	open	\N	f
 menu_items_sources	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	menu_items	open	\N	f
 menu_items_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	menu_items	open	\N	f
@@ -140,10 +139,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 25	sources	slug	\N	\N	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 27	sources	attribution	\N	\N	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 29	directus_users	project_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	\N	\N	f	f	1	full	\N	\N	\N	f	\N	\N	\N
-35	menu_items_childrens	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
-36	menu_items_childrens	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
-37	menu_items_childrens	item	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-38	menu_items_childrens	collection	\N	\N	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 40	menu_items	menu_item_parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
@@ -499,10 +494,6 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 59	menu_items_sources	read	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 60	menu_items_sources	update	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,menu_items_id,sources_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 61	menu_items_sources	delete	{"_and":[{"sources_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-62	menu_items_childrens	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-63	menu_items_childrens	read	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,collection,menu_items_id,item	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-64	menu_items_childrens	update	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-65	menu_items_childrens	delete	{"_and":[{"menu_items_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 66	filters	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 67	filters	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 68	filters	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -572,8 +563,6 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 COPY public.directus_relations (id, many_collection, many_field, one_collection, one_field, one_collection_field, one_allowed_collections, junction_field, sort_field, one_deselect_action) FROM stdin;
 2	themes	project_id	projects	themes	\N	\N	\N	\N	nullify
 3	directus_users	project_id	projects	\N	\N	\N	\N	\N	nullify
-5	menu_items_childrens	item	\N	\N	collection	menu_items	menu_items_id	\N	nullify
-6	menu_items_childrens	menu_items_id	menu_items	\N	\N	\N	item	\N	nullify
 7	menu_items	menu_item_parent_id	menu_items	\N	\N	\N	\N	\N	nullify
 10	menu_items	parent_id	menu_items	items	\N	\N	\N	index_order	nullify
 11	themes	root_menu_item_id	menu_items	\N	\N	\N	\N	\N	nullify

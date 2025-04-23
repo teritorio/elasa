@@ -1210,42 +1210,6 @@ CREATE TABLE public.menu_items (
 ALTER TABLE public.menu_items OWNER TO postgres;
 
 --
--- Name: menu_items_childrens; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.menu_items_childrens (
-    id integer NOT NULL,
-    menu_items_id integer,
-    item character varying(255),
-    collection character varying(255)
-);
-
-
-ALTER TABLE public.menu_items_childrens OWNER TO postgres;
-
---
--- Name: menu_items_childrens_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.menu_items_childrens_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.menu_items_childrens_id_seq OWNER TO postgres;
-
---
--- Name: menu_items_childrens_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.menu_items_childrens_id_seq OWNED BY public.menu_items_childrens.id;
-
-
---
 -- Name: menu_items_filters; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1850,13 +1814,6 @@ ALTER TABLE ONLY public.junction_directus_roles_undefined ALTER COLUMN id SET DE
 
 
 --
--- Name: menu_items_childrens id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.menu_items_childrens ALTER COLUMN id SET DEFAULT nextval('public.menu_items_childrens_id_seq'::regclass);
-
-
---
 -- Name: menu_items_filters id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -2285,14 +2242,6 @@ ALTER TABLE ONLY public.junction_directus_roles_undefined
 
 ALTER TABLE ONLY public.languages
     ADD CONSTRAINT languages_pkey PRIMARY KEY (code);
-
-
---
--- Name: menu_items_childrens menu_items_childrens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.menu_items_childrens
-    ADD CONSTRAINT menu_items_childrens_pkey PRIMARY KEY (id);
 
 
 --
