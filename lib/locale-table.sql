@@ -272,7 +272,7 @@ BEGIN
                 key_column_usage.table_name = tables.table_name AND
                 key_column_usage.column_name != 'project_id'
         WHERE
-            tables.table_name = _table_name
+            tables.table_name = substring(_table_name, 1, 63)
         GROUP BY
             tables.table_name,
             tables_t.table_name,
@@ -437,7 +437,7 @@ CREATE OR REPLACE FUNCTION create_project_pois_local_view(
         JOIN LATERAL create_pois_local_view(
                 projects.id,
                 sources.id,
-                substring('local-' || projects.slug || '-' || sources.slug, 1, 63)
+                'local-' || projects.slug || '-' || sources.slug
             ) AS view ON true
     WHERE
         _project_slug IS NULL OR projects.slug = _project_slug
