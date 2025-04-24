@@ -313,7 +313,7 @@ def insert_group_fields(conn, project_id, ontology)
       field_id = conn.exec(
         'INSERT INTO fields(project_id, type, field)
         VALUES ($1, $2, $3)
-        ON CONFLICT (project_id, field)
+        ON CONFLICT (project_id, "group", field)
         DO UPDATE SET
           field = EXCLUDED.field -- Do nothing, but helps to return the id
         RETURNING id',
@@ -518,7 +518,7 @@ def new_filter(project_id, schema, i18ns)
         '
         INSERT INTO fields(project_id, type, field)
         VALUES ($1, $2, $3)
-        ON CONFLICT (project_id, field)
+        ON CONFLICT (project_id, "group", field)
         DO UPDATE SET
           field = EXCLUDED.field -- Do nothing, but helps to return the id
         RETURNING
