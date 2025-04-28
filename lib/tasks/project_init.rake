@@ -242,11 +242,14 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
     fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
   end
 
+  slug = classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] }
+  conn.exec("SAVEPOINT \"#{source_slug}\"")
+
   icon = find_icon(css_parser, icons)
   category_id = insert_menu_item(
     conn,
     project_id: project_id,
-    slugs: classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] },
+    slugs: slug,
     index_order: index,
     parent_id: parent_id,
     type: 'category',
@@ -292,10 +295,13 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   ) { |result|
     result&.first
   }
-  return unless id.nil?
-
-  puts "[ERROR] Fails link source to menu_item: (#{source_slug}) -- delete the menu entry"
-  conn.exec('DELETE FROM menu_items WHERE id = $1', [category_id])
+  if !id.nil?
+    true
+  else
+    conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
+    puts "[ERROR] No source to link to menu_item: (#{source_slug})"
+    false
+  end
 end
 
 def insert_group_fields(conn, project_id, ontology)
@@ -408,6 +414,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   css_parser.load_uri!('public/' + css)
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('BEGIN')
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
@@ -426,17 +433,19 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
     group_fields_ids = insert_group_fields(conn, project_id, ontology)
 
     ontology['group'].each_with_index{ |id_superclass, superclass_index|
-      superclass_id, superclass = id_superclass
+    conn.exec("SAVEPOINT superclass")
+    superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
       superclass_menu_id = insert_menu_group(conn, project_id, poi_menu_id, [superclass_id], [superclass['icon']], css_parser, superclass, superclass_index)
-      superclass['group'].each_with_index{ |id_class, class_index|
+      inserted = superclass['group'].each_with_index.collect{ |id_class, class_index|
         class_id, classs = id_class
         classs['color_fill'] = superclass['color_fill']
         classs['color_line'] = superclass['color_line']
         classs['display_mode'] = 'large'
         if classs.key?('group')
+          conn.exec("SAVEPOINT class")
           class_menu_id = insert_menu_group(conn, project_id, superclass_menu_id, [superclass_id, class_id], [superclass['icon'], classs['icon']], css_parser, classs, class_index)
-          classs['group'].each_with_index{ |id_subclass, subclass_index|
+          inserted = classs['group'].each_with_index.collect{ |id_subclass, subclass_index|
             subclass_id, subclass = id_subclass
             subclass['color_fill'] = superclass['color_fill']
             subclass['color_line'] = superclass['color_line']
@@ -445,15 +454,23 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
             source_slug = class_path.join('-')
             icons = [superclass['icon'], classs['icon'], subclass['icon']]
             insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, group_fields_ids, filters)
-          }
+          }.any?
+          if !inserted
+            conn.exec("ROLLBACK TO SAVEPOINT class")
+          end
+          inserted
         else
           class_path = [superclass_id, class_id]
           source_slug = class_path.join('-')
           icons = [superclass['icon'], classs['icon']]
           insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, group_fields_ids, filters)
         end
-      }
+      }.any?
+      if !inserted
+        conn.exec("ROLLBACK TO SAVEPOINT superclass")
+      end
     }
+    conn.exec('COMMIT')
   }
 end
 
@@ -462,6 +479,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
   css_parser.load_uri!("/srv/app/public#{css}")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    conn.exec('BEGIN')
     properties_extra = {
       'all' => schema['properties'].to_h{ |key, _sch|
         [key, nil]
@@ -498,6 +516,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
 
       insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, group_fields_ids, filters)
     }
+    conn.exec('COMMIT')
   }
 end
 
