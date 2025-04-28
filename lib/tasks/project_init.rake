@@ -285,7 +285,10 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
         sources.id
       FROM
         sources
+        LEFT JOIN menu_items_sources ON
+          menu_items_sources.sources_id = sources.id
       WHERE
+        menu_items_sources.sources_id IS NULL AND -- Only insert if not already linked
         sources.project_id = $1 AND
         sources.slug = $3
       RETURNING
