@@ -30,6 +30,17 @@ export default {
       },
     },
     {
+      field: "withThumbnail",
+      name: "Add thumbnail field",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
       field: "withName",
       name: "Add a name field",
       type: "boolean",

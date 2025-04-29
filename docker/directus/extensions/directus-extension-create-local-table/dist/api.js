@@ -1,9 +1,9 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withTranslations, withImages, withName, withDescription, withAddr, withContact }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact }, { services, database, get, env, logger, data, accountability }) => {
     try {
-      [withTranslations, withImages, withName, withDescription, withAddr, withContact] = [withTranslations, withImages, withName, withDescription, withAddr, withContact].map((value) => value.toString().trim() === 'true');
+      [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact] = [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact].map((value) => value.toString().trim() === 'true');
       withTranslations = withTranslations || withName || withDescription;
       const sourcesIds = data['$trigger']['body']['keys'].map((key) => Number(key));
 
@@ -44,6 +44,7 @@ export default {
         Object.entries(tableExtraFields).map(async ([field, type]) => {
           await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS ${field} ${type === 'String' ? 'character varying(255)' : 'jsonb'}`);
         });
+        if (withThumbnail) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS thumbnail uuid REFERENCES directus_files(id) ON DELETE CASCADE`); }
         console.info(`Table ${tableName} done`);
 
         await database.raw(`
@@ -57,17 +58,17 @@ export default {
       `, { collection: tableName, icon: 'pin_drop', group: 'local_sources', translations: JSON.stringify(source.translations) });
         console.info(`Collection ${tableName} configured`);
 
-        ['id', 'project_id', 'geom'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
+        ['id', 'project_id', 'geom', 'thumbnail'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
           await database.raw(`
             MERGE INTO directus_fields
-            USING (SELECT ?, ?, ?::boolean, ?::boolean) AS source(collection, field, hidden, readonly)
+            USING (SELECT ?, ?, ?::boolean, ?::boolean, ?::json) AS source(collection, field, hidden, readonly, interface)
             ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
             WHEN NOT MATCHED THEN
-              INSERT (collection, field, hidden, readonly)
-              VALUES (source.collection, source.field, source.hidden, source.readonly)
+              INSERT (collection, field, hidden, readonly, interface)
+              VALUES (source.collection, source.field, source.hidden, source.readonly, source.interface)
             WHEN MATCHED THEN
-              UPDATE SET collection = source.collection, field = source.field, hidden = source.hidden, readonly = source.readonly
-          `, [tableName, field, field == 'project_id', field == 'id']);
+              UPDATE SET collection = source.collection, field = source.field, hidden = source.hidden, readonly = source.readonly, interface = source.interface
+          `, [tableName, field, field == 'project_id', field == 'id', field == 'thumbnail' ? 'file-image' : null]);
           console.info(`Field ${tableName}.${field} configured`);
         });
 
