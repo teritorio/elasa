@@ -332,7 +332,7 @@ def clean_pois(pois, category_id)
       end
 
       # Only filename
-      ['route:gpx_trace', 'route:pdf'].each{ |k|
+      ['route:gpx_trace', 'route:pdf', 'image:thumbnail'].each{ |k|
         poi['properties'][k] = poi['properties'][k].split('/').last if poi['properties'][k]
       }
       poi['properties']['editorial']['website:details'] = poi['properties']['editorial']['website:details'].split('/')[3..].join('/') if !poi.dig('properties', 'editorial', 'website:details').nil?

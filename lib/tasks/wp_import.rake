@@ -1348,7 +1348,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         p['properties']['website:details'] = website_details
       end
 
-      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'image:thumbnail', 'classic-editor-remember').collect{ |k, v|
+      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'classic-editor-remember').collect{ |k, v|
         if v.is_a?(Array)
           [k, Array]
         elsif v.is_a?(Hash)
@@ -1395,9 +1395,9 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             interface = 'select-dropdown'
             options = '{"choices":[{"text":"parking","value":"parking","icon":"parking"},{"text":"start","value":"start","icon":"flag"},{"text":"waypoint","value":"waypoint","icon":"pin_drop"},{"text":"end","value":"end","icon":"emoji_flags"}]}'
             'varchar'
-          elsif ['route:gpx_trace', 'route:pdf'].include?(key)
+          elsif ['route:gpx_trace', 'route:pdf', 'image:thumbnail'].include?(key)
             f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
-            interface = 'file'
+            interface = key == 'image:thumbnail' ? 'file-image' : 'file'
             fk = 'directus_files(id) ON DELETE SET NULL'
             'uuid'
           elsif key == 'website:details'
