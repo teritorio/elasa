@@ -193,25 +193,17 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
   )
 end
 
-def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
-  group_ids = classs['properties_extra'].collect{ |group|
-    next if group.include?('i18n')
-
-    begin
-      group_fields_ids[group].first
-    rescue StandardError
-      puts "Reference non existing group field #{group}"
-      raise
-    end
-  }.compact
-  fields = classs['properties_extra'].collect{ |group| group_fields_ids[group].last.keys }.compact.flatten
-  field_ids = classs['properties_extra'].collect{ |group| group_fields_ids[group].last.values }.compact.flatten
-
+def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids, fields_ids)
   popup_fields_id = conn.exec(
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
     [project_id, 'group', "group_popup_#{source_slug}", 'standard']
   ) { |result| result.first['id'].to_i }
-  field_ids.each_with_index{ |field_id, field_index|
+  %w[opening_hours phone website addr].to_h{ |field| [field, fields_ids[field]] }.each_with_index{ |(field, field_id), field_index|
+    if field_id.nil?
+      puts "[ERROR] No field id for #{field}"
+      raise
+    end
+
     conn.exec(
       'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
       [popup_fields_id, field_id, field_index]
@@ -223,23 +215,32 @@ def insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids
     'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
     [project_id, 'group', "group_details_#{source_slug}", 'standard']
   ) { |result| result.first['id'].to_i }
-  group_ids.each_with_index{ |group_id, group_index|
+  [
+    [:contact, group_fields_ids['contact']&.first],
+    [:description, fields_ids['description']],
+    [:opening, group_fields_ids['opening']&.first],
+    [:location, group_fields_ids['location']&.first],
+  ].each_with_index{ |(slug, id), index|
+    if id.nil?
+      puts "[ERROR] No id for #{slug}"
+      raise
+    end
+
     conn.exec(
       'INSERT INTO fields_fields(fields_id, related_fields_id, index) VALUES ($1, $2, $3) RETURNING id',
-      [details_fields_id, group_id, group_index]
+      [details_fields_id, id, index]
     )
   }
 
-  [fields, popup_fields_id, details_fields_id]
+  [popup_fields_id, details_fields_id]
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, group_fields_ids, _filters)
+def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, group_fields_ids, fields_ids, _filters)
   if classs['properties_extra'] == ['all']
-    fields = group_fields_ids.values.last.last.keys
     popup_fields_id = group_fields_ids.values.first.first
     details_fields_id = group_fields_ids.values.first.first
   else
-    fields, popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids)
+    popup_fields_id, details_fields_id = insert_fields_groups(conn, project_id, source_slug, classs, group_fields_ids, fields_ids)
   end
 
   slug = classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] }
@@ -309,10 +310,25 @@ end
 
 def insert_group_fields(conn, project_id, ontology)
   properties_extra = ontology['properties_extra']
-  properties_extra.to_h{ |group_id, fields|
-    group_field_id = conn.exec(
-      'INSERT INTO fields(project_id, type, "group", display_mode) VALUES ($1, $2, $3, $4) RETURNING id',
-      [project_id, 'group', group_id, 'standard']
+  properties_extra['location'] = {
+    'addr' => {
+      'label' => { 'fr-FR' => 'Adresse', 'en-US' => 'Address' },
+    },
+    'coordinates' => {
+      'label' => { 'fr-FR' => 'Coordonnées', 'en-US' => 'Coordinates' },
+    },
+  }
+  fields_ids = {}
+  group_fields_ids = properties_extra.to_h{ |group_id, fields|
+    group_field_id = conn.exec('
+      INSERT INTO
+        fields(project_id, type, "group", display_mode)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (project_id, "group", field)
+      DO UPDATE SET
+        display_mode = EXCLUDED.display_mode
+      RETURNING id
+    ', [project_id, 'group', group_id, 'standard']
     ) { |result|
       result.first['id'].to_i
     }
@@ -338,9 +354,12 @@ def insert_group_fields(conn, project_id, ontology)
 
       [field, field_id]
     }
+    fields_ids = fields_ids.merge(field_ids)
 
     [group_id, [group_field_id, field_ids]]
   }
+
+  [group_fields_ids, fields_ids]
 end
 
 def new_root_menu(project_id)
@@ -433,7 +452,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
       color_line:	'#ff0000',
     )
 
-    group_fields_ids = insert_group_fields(conn, project_id, ontology)
+    group_fields_ids, fields_ids = insert_group_fields(conn, project_id, ontology)
 
     ontology['group'].each_with_index{ |id_superclass, superclass_index|
     conn.exec("SAVEPOINT superclass")
@@ -456,7 +475,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
             class_path = [superclass_id, class_id, subclass_id]
             source_slug = class_path.join('-')
             icons = [superclass['icon'], classs['icon'], subclass['icon']]
-            insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, group_fields_ids, filters)
+            insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, group_fields_ids, fields_ids, filters)
           }.any?
           if !inserted
             conn.exec("ROLLBACK TO SAVEPOINT class")
@@ -466,7 +485,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
           class_path = [superclass_id, class_id]
           source_slug = class_path.join('-')
           icons = [superclass['icon'], classs['icon']]
-          insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, group_fields_ids, filters)
+          insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, group_fields_ids, fields_ids, filters)
         end
       }.any?
       if !inserted
@@ -489,7 +508,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
       },
     }
 
-    group_fields_ids = insert_group_fields(conn, project_id, { 'properties_extra' => properties_extra })
+    group_fields_ids, fields_ids = insert_group_fields(conn, project_id, { 'properties_extra' => properties_extra })
 
     poi_menu_id = insert_menu_item(
       conn,
@@ -517,7 +536,7 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
         'properties_extra' => ['all'],
       }
 
-      insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, group_fields_ids, filters)
+      insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, group_fields_ids, fields_ids, filters)
     }
     conn.exec('COMMIT')
   }
