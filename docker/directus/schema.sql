@@ -2173,6 +2173,14 @@ ALTER TABLE ONLY public.fields_fields
 
 
 --
+-- Name: fields_fields fields_fields_uniq_fields_id_related_fields_id; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.fields_fields
+    ADD CONSTRAINT fields_fields_uniq_fields_id_related_fields_id UNIQUE (fields_id, related_fields_id);
+
+
+--
 -- Name: fields fields_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
