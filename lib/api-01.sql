@@ -1002,7 +1002,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             'category_ids', nullif(array_unique(array_agg(id_from_slugs_menu_item(menu.slug, menu.menu_id)) OVER (PARTITION BY pois.slug_id)), ARRAY[]::bigint[]),
                             'updated_at', pois.properties->'updated_at',
                             'source', pois.properties->'source',
-                            'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN substr(pois.properties->>'id', 2)::bigint END,
+                            'osm_id', CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' AND pois.properties->>'id' ~ E'^.\\d+$' THEN substr(pois.properties->>'id', 2)::bigint END,
                             'osm_type',
                                 CASE WHEN pois.properties->>'source' LIKE '%openstreetmap%' THEN
                                     CASE substr(pois.properties->>'id', 1, 1)
