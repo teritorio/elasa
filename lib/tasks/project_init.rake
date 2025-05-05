@@ -193,8 +193,8 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
   )
 end
 
-def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
-  popup_fields_id = conn.exec('
+def insert_fields_group(conn, project_id, slug, fields, group_fields_ids, fields_ids, filters)
+  fields_id = conn.exec('
     INSERT INTO
       fields(project_id, type, "group", display_mode)
     VALUES
@@ -203,9 +203,9 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
     DO UPDATE SET
       display_mode = EXCLUDED.display_mode
     RETURNING id
-    ', [project_id, 'group', "group_popup_default", 'standard']
+    ', [project_id, 'group', "group_#{slug}_default", 'standard']
   ) { |result| result.first['id'].to_i }
-  %w[opening_hours phone website addr].to_h{ |field| [field, fields_ids[field]] }.each_with_index{ |(field, field_id), field_index|
+  fields.to_h{ |field| [field, fields_ids[field]] }.each_with_index{ |(field, field_id), field_index|
     if field_id.nil?
       puts "[ERROR] No field id for #{field}"
       raise
@@ -219,9 +219,16 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
       ON CONFLICT (fields_id, related_fields_id)
       DO NOTHING
       RETURNING id
-      ', [popup_fields_id, field_id, field_index]
+      ', [fields_id, field_id, field_index]
     )
   }
+
+  fields_id
+end
+
+def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
+  popup_fields_id = insert_fields_group(conn, project_id, 'popup', %w[opening_hours phone website addr], group_fields_ids, fields_ids, filters)
+  list_fields_id = insert_fields_group(conn, project_id, 'list', %w[name opening_hours phone website addr], group_fields_ids, fields_ids, filters)
 
   # Details
   details_fields_id = conn.exec('
@@ -253,7 +260,7 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
     )
   }
 
-  [popup_fields_id, details_fields_id, popup_fields_id]
+  [popup_fields_id, details_fields_id, list_fields_id]
 end
 
 def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id)
