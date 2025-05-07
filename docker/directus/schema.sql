@@ -2451,6 +2451,13 @@ CREATE INDEX menu_items_filters_idx_menu_items_id ON public.menu_items_filters U
 
 
 --
+-- Name: pois_idx_geom; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_idx_geom ON public.pois USING gist (geom);
+
+
+--
 -- Name: pois_idx_slug_original_id_integer; Type: INDEX; Schema: public; Owner: postgres
 --
 
