@@ -253,6 +253,7 @@ def clean_pois(pois, category_id)
 
       poi['properties']['display']&.delete('color_fill') # Not constant Elasa/WP on POI in multiple categories
       poi['properties']['display']&.delete('color_line') # Not constant Elasa/WP on POI in multiple categories
+      poi['properties']['display']['color_text'] = poi['properties']['colour:text'] if !poi['properties']['display'].nil? && !poi['properties']['colour:text'].nil? # Buggy WP
 
       poi['properties']['metadata']&.delete('natives') # Buggy WP
       poi['properties'].delete('website:details') # Buggy WP
@@ -288,6 +289,7 @@ def clean_pois(pois, category_id)
       poi['properties']['route:hiking:duration'] = poi['properties']['route:hiking:duration']&.to_i # Buggy WP
       poi['properties']['duration_cycle'] = poi['properties']['duration_cycle']&.to_i # Buggy WP
       poi['properties']['maxlength'] = poi['properties']['maxlength']&.to_i # Buggy WP
+      poi['properties']['length'] = poi['properties']['length']&.to_i # Buggy WP
       poi['properties']['capacity:disabled'] = poi['properties']['capacity:disabled']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_agrees'] = poi['properties']['assmat_nb_places_agrees']&.to_i # Buggy WP
       poi['properties']['assmat_nb_places_libres'] = poi['properties']['assmat_nb_places_libres']&.to_i # Buggy WP
@@ -298,6 +300,10 @@ def clean_pois(pois, category_id)
       poi['properties']['zpj_zones_2_activer_dessin'] = poi['properties']['zpj_zones_2_activer_dessin']&.to_i # Imported as integer
       poi['properties']['zpj_date_debut_annee'] = poi['properties']['zpj_date_debut_annee']&.to_i # Imported as integer
       poi['properties']['zpj_date_fin_annee'] = poi['properties']['zpj_date_fin_annee']&.to_i # Imported as integer
+
+      poi['properties'].delete('agenda:id')
+      poi['properties'].delete('agenda:name')
+      poi['properties'].delete('agenda')
 
       # Buggy WP with 0 and "no" values
       [
@@ -416,19 +422,29 @@ def compare_pois(pois_old, pois_new)
     end
 
     # categories_ids
-    if !(
+    if (h[1]['properties']['metadata']['category_ids']&.size || 0) >= 2 && !(
       (h[0]['properties']['metadata']['category_ids'] || []) |
       (h[1]['properties']['metadata']['category_ids'] || [])
     ).empty?
       # Force WP categories_ids to contains all categories_ids
       h[1]['properties']['metadata']['category_ids'] = h[0]['properties']['metadata']['category_ids']
-    end
 
-    if !h[0]['properties']['metadata']['category_ids']&.empty?
       # Has it have multiple category_ids, could have different values, force to be the same
-      h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class'] if !h[1].dig('properties', 'display', 'style_class').nil?
-      h[0]['properties']['display']['details_fields'] = h[1]['properties']['display']['details_fields'] if !h[1].dig('properties', 'display', 'details_fields').nil?
-      h[0]['properties']['display']['list_fields'] = h[1]['properties']['display']['list_fields'] if !h[1].dig('properties', 'display', 'list_fields').nil?
+      if !h[1].dig('properties', 'display').nil? && !h[0].dig('properties', 'display').nil?
+        h[0]['properties']['display']['style_class'] = h[1]['properties']['display']['style_class']
+        h[0]['properties']['display'] = h[0]['properties']['display'].compact
+      end
+
+      if !h[1].dig('properties', 'editorial').nil? && !h[0].dig('properties', 'editorial').nil?
+        h[0]['properties']['editorial']['popup_fields'] = h[1]['properties']['editorial']['popup_fields']
+        h[0]['properties']['editorial']['details_fields'] = h[1]['properties']['editorial']['details_fields']
+        h[0]['properties']['editorial']['list_fields'] = h[1]['properties']['editorial']['list_fields']
+
+        h[0]['properties']['editorial']['class_label'] = h[1]['properties']['editorial']['class_label'] if !h[1].dig('properties', 'editorial', 'class_label').nil?
+        h[0]['properties']['editorial']['class_label_popup'] = h[1]['properties']['editorial']['class_label_popup'] if !h[1].dig('properties', 'editorial', 'class_label_popup').nil?
+        h[0]['properties']['editorial']['class_label_details'] = h[1]['properties']['editorial']['class_label_details'] if !h[1].dig('properties', 'editorial', 'class_label_details').nil?
+        h[0]['properties']['editorial'] = h[0]['properties']['editorial'].compact
+      end
     end
 
     if h[0]['properties']['source:image'] == 'local'

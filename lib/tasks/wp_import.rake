@@ -1739,7 +1739,7 @@ def links_local_pois_deps(conn, project_id, deps_ids_s)
     deps_ids.each{ |poi_id, dep_ids|
     conn.exec_params("
         INSERT INTO \"#{table_p}\"(parent_pois_id, children_pois_id, index)
-        SELECT
+        SELECT DISTINCT ON(\"index\")
           $1,
           pois.id,
           t.index
@@ -1752,7 +1752,8 @@ def links_local_pois_deps(conn, project_id, deps_ids_s)
             sources.id = pois.source_id AND
             sources.project_id = $3
         ORDER BY
-          t.index
+          t.index,
+          pois.slugs->>'original_id' NULLS LAST
         ", [
         poi_id,
         dep_ids.to_json,
