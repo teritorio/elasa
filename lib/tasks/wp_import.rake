@@ -1780,7 +1780,7 @@ namespace :wp do
 
     theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
-    load_from_source("#{datasource_url}/data", project_slug) if datasources_slug.present?
+    load_from_source("#{datasource_url}/data", project_slug, datasources_slug) if datasources_slug.present?
     i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
     load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
     i18ns = i18ns.transform_values{ |v|

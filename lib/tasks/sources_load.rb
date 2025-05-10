@@ -207,70 +207,62 @@ def load_pois(conn, project_slug, source_slug, pois)
   )
 end
 
-def load_from_source(datasource_url, project_slug)
+def load_from_source(datasource_url, project_slug, datasource_project)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec_params('SELECT slug, datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
-      results.collect{ |row|
-        project_slug = row.fetch('slug')
-        datasource_project = row.fetch('datasources_slug')
-        next if datasource_project.nil?
+    conn.exec_params(
+      "
+      DELETE FROM
+        pois_pois
+      USING
+        projects
+        JOIN sources ON
+          sources.project_id = projects.id
+        JOIN pois ON
+          pois.source_id = sources.id
+      WHERE
+        projects.slug = $1 AND
+        pois_pois.parent_pois_id = pois.id
+      ",
+      [project_slug]
+    )
 
-        conn.exec_params(
-          "
-          DELETE FROM
-            pois_pois
-          USING
-            projects
-            JOIN sources ON
-              sources.project_id = projects.id
-            JOIN pois ON
-              pois.source_id = sources.id
-          WHERE
-            projects.slug = $1 AND
-            pois_pois.parent_pois_id = pois.id
-          ",
-          [project_slug]
-        )
+    metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
 
-        metadatas = fetch_json("#{datasource_url}/#{datasource_project}/metadata.json")
+    puts "source #{project_slug} (#{metadatas.size})"
 
-        puts "source #{project_slug} (#{metadatas.size})"
+    load_source(conn, project_slug, metadatas)
 
-        load_source(conn, project_slug, metadatas)
-
-        metadatas.each_key{ |source_slug|
-          pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
-          load_pois(conn, project_slug, source_slug, pois['features'])
-          puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
-        }
-        puts ''
-
-        conn.exec_params(
-          "
-          INSERT INTO
-            pois_pois(parent_pois_id, children_pois_id, index)
-          SELECT
-            parent_pois.id AS parent_pois_id,
-            children_pois.id AS children_pois_id,
-            index
-          FROM
-            projects
-            JOIN sources ON
-              sources.project_id = projects.id
-            JOIN pois AS parent_pois ON
-              parent_pois.source_id = sources.id
-            JOIN LATERAL jsonb_array_elements(parent_pois.properties->'refs') WITH ORDINALITY AS parent_pois_refs(ref, index) ON true
-            JOIN pois AS children_pois ON
-              children_pois.properties->'id' = parent_pois_refs.ref
-          WHERE
-              projects.slug = $1
-          ",
-          [project_slug]
-        )
-
-        metadatas
-      }
+    metadatas.each_key{ |source_slug|
+      pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
+      load_pois(conn, project_slug, source_slug, pois['features'])
+      puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
     }
+    puts ''
+
+    conn.exec_params(
+      "
+      INSERT INTO
+        pois_pois(parent_pois_id, children_pois_id, index)
+      SELECT
+        parent_pois.id AS parent_pois_id,
+        children_pois.id AS children_pois_id,
+        index
+      FROM
+        projects
+        JOIN sources ON
+          sources.project_id = projects.id
+        JOIN pois AS parent_pois ON
+          parent_pois.source_id = sources.id
+        JOIN LATERAL jsonb_array_elements(parent_pois.properties->'refs') WITH ORDINALITY AS parent_pois_refs(ref, index) ON true
+        JOIN pois AS children_pois ON
+          children_pois.properties->'id' = parent_pois_refs.ref
+      WHERE
+          projects.slug = $1
+      ",
+      [project_slug]
+    )
+
+    metadatas
   }
 end
 

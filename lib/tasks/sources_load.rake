@@ -18,9 +18,18 @@ namespace :sources do
   desc 'Load Sources and POIs from datasource'
   task :load, [] => :environment do
     url_base, project_slug = ARGV[2..]
-    load_from_source("#{url_base}/data", project_slug)
-    i18ns = fetch_json("#{url_base}/data/#{project_slug}/i18n.json")
-    load_i18n(project_slug, i18ns)
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+      conn.exec_params('SELECT datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
+        results.collect{ |row|
+          datasource_project = row.fetch('datasources_slug')
+          next if datasource_project.nil?
+
+          load_from_source("#{url_base}/data", project_slug, datasource_project)
+          i18ns = fetch_json("#{url_base}/data/#{datasource_project}/i18n.json")
+          load_i18n(project_slug, i18ns)
+        }
+      }
+    }
     exit 0 # Beacause of manually deal with rake command line arguments
   rescue StandardError => e
     Sentry.capture_exception(e)

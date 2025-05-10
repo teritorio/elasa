@@ -11,12 +11,13 @@ class Api02AdminController < ApplicationController
     row_project = project(project_slug, api_key)
     if row_project.present?
       url_base = ENV.fetch('DATASOURCES_URL', nil)
+      datasource_project = row.fetch('datasources_slug')
 
       original_stdout = $stdout
       begin
         $stdout = StringIO.new
 
-        load_from_source("#{url_base}/data", project_slug)
+        load_from_source("#{url_base}/data", project_slug, datasources_slug)
         i18ns = fetch_json("#{url_base}/data/#{project_slug}/i18n.json")
         load_i18n(project_slug, i18ns)
 
