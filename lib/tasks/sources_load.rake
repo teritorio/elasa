@@ -23,6 +23,7 @@ namespace :sources do
         results.collect{ |row|
           datasource_project = row.fetch('datasources_slug')
           next if datasource_project.nil?
+          puts "\n#{datasource_project}\n\n"
 
           load_from_source("#{url_base}/data", project_slug, datasource_project)
           i18ns = fetch_json("#{url_base}/data/#{datasource_project}/i18n.json")
