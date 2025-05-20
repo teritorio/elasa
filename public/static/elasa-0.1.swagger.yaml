@@ -153,6 +153,7 @@ paths:
                           type: string
                           enum: [compact, large]
                           description: How display the menu item.
+                          default: compact
                     link:
                       type: object
                       additionalProperties: false
@@ -178,6 +179,7 @@ paths:
                           type: string
                           enum: [compact, large]
                           description: How display the menu item.
+                          default: compact
                     category:
                       type: object
                       additionalProperties: false
@@ -211,6 +213,7 @@ paths:
                           type: string
                           enum: [compact, large]
                           description: How display the menu item.
+                          default: compact
                         zoom:
                           type: integer
                           description: Zoom level to show this category POI.
@@ -606,6 +609,7 @@ components:
           type: string
           enum: [standard, card]
           description: How display the group.
+          default: standard
         icon:
           type: string
           description: CSS identifier of the icons.
