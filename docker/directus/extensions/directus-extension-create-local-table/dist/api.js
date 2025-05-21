@@ -10,6 +10,7 @@ export default {
       let sources = (await database.raw(`
         SELECT
           slug,
+          sources.id,
           project_id,
           jsonb_agg(jsonb_build_object('language', languages_code, 'translation', name)) AS translations
         FROM
@@ -61,7 +62,7 @@ export default {
         ['id', 'project_id', 'geom', 'thumbnail'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
           await database.raw(`
             MERGE INTO directus_fields
-            USING (SELECT ?, ?, ?::boolean, ?::boolean, ?::json) AS source(collection, field, hidden, readonly, interface)
+            USING (SELECT ?, ?, ?::boolean, ?::boolean, ?) AS source(collection, field, hidden, readonly, interface)
             ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
             WHEN NOT MATCHED THEN
               INSERT (collection, field, hidden, readonly, interface)
@@ -258,9 +259,9 @@ export default {
             console.info(`Permission ${tableNameI} ${action} configured`);
           });
         }
-      });
 
-      await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source_id, table]);
+        await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
+      });
     } catch (error) {
       console.error(error);
       throw error;
