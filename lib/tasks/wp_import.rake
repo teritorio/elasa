@@ -1785,7 +1785,7 @@ namespace :wp do
     load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
     i18ns = i18ns.transform_values{ |v|
       {
-        '@default' => v['label'],
+        '@default' => { 'fr-FR' => v.dig('label', 'fr') }.compact_blank,
         'values' => v['values']&.transform_values{ |vv|
           {
             '@default:full' => { 'fr-FR' => vv.dig('label', 'fr') }.compact_blank,
