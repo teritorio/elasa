@@ -731,13 +731,13 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
 
     # Remove duplicate OSM objects in same catagory from WP API
     pois = pois.group_by{ |poi|
-      if !poi['properties'].key?('metadata')
-        poi['properties']['id']
-      else
+      if poi['properties'].key?('metadata')
         [
           poi['properties']['metadata']['category_ids'],
           poi['properties']['metadata']['source_id'] || poi['properties']['metadata']['id']
         ]
+      else
+        poi['properties']['id']
       end
     }.values.collect{ |pois|
       pois.min_by{ |poi| [poi['properties']['id'] || poi['properties']['metadata']['id']] }
@@ -1737,7 +1737,7 @@ end
 def links_local_pois_deps(conn, project_id, deps_ids_s)
   deps_ids_s.each{ |table_p, deps_ids|
     deps_ids.each{ |poi_id, dep_ids|
-    conn.exec_params("
+      conn.exec_params("
         INSERT INTO \"#{table_p}\"(parent_pois_id, children_pois_id, index)
         SELECT DISTINCT ON(\"index\")
           $1,
@@ -1755,10 +1755,10 @@ def links_local_pois_deps(conn, project_id, deps_ids_s)
           t.index,
           pois.slugs->>'original_id' NULLS LAST
         ", [
-        poi_id,
-        dep_ids.to_json,
-        project_id,
-      ])
+          poi_id,
+          dep_ids.to_json,
+          project_id,
+        ])
     }
   }
 end
