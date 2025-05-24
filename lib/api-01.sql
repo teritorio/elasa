@@ -1155,7 +1155,7 @@ CREATE OR REPLACE FUNCTION attribute_translations(
             json_build_object(
                 '@default', json_build_object(
                     -- TODO loop to get the right language translations
-                    substring(translations->0->>'language', 1, 2), translations->0->'translation'
+                    translations->0->>'language', translations->0->'translation'
                 )
             ) AS key_translations,
             NULL::json AS values_translations
