@@ -68,6 +68,15 @@ services:
       ADMIN_EMAIL: ${DIRECTUS_ADMIN_EMAIL}
       ADMIN_PASSWORD: ${DIRECTUS_ADMIN_PASSWORD}
 
+      EMAIL_TRANSPORT: smtp
+      EMAIL_SMTP_HOST: ${DIRECTUS_SMTP_HOST:-}
+      EMAIL_SMTP_PORT: ${DIRECTUS_SMTP_PORT:-}
+      EMAIL_SMTP_USER: ${DIRECTUS_SMTP_USER:-}
+      EMAIL_SMTP_PASSWORD: ${DIRECTUS_SMTP_PASSWORD:-}
+      EMAIL_SMTP_POOL: true
+      EMAIL_SMTP_SECURE: ${DIRECTUS_SMTP_SECURE:-}
+      EMAIL_FROM: ${DIRECTUS_EMAIL_FROM:-}
+
       # Make sure to set this in production
       # (see https://docs.directus.io/reference/environment-variables/#general)
       PUBLIC_URL: $DIRECTUS_PUBLIC_URL
