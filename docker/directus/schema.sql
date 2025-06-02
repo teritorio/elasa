@@ -208,7 +208,6 @@ CREATE TABLE public.directus_activity (
     user_agent text,
     collection character varying(64) NOT NULL,
     item character varying(255) NOT NULL,
-    comment text,
     origin character varying(255)
 );
 
@@ -797,7 +796,8 @@ CREATE TABLE public.directus_settings (
     public_registration boolean DEFAULT false NOT NULL,
     public_registration_verify_email boolean DEFAULT true NOT NULL,
     public_registration_role uuid,
-    public_registration_email_filter json
+    public_registration_email_filter json,
+    visual_editor_urls json
 );
 
 
@@ -2532,14 +2532,6 @@ ALTER TABLE ONLY public.directus_access
 
 ALTER TABLE ONLY public.directus_collections
     ADD CONSTRAINT directus_collections_group_foreign FOREIGN KEY ("group") REFERENCES public.directus_collections(collection);
-
-
---
--- Name: directus_comments directus_comments_collection_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.directus_comments
-    ADD CONSTRAINT directus_comments_collection_foreign FOREIGN KEY (collection) REFERENCES public.directus_collections(collection) ON DELETE CASCADE;
 
 
 --

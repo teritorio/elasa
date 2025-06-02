@@ -43,7 +43,7 @@ f400ab71-d9c5-4ea8-96aa-0958f373ccca	Administrator	verified	$t:admin_description
 --
 
 COPY public.directus_users (id, first_name, last_name, email, password, location, title, description, tags, avatar, language, tfa_secret, status, role, token, last_access, last_page, provider, external_identifier, auth_data, email_notifications, project_id, appearance, theme_dark, theme_light, theme_light_overrides, theme_dark_overrides) FROM stdin;
-7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2024-11-04 12:55:53.337+00	/settings/roles/5979e2ac-a34f-4c70-bf9d-de48b3900a8f	default	\N	\N	t	\N	\N	\N	\N	\N	\N
+7ee01efc-e308-47e8-bf57-3dacd8ba56c5	Admin	User	admin@example.com	$argon2id$v=19$m=65536,t=3,p=4$qS/yUxvrtrTXACg+65QTTQ$5xe8tFtiM/tsoP+k0SjMLTQMc/lKuC1QUOyCM7Mm+kc	\N	\N	\N	\N	\N	\N	\N	active	f400ab71-d9c5-4ea8-96aa-0958f373ccca	\N	2025-06-02 11:17:55.871+00	/settings/data-model	default	\N	\N	t	\N	\N	\N	\N	\N	\N
 \.
 
 
@@ -419,6 +419,9 @@ COPY public.directus_migrations (version, name, "timestamp") FROM stdin;
 20240817A	Update Icon Fields Length	2024-11-04 12:55:33.348587+00
 20240909A	Separate Comments	2024-11-04 12:55:33.450109+00
 20240909B	Consolidate Content Versioning	2024-11-04 12:55:33.454033+00
+20240924A	Migrate Legacy Comments	2025-06-02 11:17:45.957365+00
+20240924B	Populate Versioning Deltas	2025-06-02 11:17:45.963548+00
+20250224A	Visual Editor	2025-06-02 11:17:45.970889+00
 \.
 
 
@@ -618,8 +621,8 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 -- Data for Name: directus_settings; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides, report_error_url, report_bug_url, report_feature_url, public_registration, public_registration_verify_email, public_registration_role, public_registration_email_filter) FROM stdin;
-1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	none	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":true},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N	\N	\N	\N	f	t	\N	\N
+COPY public.directus_settings (id, project_name, project_url, project_color, project_logo, public_foreground, public_background, public_note, auth_login_attempts, auth_password_policy, storage_asset_transform, storage_asset_presets, custom_css, storage_default_folder, basemaps, mapbox_key, module_bar, project_descriptor, default_language, custom_aspect_ratios, public_favicon, default_appearance, default_theme_light, theme_light_overrides, default_theme_dark, theme_dark_overrides, report_error_url, report_bug_url, report_feature_url, public_registration, public_registration_verify_email, public_registration_role, public_registration_email_filter, visual_editor_urls) FROM stdin;
+1	Elasa	\N	#6644ff	\N	\N	\N	\N	25	\N	none	\N	\N	\N	\N	\N	[{"type":"module","id":"content","enabled":true},{"type":"module","id":"visual","enabled":false},{"type":"module","id":"users","enabled":true},{"type":"module","id":"files","enabled":true},{"type":"module","id":"insights","enabled":false},{"type":"module","id":"settings","enabled":true,"locked":true}]	\N	en-US	\N	\N	auto	\N	\N	\N	\N	\N	\N	\N	f	t	\N	\N	\N
 \.
 
 
