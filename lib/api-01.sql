@@ -821,6 +821,7 @@ CREATE OR REPLACE FUNCTION pois_(
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
+    _poi_ref text[],
     _geometry_as text,
     _short_description text,
     _start_date text,
@@ -891,6 +892,13 @@ CREATE OR REPLACE FUNCTION pois_(
                 (
                     _poi_ids IS NULL OR
                     pois_join.slug_id = ANY(_poi_ids)
+                ) AND
+                (
+                    _poi_ref IS NULL OR (
+                        pois_join.properties->'tags' ? 'ref' AND
+                        pois_join.properties->'tags'->'ref' ? _poi_ref[1] AND
+                        pois_join.properties->'tags'->'ref'->>_poi_ref[1] = _poi_ref[2]
+                    )
                 )
     ),
     pois_with_deps AS (
@@ -1061,6 +1069,7 @@ CREATE OR REPLACE FUNCTION pois(
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
+    _poi_ref text[],
     _geometry_as text,
     _short_description text,
     _start_date text,
@@ -1099,7 +1108,7 @@ CREATE OR REPLACE FUNCTION pois(
     SELECT * FROM pois_(
         _base_url,
         (SELECT id FROM projects),
-        _theme_slug, _category_id, _poi_ids, _geometry_as, _short_description, _start_date, _end_date, _with_deps,
+        _theme_slug, _category_id, _poi_ids, _poi_ref, _geometry_as, _short_description, _start_date, _end_date, _with_deps,
         (SELECT geom FROM cliping_polygon)
     )
 $$ LANGUAGE sql STABLE PARALLEL SAFE;

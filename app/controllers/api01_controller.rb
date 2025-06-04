@@ -79,14 +79,21 @@ class Api01Controller < ApplicationController
 
   def poi
     project_slug, theme_slug = project_theme_params
-    id = params.require(:id).to_i
+    if params.require(:id).start_with?('ref:')
+      ref = params.require(:id).split(':', 2).last.rpartition(':')
+      ref[0] = 'FR:CRTA' if ref[0] == 'sirtaqui'
+      ref = [ref[0], ref[-1]]
+    else
+      id = params.require(:id).to_i
+    end
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6, $7, $8, $9, $10, $11)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       nil,
-      PG::TextEncoder::Array.new.encode([id]),
+      id.nil? ? nil : PG::TextEncoder::Array.new.encode([id]),
+      PG::TextEncoder::Array.new.encode(ref),
       params[:geometry_as],
       params[:short_description],
       nil,
@@ -116,12 +123,13 @@ class Api01Controller < ApplicationController
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
     ids = params[:ids]&.split(',')&.collect(&:to_i)
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6, $7, $8, $9, $10, $11)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       category_id,
       PG::TextEncoder::Array.new.encode(ids),
+      nil,
       params[:geometry_as],
       ActiveModel::Type::Boolean.new.cast(params[:short_description]),
       params[:start_date],

@@ -2458,6 +2458,13 @@ CREATE INDEX pois_idx_geom ON public.pois USING gist (geom);
 
 
 --
+-- Name: pois_idx_ref; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_idx_ref ON public.pois USING gin ((((properties -> 'tags'::text) -> 'ref'::text))) WHERE ((properties -> 'tags'::text) ? 'ref'::text);
+
+
+--
 -- Name: pois_idx_slug_original_id_integer; Type: INDEX; Schema: public; Owner: postgres
 --
 
