@@ -75,7 +75,7 @@ BEGIN
                 pois.source_id = local_pois.source_id AND
                 (pois.slugs->>''original_id'')::integer = (local_pois.slugs->>''original_id'')::integer AND
 
-                pois_files._pois_id = pois.id AND
+                pois_files.pois_id = pois.id AND
                 pois_files.directus_files_id = ''' || _directus_files_id || '''
         ';
     ELSE

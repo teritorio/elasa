@@ -1528,7 +1528,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         nil,
         'pois_id',
         nil,
-        'nullify',
+        'delete',
       ])
       conn.exec('
       INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -1539,7 +1539,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         'image',
         'directus_files_id',
         'index',
-        'nullify',
+        'delete',
       ])
 
       conn.exec('DELETE FROM directus_permissions WHERE collection = $1', [table_i])
@@ -1606,7 +1606,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         nil,
         'parent_pois_id',
         nil,
-        'nullify',
+        'delete',
       ])
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -1696,7 +1696,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         nil,
         'parent_pois_id',
         nil,
-        'nullify',
+        'delete',
       ])
       conn.exec('
         INSERT INTO directus_relations(many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action) VALUES ($1, $2, $3, $4, $5, $6, $7)

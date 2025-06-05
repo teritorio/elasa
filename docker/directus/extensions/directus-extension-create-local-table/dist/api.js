@@ -221,10 +221,10 @@ export default {
             USING (SELECT ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field)
             ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
             WHEN NOT MATCHED THEN
-              INSERT (many_collection, many_field, one_collection, one_field, junction_field)
-              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field)
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, 'delete')
             WHEN MATCHED THEN
-              UPDATE SET junction_field = source.junction_field
+              UPDATE SET junction_field = source.junction_field, one_deselect_action = 'delete'
           `, [tableNameI, 'directus_files_id', 'directus_files', null, 'pois_id']);
           console.info(`Relation ${tableNameI} directus_files_id directus_files configured`);
           await database.raw(`
@@ -232,10 +232,10 @@ export default {
             USING (SELECT ?, ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field, sort_field)
             ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
             WHEN NOT MATCHED THEN
-              INSERT (many_collection, many_field, one_collection, one_field, junction_field, sort_field)
-              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, source.sort_field)
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, source.sort_field, 'delete')
             WHEN MATCHED THEN
-              UPDATE SET junction_field = source.junction_field, sort_field = source.sort_field
+              UPDATE SET junction_field = source.junction_field, sort_field = source.sort_field, one_deselect_action = 'delete'
           `, [tableNameI, 'pois_id', tableName, 'image', 'directus_files_id', 'index']);
           console.info(`Relation ${tableNameI} pois_id ${tableName} image directus_files_id configured`);
 
