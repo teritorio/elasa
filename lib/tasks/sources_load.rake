@@ -19,10 +19,12 @@ namespace :sources do
   task :load, [] => :environment do
     url_base, project_slug = ARGV[2..]
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-      conn.exec_params('SELECT datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
+      conn.exec_params('SELECT slug, datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
         results.collect{ |row|
+          project_slug = row.fetch('datasources_slug')
           datasource_project = row.fetch('datasources_slug')
           next if datasource_project.nil?
+
           puts "\n#{datasource_project}\n\n"
 
           load_from_source("#{url_base}/data", project_slug, datasource_project)
