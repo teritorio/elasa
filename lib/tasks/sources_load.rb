@@ -262,6 +262,8 @@ def load_from_source(datasource_url, project_slug, datasource_project)
       [project_slug]
     )
 
+    conn.exec_params('SELECT * FROM api01.force_update_project_pois_local($1)', [project_slug])
+
     metadatas
   }
 end

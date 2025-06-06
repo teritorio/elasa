@@ -225,6 +225,61 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP FUNCTION IF EXISTS select_pois_local;
+CREATE OR REPLACE FUNCTION select_pois_local(
+    _table_name text
+) RETURNS TABLE(
+    table_name text,
+    local_id text,
+    table_name_t text,
+    table_name_i text,
+    table_name_p text,
+    table_name_w text,
+    file_fields text[]
+) AS $$
+    SELECT
+        tables.table_name,
+        regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
+        tables_t.table_name AS table_name_t,
+        tables_i.table_name AS table_name_i,
+        tables_p.table_name AS table_name_p,
+        tables_w.table_name AS table_name_w,
+        array_agg(key_column_usage.column_name) AS file_fields
+    FROM
+        information_schema.tables
+        -- Translations
+        LEFT JOIN information_schema.tables AS tables_t ON
+            tables_t.table_name = substring(tables.table_name, 1, 63 - 2) || '_t'
+        -- Images
+        LEFT JOIN information_schema.tables AS tables_i ON
+            tables_i.table_name = substring(tables.table_name, 1, 63 - 2) || '_i'
+        -- Deps pois
+        LEFT JOIN information_schema.tables AS tables_p ON
+            tables_p.table_name = substring(tables.table_name, 1, 63 - 2) || '_p'
+        -- Deps waypoints
+        LEFT JOIN information_schema.tables AS tables_w ON
+            tables_w.table_name = substring(tables.table_name, 1, 63 - 2) || '_w'
+        -- Many files fields
+        -- One file fields
+        LEFT JOIN information_schema.table_constraints ON
+            table_constraints.table_name = tables.table_name AND
+            table_constraints.table_schema = 'public' AND
+            table_constraints.constraint_type = 'FOREIGN KEY'
+        LEFT JOIN information_schema.key_column_usage ON
+            key_column_usage.constraint_name = table_constraints.constraint_name AND
+            key_column_usage.table_schema = 'public' AND
+            key_column_usage.table_name = tables.table_name AND
+            key_column_usage.column_name != 'project_id'
+    WHERE
+        tables.table_name = substring(_table_name, 1, 63)
+    GROUP BY
+        tables.table_name,
+        tables_t.table_name,
+        tables_i.table_name,
+        tables_p.table_name,
+        tables_w.table_name
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
 DROP FUNCTION IF EXISTS create_pois_local_view;
 CREATE OR REPLACE FUNCTION create_pois_local_view(
     _project_id integer,
@@ -236,49 +291,7 @@ CREATE OR REPLACE FUNCTION create_pois_local_view(
 DECLARE
     source record;
 BEGIN
-    FOR source IN
-        SELECT
-            _source_id AS id,
-            tables.table_name,
-            regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
-            tables_t.table_name AS table_name_t,
-            tables_i.table_name AS table_name_i,
-            tables_p.table_name AS table_name_p,
-            tables_w.table_name AS table_name_w,
-            array_agg(key_column_usage.column_name) AS file_fields
-        FROM
-            information_schema.tables
-            -- Translations
-            LEFT JOIN information_schema.tables AS tables_t ON
-                tables_t.table_name = substring(tables.table_name, 1, 63 - 2) || '_t'
-            -- Images
-            LEFT JOIN information_schema.tables AS tables_i ON
-                tables_i.table_name = substring(tables.table_name, 1, 63 - 2) || '_i'
-            -- Deps pois
-            LEFT JOIN information_schema.tables AS tables_p ON
-                tables_p.table_name = substring(tables.table_name, 1, 63 - 2) || '_p'
-            -- Deps waypoints
-            LEFT JOIN information_schema.tables AS tables_w ON
-                tables_w.table_name = substring(tables.table_name, 1, 63 - 2) || '_w'
-            -- Many files fields
-            -- One file fields
-            LEFT JOIN information_schema.table_constraints ON
-                table_constraints.table_name = tables.table_name AND
-                table_constraints.table_schema = 'public' AND
-                table_constraints.constraint_type = 'FOREIGN KEY'
-            LEFT JOIN information_schema.key_column_usage ON
-                key_column_usage.constraint_name = table_constraints.constraint_name AND
-                key_column_usage.table_schema = 'public' AND
-                key_column_usage.table_name = tables.table_name AND
-                key_column_usage.column_name != 'project_id'
-        WHERE
-            tables.table_name = substring(_table_name, 1, 63)
-        GROUP BY
-            tables.table_name,
-            tables_t.table_name,
-            tables_i.table_name,
-            tables_p.table_name,
-            tables_w.table_name
+    FOR source IN SELECT * FROM select_pois_local(_table_name)
     LOOP
         EXECUTE 'DROP VIEW IF EXISTS public."' || substring(source.table_name, 1, 63 - 2) || '_v" CASCADE';
         EXECUTE '
@@ -366,11 +379,6 @@ BEGIN
             ';
         END IF;
 
-        -- Touch all data to force update of pois
-        EXECUTE '
-            UPDATE "' || source.table_name ||'" SET id = id
-        ';
-
         IF source.table_name_i IS NOT NULL THEN
             EXECUTE '
                 DROP TRIGGER IF EXISTS "' || substring(source.table_name_i, 1, 63 - 2) || '_t" ON "' || source.table_name_i || '";
@@ -379,9 +387,6 @@ BEGIN
                 ON "' || source.table_name_i || '"
                 FOR EACH ROW
                 EXECUTE FUNCTION api01.pois_local_i_trigger();
-            ';
-            EXECUTE '
-                UPDATE "' || source.table_name_i ||'" SET id = id
             ';
         END IF;
 
@@ -394,9 +399,6 @@ BEGIN
                 FOR EACH ROW
                 EXECUTE FUNCTION api01.pois_local_p_trigger();
             ';
-            EXECUTE '
-                UPDATE "' || source.table_name_p ||'" SET id = id
-            ';
         END IF;
 
         IF source.table_name_w IS NOT NULL THEN
@@ -408,9 +410,37 @@ BEGIN
                 FOR EACH ROW
                 EXECUTE FUNCTION api01.pois_local_w_trigger();
             ';
-            EXECUTE '
-                UPDATE "' || source.table_name_w ||'" SET id = id
-            ';
+        END IF;
+
+        RETURN NEXT;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+
+DROP FUNCTION IF EXISTS force_update_pois_local;
+CREATE OR REPLACE FUNCTION force_update_pois_local(
+    _table_name text
+) RETURNS TABLE(
+    name text
+) AS $$
+DECLARE
+    source record;
+BEGIN
+    FOR source IN SELECT * FROM api01.select_pois_local(_table_name)
+    LOOP
+        -- Touch all data to force update of pois
+        EXECUTE 'UPDATE "' || source.table_name ||'" SET id = id';
+
+        IF source.table_name_i IS NOT NULL THEN
+            EXECUTE 'UPDATE "' || source.table_name_i ||'" SET id = id';
+        END IF;
+
+        IF source.table_name_p IS NOT NULL THEN
+            EXECUTE 'UPDATE "' || source.table_name_p ||'" SET id = id';
+        END IF;
+
+        IF source.table_name_w IS NOT NULL THEN
+            EXECUTE 'UPDATE "' || source.table_name_w ||'" SET id = id';
         END IF;
 
         RETURN NEXT;
@@ -439,6 +469,36 @@ CREATE OR REPLACE FUNCTION create_project_pois_local_view(
                 sources.id,
                 'local-' || projects.slug || '-' || sources.slug
             ) AS view ON true
+        JOIN LATERAL force_update_pois_local(
+                'local-' || projects.slug || '-' || sources.slug ||
+                CASE view.name IS NOT NULL WHEN true THEN '' END -- CASE just to force create_pois_local_view first
+            ) AS force ON true
+    WHERE
+        _project_slug IS NULL OR projects.slug = _project_slug
+    GROUP BY
+        projects.id
+    ;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+DROP FUNCTION IF EXISTS force_update_project_pois_local;
+CREATE OR REPLACE FUNCTION force_update_project_pois_local(
+    _project_slug text
+) RETURNS TABLE(
+    project_id integer,
+    name text,
+    count integer
+) AS $$
+    SELECT
+        projects.id AS id,
+        projects.slug AS slug,
+        count(*) AS count
+    FROM
+        projects
+        JOIN sources ON
+            sources.project_id = projects.id
+        JOIN LATERAL api01.force_update_pois_local(
+                'local-' || projects.slug || '-' || sources.slug
+            ) AS force ON true
     WHERE
         _project_slug IS NULL OR projects.slug = _project_slug
     GROUP BY
