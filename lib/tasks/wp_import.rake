@@ -1727,6 +1727,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
 
     # Create trigger and fill pois_local table
     conn.exec('SELECT api01.create_pois_local_view($1, $2, $3)', [project_id, source_id, table])
+    conn.exec('SELECT api01.force_update_pois_local($1)', [table])
 
     source_id
   }
