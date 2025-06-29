@@ -291,7 +291,7 @@ CREATE OR REPLACE FUNCTION create_pois_local_view(
 DECLARE
     source record;
 BEGIN
-    FOR source IN SELECT * FROM select_pois_local(_table_name)
+    FOR source IN SELECT * FROM api01.select_pois_local(_table_name)
     LOOP
         EXECUTE 'DROP VIEW IF EXISTS public."' || substring(source.table_name, 1, 63 - 2) || '_v" CASCADE';
         EXECUTE '

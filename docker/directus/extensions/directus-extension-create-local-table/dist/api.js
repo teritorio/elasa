@@ -261,6 +261,7 @@ export default {
         }
 
         await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
+        await database.raw(`SELECT api01.force_update_pois_local(?)`, [tableName]);
       });
     } catch (error) {
       console.error(error);
