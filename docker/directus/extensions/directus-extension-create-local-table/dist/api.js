@@ -37,7 +37,7 @@ export default {
 
       sources.forEach(async (source) => {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
-        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE, geom geometry(Geometry,4326) NOT NULL)`);
+        await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, geom geometry(Geometry,4326) NOT NULL)`);
         await database.raw(`CREATE INDEX IF NOT EXISTS "${tableName.slice(-63 + 9)}_idx_geom" ON "${tableName}" USING gist(geom)`);
         let tableExtraFields = {};
         if (withAddr) { tableExtraFields = Object.assign(tableExtraFields, { "addr___housenumber": "String", "addr___street": "String", "addr___place": "String", "addr___postcode": "String", "addr___city": "String" }); }
@@ -59,17 +59,17 @@ export default {
       `, { collection: tableName, icon: 'pin_drop', group: 'local_sources', translations: JSON.stringify(source.translations) });
         console.info(`Collection ${tableName} configured`);
 
-        ['id', 'project_id', 'geom', 'thumbnail'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
+        ['id', 'geom', 'thumbnail'].concat(Object.keys(tableExtraFields)).forEach(async (field) => {
           await database.raw(`
             MERGE INTO directus_fields
-            USING (SELECT ?, ?, ?::boolean, ?::boolean, ?) AS source(collection, field, hidden, readonly, interface)
+            USING (SELECT ?, ?, ?::boolean, ?) AS source(collection, field, readonly, interface)
             ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
             WHEN NOT MATCHED THEN
-              INSERT (collection, field, hidden, readonly, interface)
-              VALUES (source.collection, source.field, source.hidden, source.readonly, source.interface)
+              INSERT (collection, field, readonly, interface)
+              VALUES (source.collection, source.field, source.readonly, source.interface)
             WHEN MATCHED THEN
-              UPDATE SET collection = source.collection, field = source.field, hidden = source.hidden, readonly = source.readonly, interface = source.interface
-          `, [tableName, field, field == 'project_id', field == 'id', field == 'thumbnail' ? 'file-image' : null]);
+              UPDATE SET collection = source.collection, field = source.field, readonly = source.readonly, interface = source.interface
+          `, [tableName, field, field == 'id', field == 'thumbnail' ? 'file-image' : null]);
           console.info(`Field ${tableName}.${field} configured`);
         });
 
