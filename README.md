@@ -75,9 +75,3 @@ docker compose run --rm api bundle exec rake test
 ```
 docker compose run --rm api bundle exec rake api:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
-
-## Export schema
-
-```
-docker compose run --rm directus npx directus schema-sync export
-```

@@ -2,4 +2,3 @@ log*
 tmp/
 .env
 uploads/
-docker/directus/schema-sync/data/schema/local-*

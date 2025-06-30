@@ -46,7 +46,6 @@ services:
       - ./uploads:/directus/uploads
       # If you want to load extensions from the host
       - ./docker/directus/extensions:/directus/extensions
-      - ./docker/directus/schema-sync:/directus/schema-sync
     depends_on:
       - cache
       - postgres

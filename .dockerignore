@@ -5,4 +5,3 @@ log/
 sorbet/
 tmp/
 uploads/
-docker/directus/schema-sync/data/schema/local-*
