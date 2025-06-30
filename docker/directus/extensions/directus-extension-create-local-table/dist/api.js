@@ -262,6 +262,12 @@ export default {
 
         await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
         await database.raw(`SELECT api01.force_update_pois_local(?)`, [tableName]);
+
+        // Force database schema re-read
+        const itemsService = new services.UtilsService({
+          accountability: accountability,
+        });
+        await itemsService.clearCache({ system: true });
       });
     } catch (error) {
       console.error(error);
