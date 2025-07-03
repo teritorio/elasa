@@ -87,7 +87,7 @@ export default {
             policy,
             tableName,
             action,
-            action == 'create' ? {} : { "_and": [{ project_id: { _eq: '$CURRENT_USER.project_id' } }] },
+            {},
             '*'
           ]);
           console.info(`Permission ${tableName} ${action} configured`);
@@ -179,7 +179,7 @@ export default {
               policy,
               tableNameT,
               action,
-              action == 'create' ? {} : { pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } },
+              {},
               '*'
             ]);
             console.info(`Permission ${tableNameT} ${action} configured`);
@@ -253,7 +253,7 @@ export default {
               policy,
               tableNameI,
               action,
-              action == 'create' ? {} : { pois_id: { project_id: { _eq: '$CURRENT_USER.project_id' } } },
+              {},
               '*'
             ]);
             console.info(`Permission ${tableNameI} ${action} configured`);
