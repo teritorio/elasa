@@ -1,9 +1,9 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
     try {
-      [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact] = [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact].map((value) => value.toString().trim() === 'true');
+      [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints] = [withTranslations, withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
       withTranslations = withTranslations || withName || withDescription;
       const sourcesIds = data['$trigger']['body']['keys'].map((key) => Number(key));
 
@@ -257,6 +257,155 @@ export default {
               '*'
             ]);
             console.info(`Permission ${tableNameI} ${action} configured`);
+          });
+        }
+
+        if (withDeps) {
+          const tableNameP = tableName.slice(-63 + 2) + '_p';
+
+          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameP}" (id SERIAL PRIMARY KEY, parent_pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, children_pois_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE, index INTEGER NOT NULL DEFAULT 1)`);
+          console.info(`Table ${tableNameP} created`);
+
+          await database.raw(`
+            INSERT INTO directus_collections(collection, icon, "group", hidden)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (collection)
+            DO UPDATE SET
+              collection = directus_collections.collection,
+              icon = directus_collections.icon,
+              "group" = directus_collections."group",
+              hidden = directus_collections.hidden
+          `, [tableNameP, 'import_export', tableName, true]);
+          console.info(`Collection ${tableNameP} configured`);
+
+          await database.raw(`
+            MERGE INTO directus_fields
+            USING (SELECT ?, ?, ?, ?, ?::json) AS source(collection, field, special, interface, options)
+            ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
+            WHEN NOT MATCHED THEN
+              INSERT (collection, field, special, interface, options)
+              VALUES (source.collection, source.field, source.special, source.interface, source.options)
+            WHEN MATCHED THEN
+              UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options
+          `, [tableName, 'associated_pois', 'm2m', 'list-m2m', {"enableCreate":false,"enableLink":true}]);
+          console.info(`Field ${tableName}.deps configured`);
+
+          await database.raw(`
+            MERGE INTO directus_relations
+            USING (SELECT ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field)
+            ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+            WHEN NOT MATCHED THEN
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, 'delete')
+            WHEN MATCHED THEN
+              UPDATE SET junction_field = source.junction_field, one_deselect_action = 'delete'
+          `, [tableNameP, 'children_pois_id', 'pois', null, 'parent_pois_id']);
+          console.info(`Relation ${tableNameP} deps configured`);
+          await database.raw(`
+            MERGE INTO directus_relations
+            USING (SELECT ?, ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field, sort_field)
+            ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+            WHEN NOT MATCHED THEN
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, source.sort_field, 'delete')
+            WHEN MATCHED THEN
+              UPDATE SET junction_field = source.junction_field, sort_field = source.sort_field, one_deselect_action = 'delete'
+          `, [tableNameP, 'parent_pois_id', tableName, 'associated_pois', 'children_pois_id', 'index']);
+          console.info(`Relation ${tableNameP} pois_id ${tableName} deps  configured`);
+
+          ['create', 'read', 'update', 'delete'].forEach(async (action) => {
+            await database.raw(`
+              MERGE INTO directus_permissions
+              USING (SELECT ?::uuid, ?, ?, ?::json, ?) AS source(policy, collection, action, permissions, fields)
+              ON (directus_permissions.policy = source.policy AND directus_permissions.collection = source.collection AND directus_permissions.action = source.action)
+              WHEN NOT MATCHED THEN
+                INSERT (policy, collection, action, permissions, fields)
+                VALUES (source.policy, source.collection, source.action, source.permissions, source.fields)
+              WHEN MATCHED THEN
+                UPDATE SET policy = source.policy, collection = source.collection, action = source.action, permissions = source.permissions, fields = source.fields
+            `, [
+              policy,
+              tableNameP,
+              action,
+              {},
+              '*'
+            ]);
+            console.info(`Permission ${tableNameP} ${action} configured`);
+          });
+        }
+
+        if (withWaypoints) {
+          const tableNameW = tableName.slice(-63 + 2) + '_w';
+          const table_pdp = `local-${projects.slug}-waypoints`;
+
+          await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameW}" (id SERIAL PRIMARY KEY, parent_pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, children_pois_id integer NOT NULL REFERENCES ${table_pdp}(id) ON DELETE CASCADE, index INTEGER NOT NULL DEFAULT 1)`);
+          console.info(`Table ${tableNameW} created`);
+
+          await database.raw(`
+            INSERT INTO directus_collections(collection, icon, "group", hidden)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT (collection)
+            DO UPDATE SET
+              collection = directus_collections.collection,
+              icon = directus_collections.icon,
+              "group" = directus_collections."group",
+              hidden = directus_collections.hidden
+          `, [tableNameW, 'import_export', tableName, true]);
+          console.info(`Collection ${tableNameW} configured`);
+
+          await database.raw(`
+            MERGE INTO directus_fields
+            USING (SELECT ?, ?, ?, ?, ?::json) AS source(collection, field, special, interface, options)
+            ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
+            WHEN NOT MATCHED THEN
+              INSERT (collection, field, special, interface, options)
+              VALUES (source.collection, source.field, source.special, source.interface, source.options)
+            WHEN MATCHED THEN
+              UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options
+          `, [tableName, 'waypoints', 'm2m', 'list-m2m', {"enableLink":true,"limit":200,"layout":"table","tableSpacing":"compact","fields":["index","children_pois_id.route___waypoint___type","children_pois_id.waypoints_translations.name"],"enableSelect":false}]);
+          console.info(`Field ${tableName}.waypoints configured`);
+
+          await database.raw(`
+            MERGE INTO directus_relations
+            USING (SELECT ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field)
+            ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+            WHEN NOT MATCHED THEN
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, 'delete')
+            WHEN MATCHED THEN
+              UPDATE SET junction_field = source.junction_field, one_deselect_action = 'delete'
+          `, [tableNameW, 'children_pois_id', table_pdp, null, 'parent_pois_id']);
+          console.info(`Relation ${tableNameW} waypoints configured`);
+          await database.raw(`
+            MERGE INTO directus_relations
+            USING (SELECT ?, ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field, sort_field)
+            ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+            WHEN NOT MATCHED THEN
+              INSERT (many_collection, many_field, one_collection, one_field, junction_field, sort_field, one_deselect_action)
+              VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, source.sort_field, 'delete')
+            WHEN MATCHED THEN
+              UPDATE SET junction_field = source.junction_field, sort_field = source.sort_field, one_deselect_action = 'delete'
+          `, [tableNameW, 'parent_pois_id', tableName, 'waypoints', 'children_pois_id', 'index']);
+          console.info(`Relation ${tableNameW} pois_id ${tableName} waypoints configured`);
+
+          ['create', 'read', 'update', 'delete'].forEach(async (action) => {
+            await database.raw(`
+              MERGE INTO directus_permissions
+              USING (SELECT ?::uuid, ?, ?, ?::json, ?) AS source(policy, collection, action, permissions, fields)
+              ON (directus_permissions.policy = source.policy AND directus_permissions.collection = source.collection AND directus_permissions.action = source.action)
+              WHEN NOT MATCHED THEN
+                INSERT (policy, collection, action, permissions, fields)
+                VALUES (source.policy, source.collection, source.action, source.permissions, source.fields)
+              WHEN MATCHED THEN
+                UPDATE SET policy = source.policy, collection = source.collection, action = source.action, permissions = source.permissions, fields = source.fields
+            `, [
+              policy,
+              tableNameW,
+              action,
+              {},
+              '*'
+            ]);
+            console.info(`Permission ${tableNameW} ${action} configured`);
           });
         }
 

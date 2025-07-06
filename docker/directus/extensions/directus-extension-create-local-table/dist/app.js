@@ -84,5 +84,27 @@ export default {
         default_value: false,
       },
     },
+    {
+      field: "withDeps",
+      name: "Add link to other objects",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
+      field: "withWaypoints",
+      name: "Add waypoints",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
   ],
 }
