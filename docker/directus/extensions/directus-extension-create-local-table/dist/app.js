@@ -8,17 +8,6 @@ export default {
 
   options: [
     {
-      field: "withTranslations",
-      name: "Add join table for translations",
-      type: "boolean",
-      meta: {
-        interface: "toggle",
-      },
-      schema: {
-        default_value: false,
-      },
-    },
-    {
       field: "withImages",
       name: "Add join table for images",
       type: "boolean",
