@@ -454,7 +454,20 @@ CREATE OR REPLACE FUNCTION menu(
             nullif(jsonb_agg(
                 jsonb_build_object(
                     'type', filters.type,
-                    'name', filters.name
+                    'name', CASE filters.type
+                        WHEN 'boolean' THEN (
+                            SELECT
+                            jsonb_build_object(
+                                'fr', capitalize(coalesce(name_large, name, filters.name->>'fr-FR'))
+                            )
+                            FROM
+                                fields_translations
+                            WHERE
+                                fields_translations.fields_id = filters.boolean_property AND
+                                fields_translations.languages_code = 'fr-FR'
+                        )
+                        ELSE filters.name
+                    END
                 ) ||
                 CASE filters.type
                 WHEN 'multiselection' THEN
