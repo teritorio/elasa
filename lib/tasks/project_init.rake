@@ -305,6 +305,19 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
 
   id = conn.exec(
     '
+      WITH
+      sources AS ( -- Filter on sources with POIs
+        SELECT DISTINCT ON (sources.id)
+          sources.id,
+          sources.project_id,
+          sources.slug
+        FROM
+          sources
+          JOIN pois ON
+            pois.source_id = sources.id
+        ORDER BY
+          sources.id
+      )
       INSERT INTO menu_items_sources(menu_items_id, sources_id)
       SELECT
         $2,
@@ -326,7 +339,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   }
   if id.nil?
     conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
-    puts "[ERROR] No source to link to menu_item: (#{source_slug})"
+    puts "[WARNIN] Source already linked to menu_item or empty: (#{source_slug})"
     false
   else
     true
