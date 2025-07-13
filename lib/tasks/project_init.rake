@@ -194,7 +194,8 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
 end
 
 def insert_fields_group(conn, project_id, slug, fields, group_fields_ids, fields_ids, filters)
-  fields_id = conn.exec('
+  fields_id = conn.exec(
+    '
     INSERT INTO
       fields(project_id, type, "group", display_mode)
     VALUES
@@ -211,7 +212,8 @@ def insert_fields_group(conn, project_id, slug, fields, group_fields_ids, fields
       raise
     end
 
-    conn.exec('
+    conn.exec(
+      '
       INSERT INTO
         fields_fields(fields_id, related_fields_id, index)
       VALUES
@@ -231,7 +233,8 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
   list_fields_id = insert_fields_group(conn, project_id, 'list', %w[name opening_hours phone website addr], group_fields_ids, fields_ids, filters)
 
   # Details
-  details_fields_id = conn.exec('
+  details_fields_id = conn.exec(
+    '
     INSERT INTO
       fields(project_id, type, "group", display_mode)
     VALUES
@@ -240,7 +243,7 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
     DO UPDATE SET
       display_mode = EXCLUDED.display_mode
     RETURNING id
-    ', [project_id, 'group', "group_details_default", 'standard']
+    ', [project_id, 'group', 'group_details_default', 'standard']
   ) { |result| result.first['id'].to_i }
   [
     group_fields_ids['contact']&.first,
@@ -248,7 +251,8 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
     group_fields_ids['opening']&.first,
     group_fields_ids['location']&.first,
   ].compact.each_with_index{ |id, index|
-    conn.exec('
+    conn.exec(
+      '
       INSERT INTO
         fields_fields(fields_id, related_fields_id, index)
       VALUES
@@ -320,12 +324,12 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   ) { |result|
     result&.first
   }
-  if !id.nil?
-    true
-  else
+  if id.nil?
     conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
     puts "[ERROR] No source to link to menu_item: (#{source_slug})"
     false
+  else
+    true
   end
 end
 
@@ -341,7 +345,8 @@ def insert_group_fields(conn, project_id, ontology)
   }
   fields_ids = {}
   group_fields_ids = properties_extra.to_h{ |group_id, fields|
-    group_field_id = conn.exec('
+    group_field_id = conn.exec(
+      '
       INSERT INTO
         fields(project_id, type, "group", display_mode)
       VALUES ($1, $2, $3, $4)
@@ -349,7 +354,7 @@ def insert_group_fields(conn, project_id, ontology)
       DO UPDATE SET
         display_mode = EXCLUDED.display_mode
       RETURNING id
-    ', [project_id, 'group', group_id, 'standard']
+      ', [project_id, 'group', group_id, 'standard']
     ) { |result|
       result.first['id'].to_i
     }
@@ -368,7 +373,8 @@ def insert_group_fields(conn, project_id, ontology)
         result.first['id'].to_i
       }
 
-      conn.exec('
+      conn.exec(
+        '
         INSERT INTO
           fields_fields(fields_id, related_fields_id, index)
         VALUES
@@ -460,7 +466,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   return if ontology.nil?
 
   css_parser = CssParser::Parser.new
-  css_parser.load_uri!('public/' + css)
+  css_parser.load_uri!("public/#{css}")
 
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     conn.exec('BEGIN')
@@ -483,8 +489,8 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
     popup_fields_id, details_fields_id, list_fields_id = insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
 
     ontology['group'].each_with_index{ |id_superclass, superclass_index|
-    conn.exec("SAVEPOINT superclass")
-    superclass_id, superclass = id_superclass
+      conn.exec('SAVEPOINT superclass')
+      superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
       superclass_menu_id = insert_menu_group(conn, project_id, poi_menu_id, [superclass_id], [superclass['icon']], css_parser, superclass, superclass_index)
       inserted = superclass['group'].each_with_index.collect{ |id_class, class_index|
@@ -493,7 +499,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
         classs['color_line'] = superclass['color_line']
         classs['display_mode'] = 'large'
         if classs.key?('group')
-          conn.exec("SAVEPOINT class")
+          conn.exec('SAVEPOINT class')
           class_menu_id = insert_menu_group(conn, project_id, superclass_menu_id, [superclass_id, class_id], [superclass['icon'], classs['icon']], css_parser, classs, class_index)
           inserted = classs['group'].each_with_index.collect{ |id_subclass, subclass_index|
             subclass_id, subclass = id_subclass
@@ -506,7 +512,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
             insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id)
           }.any?
           if !inserted
-            conn.exec("ROLLBACK TO SAVEPOINT class")
+            conn.exec('ROLLBACK TO SAVEPOINT class')
           end
           inserted
         else
@@ -517,7 +523,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
         end
       }.any?
       if !inserted
-        conn.exec("ROLLBACK TO SAVEPOINT superclass")
+        conn.exec('ROLLBACK TO SAVEPOINT superclass')
       end
     }
     conn.exec('COMMIT')
@@ -618,7 +624,7 @@ def new_filter(project_id, schema, i18ns)
           ) { |result| result.first['id'].to_i }
         end
       )
-      name.keys.each{ |lang|
+      name.each_key{ |lang|
         conn.exec(
           'INSERT INTO filters_translations(filters_id, languages_code, name) VALUES ($1, $2, $3)',
           [filter_id, lang, name[lang]]
@@ -639,9 +645,9 @@ namespace :project do
     datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
     css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
-    project_id, theme_id = new_project(slug, datasources_slug, osm_id, theme, css, website)
+    project_id, _theme_id = new_project(slug, datasources_slug, osm_id, theme, css, website)
 
-    role_uuid, policy_uuid = create_role(slug)
+    role_uuid, _policy_uuid = create_role(slug)
     create_user(project_id, slug, role_uuid)
 
     if datasources_slug.nil?
