@@ -649,7 +649,7 @@ namespace :project do
       schema = {}
       filters = {}
     else
-      metadatas = load_from_source("#{datasource_url}/data", slug, datasources_slug).first
+      metadatas = load_from_source("#{datasource_url}/data", slug, datasources_slug)
       i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
       load_i18n(slug, i18ns)
       schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/schema.json")
