@@ -206,10 +206,11 @@ def insert_fields_group(conn, project_id, slug, fields, group_fields_ids, fields
     RETURNING id
     ', [project_id, 'group', "group_#{slug}_default", 'standard']
   ) { |result| result.first['id'].to_i }
-  fields.to_h{ |field| [field, fields_ids[field]] }.each_with_index{ |(field, field_id), field_index|
+  fields.each_with_index{ |field, field_index|
+    field_id = fields_ids[field]
     if field_id.nil?
-      puts "[ERROR] No field id for #{field}"
-      raise
+      puts "[WARNING] No field id for #{field}"
+      next
     end
 
     conn.exec(
@@ -339,7 +340,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   }
   if id.nil?
     conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
-    puts "[WARNIN] Source already linked to menu_item or empty: (#{source_slug})"
+    puts "[WARNING] Source already linked to menu_item or empty: (#{source_slug})"
     false
   else
     true
@@ -347,7 +348,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
 end
 
 def insert_group_fields(conn, project_id, ontology)
-  properties_extra = ontology['properties_extra']
+  properties_extra = ontology['properties_extra'] || {}
   properties_extra['location'] = {
     'addr' => {
       'label' => { 'fr-FR' => 'Adresse', 'en-US' => 'Address' },
@@ -469,14 +470,16 @@ def new_ontologies_menu(project_id, root_menu_id, themes, css, filters)
 end
 
 def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+  return if !theme.present?
+
   ontology =
     if theme == 'bpe'
       fetch_json('https://datasources.teritorio.xyz/0.1/config/insee_bpe-ontology-2023.json')
+    elsif theme == 'datatourisme'
+      fetch_json('https://datasources.teritorio.xyz/0.1/config/datatourism-ontology.json')
     elsif %w[tourism city].include?(theme)
       fetch_json("https://raw.githubusercontent.com/teritorio/ontology-builder/gh-pages/teritorio-#{theme}-ontology-2.0.json")
     end
-
-  return if ontology.nil?
 
   css_parser = CssParser::Parser.new
   css_parser.load_uri!("public/#{css}")
