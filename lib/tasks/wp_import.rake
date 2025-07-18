@@ -1197,6 +1197,8 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
           p['geometry'].to_json
         elsif field == 'languages_code'
           'fr-FR'
+        elsif field.include?('color')
+          p['properties']['display'][field]
         else
           r = t.call(p['properties'][field.gsub('___', ':')], p['properties'])
           r = r.strip if r.is_a?(String)
@@ -1348,8 +1350,13 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
         p['properties']['website:details'] = website_details
       end
 
-      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'classic-editor-remember').collect{ |k, v|
-        if v.is_a?(Array)
+      p['properties'].compact.except('metadata', 'display', 'editorial', 'classe', 'custom_details', 'sources', 'osm_galerie_images', 'classic-editor-remember').merge({
+        'color_fill' => p.dig('properties', 'display', 'color_fill'),
+        'color_line' => p.dig('properties', 'display', 'color_line'),
+      }.compact).collect{ |k, v|
+        if k.include?('color')
+          [k, v]
+        elsif v.is_a?(Array)
           [k, Array]
         elsif v.is_a?(Hash)
           [k, Hash]
@@ -1363,8 +1370,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
       }
     }.flatten(1).group_by(&:first).transform_values{ |key_values|
       key_values.collect(&:last).tally
-    }.transform_values{ |stats|
-      (stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10 ? { nil => stats.size } : stats
+    }.to_h{ |key, stats|
+      if !key.include?('color') && ((stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10)
+        stats = { nil => stats.size }
+      end
+      [key, stats]
     }
     fields = []
     fields_translations = []
@@ -1402,6 +1412,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             'uuid'
           elsif key == 'website:details'
             f = ->(_i, j) { j['editorial']['website:details'] }
+            'varchar'
+          elsif key.include?('color')
+            f = ->(i, _j) { i }
+            interface = 'select-color'
+            options = { presets: stats.keys.collect{ |v| { name: v, color: v } } }.to_json
             'varchar'
           elsif stats&.keys&.include?(Array) || stats&.keys&.include?(Hash)
             f = ->(i, _j) { i&.to_json }
