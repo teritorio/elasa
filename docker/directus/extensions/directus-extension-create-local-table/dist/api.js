@@ -1,9 +1,9 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
     try {
-      [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints] = [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
+      [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints] = [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
 
       const sourcesIds = data['$trigger']['body']['keys'].map((key) => Number(key));
       let sources = (await database.raw(`
@@ -52,6 +52,12 @@ export default {
             "email": "jsonb",
             "facebook": "character varying(255)",
             "instagram": "character varying(255)",
+          });
+        }
+        if (withColors) {
+          fields = Object.assign(fields, {
+            "color_fill": "character varying(255)",
+            "color_line": "character varying(255)",
           });
         }
         let fields_t = {};
@@ -109,7 +115,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
         VALUES (source.collection, source.field, source.readonly, source.interface)
       WHEN MATCHED THEN
         UPDATE SET collection = source.collection, field = source.field, readonly = source.readonly, interface = source.interface
-    `, [tableName, field, field == 'id', field == 'thumbnail' ? 'file-image' : null]);
+    `, [tableName, field, field == 'id', field == 'thumbnail' ? 'file-image' : field.includes('color') ? 'select-color' : null]);
     console.info(`Field ${tableName}.${field} configured`);
   });
 

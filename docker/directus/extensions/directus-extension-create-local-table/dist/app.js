@@ -74,6 +74,17 @@ export default {
       },
     },
     {
+      field: "withColors",
+      name: "Add color_fill and color_line",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
       field: "withDeps",
       name: "Add link to other objects",
       type: "boolean",
