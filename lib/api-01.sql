@@ -983,7 +983,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
-                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details' - 'route:waypoint:type') ||
+                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details' - 'route:waypoint:type' - 'color_fill' - 'color_line') ||
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
@@ -1045,9 +1045,9 @@ CREATE OR REPLACE FUNCTION pois_(
                             )
                         )), '{}'::jsonb),
                         'display', nullif(coalesce(menu.display, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
-                            'color_fill', pois.properties->'tags'->'colour',
-                            'color_line', pois.properties->'tags'->'colour',
-                            'color_text', pois.properties->'tags'->'colour:text'
+                            'color_fill', coalesce(pois.properties->'natives'->>'color_fill', pois.properties->'tags'->>'colour'),
+                            'color_line', coalesce(pois.properties->'natives'->>'color_line', pois.properties->'tags'->>'colour'),
+                            'color_text', pois.properties->'tags'->>'colour:text'
                         )), '{}'::jsonb)
                     )
             )) AS feature
