@@ -20,7 +20,7 @@ BEGIN
                     FROM
                         projects
                         JOIN sources ON
-                            sources.project_id = project_id
+                            sources.project_id = projects.id
                     WHERE
                         projects.slug = split_part(''' || _table || ''', ''-'', 2) AND
                         sources.slug = split_part(''' || _table || ''', ''-'', 3)
