@@ -114,7 +114,7 @@ ALTER TABLE public.pois_pois OWNER TO postgres;
 
 CREATE TABLE public.articles (
     id integer NOT NULL,
-    project_id integer
+    project_id integer NOT NULL
 );
 
 
@@ -2490,7 +2490,7 @@ CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_arra
 --
 
 ALTER TABLE ONLY public.articles
-    ADD CONSTRAINT articles_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE SET NULL;
+    ADD CONSTRAINT articles_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --

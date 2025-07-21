@@ -3,7 +3,7 @@ var index = ({ filter, action }, { env, services }) => {
 
   async function setProjectId(payload, { event, collection }, { database, schema, accountability }) {
     if (
-      ["menu_items", "fields", "filters", "sources", "themes", "translations", "directus_folders"].includes(collection) ||
+      ["menu_items", "fields", "filters", "sources", "themes", "articles", "translations", "directus_folders"].includes(collection) ||
       collection.startsWith("local-")
     ) {
       if (accountability && accountability.user) {

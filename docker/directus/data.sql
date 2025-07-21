@@ -285,7 +285,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 569	articles_translations	title	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
 570	articles_translations	slug	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 571	articles_translations	body	\N	input-rich-text-html	{"toolbar":["undo","redo","bold","italic","underline","h1","h2","h3","numlist","bullist","removeformat","cut","copy","paste","blockquote","customLink","customImage","customMedia","hr","code","fullscreen"],"tinymceOverrides":{"entity_encoding":"raw"}}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
-572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	2	full	\N	\N	\N	t	\N	\N	\N
+572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	t	t	2	full	\N	\N	\N	f	\N	\N	\N
 573	projects	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"id":{"_eq":"{{id}}"}}}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 574	projects_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 575	projects_articles	projects_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
