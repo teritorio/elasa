@@ -8,28 +8,30 @@ class Api02AdminController < ApplicationController
   # Load Sources and POIs from datasource
   def sources_load
     project_slug, api_key = admin_params
-    row_project = project(project_slug, api_key)
-    if row_project.present?
-      url_base = ENV.fetch('DATASOURCES_URL', nil)
-      datasource_project = row_project.fetch('datasources_slug')
+    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
+      row_project = project(project_slug, api_key)
+      if row_project.present?
+        url_base = ENV.fetch('DATASOURCES_URL', nil)
+        datasource_project = row_project.fetch('datasources_slug')
 
-      original_stdout = $stdout
-      begin
-        $stdout = StringIO.new
+        original_stdout = $stdout
+        begin
+          $stdout = StringIO.new
 
-        load_from_source("#{url_base}/data", project_slug, datasource_project)
-        i18ns = fetch_json("#{url_base}/data/#{project_slug}/i18n.json")
-        load_i18n(project_slug, i18ns)
+          load_from_source(conn, "#{url_base}/data", project_slug, datasource_project)
+          i18ns = fetch_json("#{url_base}/data/#{project_slug}/i18n.json")
+          load_i18n(conn, project_slug, i18ns)
 
-        stdout = $stdout.string
-      ensure
-        $stdout = original_stdout
+          stdout = $stdout.string
+        ensure
+          $stdout = original_stdout
+        end
+
+        render plain: stdout
+      else
+        render status: :not_found
       end
-
-      render plain: stdout
-    else
-      render status: :not_found
-    end
+    }
   end
 
   private
@@ -38,12 +40,10 @@ class Api02AdminController < ApplicationController
     params.require(%i[project api_key])
   end
 
-  def project(slug, api_key)
-    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
-      conn.exec('SET search_path TO api01,public')
-      conn.exec_params('SELECT * FROM projects WHERE slug = $1 AND api_key = $2', [slug, api_key]) { |result|
-        result.first
-      }
+  def project(conn, slug, api_key)
+    conn.exec('SET search_path TO api01,public')
+    conn.exec_params('SELECT * FROM projects WHERE slug = $1 AND api_key = $2', [slug, api_key]) { |result|
+      result.first
     }
   end
 end

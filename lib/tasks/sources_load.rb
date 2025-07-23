@@ -207,8 +207,8 @@ def load_pois(conn, project_slug, source_slug, pois)
   )
 end
 
-def load_from_source(datasource_url, project_slug, datasource_project)
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+def load_from_source(con, datasource_url, project_slug, datasource_project)
+  con.transaction{ |conn|
     conn.exec_params(
       "
       DELETE FROM
@@ -268,8 +268,8 @@ def load_from_source(datasource_url, project_slug, datasource_project)
   }
 end
 
-def load_i18n(project_slug, i18ns)
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+def load_i18n(con, project_slug, i18ns)
+  con.transaction{ |conn|
     puts "i18n: #{i18ns.size}"
     conn.exec("
       DROP TABLE IF EXISTS translations_import;

@@ -10,110 +10,108 @@ require_relative 'commons'
 require_relative 'sources_load'
 
 
-def new_project(slug, datasources_slug, osm_id, theme, css, website)
+def new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
   if !osm_id.nil?
     osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
     osm_name = osm_tags['name']
     geojson = fetch_json("http://polygons.openstreetmap.fr/get_geojson.py?id=#{osm_id}&params=0.004000-0.001000-0.001000")
   end
 
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    project_id = conn.exec('
-      INSERT INTO projects(icon_font_css_url, polygon, bbox_line, slug, datasources_slug, default_country, default_country_state_opening_hours, polygons_extra)
-      VALUES (
-        $1,
-        ST_Force2D(ST_GeomFromGeoJSON($2)),
-        st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
-        $3, $4, $5, $6, $7
-      )
-      ON CONFLICT (slug)
-      DO UPDATE SET
-        icon_font_css_url = $1,
-        polygon = ST_Force2D(ST_GeomFromGeoJSON($2)),
-        bbox_line = st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
-        datasources_slug = $4,
-        default_country = $5,
-        default_country_state_opening_hours = $6,
-        polygons_extra = $7
-      RETURNING id
-    ', [
-      css,
-      geojson&.to_json,
-      slug,
-      datasources_slug,
-      'fr',
-      'Nouvelle-Aquitaine',
-      nil,
-    ]) { |result|
-      result.first['id'].to_i
-    }
-
-    conn.exec('
-      INSERT INTO projects_translations(projects_id, languages_code, name)
-      VALUES (
-        $1,
-        $2,
-        $3
-      )
-      ON CONFLICT (projects_id, languages_code)
-      DO UPDATE SET
-        name = $3
-    ', [
-      project_id,
-      'fr-FR',
-      osm_name,
-    ])
-
-    theme_id = conn.exec('
-      INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode)
-      VALUES (
-        $1, $2, $3, $4, $5, $6, $7
-      )
-      ON CONFLICT (project_id, slug)
-      DO UPDATE SET
-        logo = $3,
-        favicon = $4,
-        root_menu_item_id = $5,
-        favorites_mode = $6,
-        explorer_mode = $7
-      RETURNING
-        id
-    ', [
-      project_id,
-      theme,
-      nil, # logo
-      nil, # favicon
-      nil, # root menu
-      true, # favorite
-      true # explorer
-    ]) { |result|
-      result.first['id'].to_i
-    }
-
-    conn.exec('
-      INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
-      VALUES (
-        $1, $2, $3, $4, $5, $6, $7
-      )
-      ON CONFLICT (themes_id, languages_code)
-      DO UPDATE SET
-        name = $3,
-        description = $4,
-        site_url = $5,
-        main_url = $6,
-        keywords = $7
-    ', [
-      theme_id,
-      'fr-FR',
-      osm_name,
-      osm_name,
-      website,
-      website,
-      nil, # keyword
-    ])
-
-    [project_id, theme_id]
+  project_id = conn.exec('
+    INSERT INTO projects(icon_font_css_url, polygon, bbox_line, slug, datasources_slug, default_country, default_country_state_opening_hours, polygons_extra)
+    VALUES (
+      $1,
+      ST_Force2D(ST_GeomFromGeoJSON($2)),
+      st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
+      $3, $4, $5, $6, $7
+    )
+    ON CONFLICT (slug)
+    DO UPDATE SET
+      icon_font_css_url = $1,
+      polygon = ST_Force2D(ST_GeomFromGeoJSON($2)),
+      bbox_line = st_makeline(st_makepoint(st_xmin(ST_GeomFromGeoJSON($2)), st_ymin(ST_GeomFromGeoJSON($2))), st_makepoint(st_xmax(ST_GeomFromGeoJSON($2)), st_ymax(ST_GeomFromGeoJSON($2)))),
+      datasources_slug = $4,
+      default_country = $5,
+      default_country_state_opening_hours = $6,
+      polygons_extra = $7
+    RETURNING id
+  ', [
+    css,
+    geojson&.to_json,
+    slug,
+    datasources_slug,
+    'fr',
+    'Nouvelle-Aquitaine',
+    nil,
+  ]) { |result|
+    result.first['id'].to_i
   }
+
+  conn.exec('
+    INSERT INTO projects_translations(projects_id, languages_code, name)
+    VALUES (
+      $1,
+      $2,
+      $3
+    )
+    ON CONFLICT (projects_id, languages_code)
+    DO UPDATE SET
+      name = $3
+  ', [
+    project_id,
+    'fr-FR',
+    osm_name,
+  ])
+
+  theme_id = conn.exec('
+    INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode)
+    VALUES (
+      $1, $2, $3, $4, $5, $6, $7
+    )
+    ON CONFLICT (project_id, slug)
+    DO UPDATE SET
+      logo = $3,
+      favicon = $4,
+      root_menu_item_id = $5,
+      favorites_mode = $6,
+      explorer_mode = $7
+    RETURNING
+      id
+  ', [
+    project_id,
+    theme,
+    nil, # logo
+    nil, # favicon
+    nil, # root menu
+    true, # favorite
+    true # explorer
+  ]) { |result|
+    result.first['id'].to_i
+  }
+
+  conn.exec('
+    INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
+    VALUES (
+      $1, $2, $3, $4, $5, $6, $7
+    )
+    ON CONFLICT (themes_id, languages_code)
+    DO UPDATE SET
+      name = $3,
+      description = $4,
+      site_url = $5,
+      main_url = $6,
+      keywords = $7
+  ', [
+    theme_id,
+    'fr-FR',
+    osm_name,
+    osm_name,
+    website,
+    website,
+    nil, # keyword
+  ])
+
+  [project_id, theme_id]
 end
 
 def insert_menu_item(conn, **args)
@@ -409,67 +407,65 @@ def insert_group_fields(conn, project_id, ontology)
   [group_fields_ids, fields_ids]
 end
 
-def new_root_menu(project_id)
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
-    conn.exec('DELETE FROM fields_fields USING fields WHERE fields.project_id = $1 AND fields_fields.fields_id = fields.id', [project_id])
-    conn.exec('DELETE FROM fields WHERE project_id = $1 AND type = \'group\'', [project_id])
+def new_root_menu(conn, project_id)
+  conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
+  conn.exec('DELETE FROM fields_fields USING fields WHERE fields.project_id = $1 AND fields_fields.fields_id = fields.id', [project_id])
+  conn.exec('DELETE FROM fields WHERE project_id = $1 AND type = \'group\'', [project_id])
 
-    root_menu_id = insert_menu_item(
-      conn,
-      project_id: project_id,
-      slugs: { 'en-US' => 'root', 'fr-FR' => 'racine', 'es-ES' => 'raiz' },
-      index_order: 1,
-      type: 'menu_group',
-      name: { 'en-US' => 'Root Menu', 'fr-FR' => 'Menu racine', 'es-ES' => 'Menú raíz' }.compact,
-      display_mode: 'compact',
-      icon: 'teritorio teritorio-extra-point',
-      color_fill:	'#ff0000',
-      color_line:	'#ff0000',
-    )
+  root_menu_id = insert_menu_item(
+    conn,
+    project_id: project_id,
+    slugs: { 'en-US' => 'root', 'fr-FR' => 'racine', 'es-ES' => 'raiz' },
+    index_order: 1,
+    type: 'menu_group',
+    name: { 'en-US' => 'Root Menu', 'fr-FR' => 'Menu racine', 'es-ES' => 'Menú raíz' }.compact,
+    display_mode: 'compact',
+    icon: 'teritorio teritorio-extra-point',
+    color_fill:	'#ff0000',
+    color_line:	'#ff0000',
+  )
 
-    conn.exec(
-      '
-      UPDATE
-        themes
-      SET
-        root_menu_item_id = $3
-      FROM
-        projects
-      WHERE
-        projects.id = $1 AND
-        themes.project_id = projects.id AND
-        themes.id = $2
-      ',
-      [project_id, project_id, root_menu_id]
-    )
+  conn.exec(
+  '
+    UPDATE
+      themes
+    SET
+      root_menu_item_id = $3
+    FROM
+      projects
+    WHERE
+      projects.id = $1 AND
+      themes.project_id = projects.id AND
+      themes.id = $2
+    ',
+  [project_id, project_id, root_menu_id]
+)
 
-    insert_menu_item(
-      conn,
-      project_id: project_id,
-      slugs: { 'en-US' => 'search', 'fr-FR' => 'search', 'es-ES' => 'búsqueda' },
-      parent_id: root_menu_id,
-      index_order: 1,
-      type: 'search',
-      name: { 'en-US' => 'Search', 'fr-FR' => 'Recherche', 'es-ES' => 'Búsqueda' }.compact,
-      display_mode: 'compact',
+  insert_menu_item(
+    conn,
+    project_id: project_id,
+    slugs: { 'en-US' => 'search', 'fr-FR' => 'search', 'es-ES' => 'búsqueda' },
+    parent_id: root_menu_id,
+    index_order: 1,
+    type: 'search',
+    name: { 'en-US' => 'Search', 'fr-FR' => 'Recherche', 'es-ES' => 'Búsqueda' }.compact,
+    display_mode: 'compact',
 
-      icon: 'teritorio teritorio-extra-point',
-      color_fill:	'#ff0000',
-      color_line:	'#ff0000',
-    )
+    icon: 'teritorio teritorio-extra-point',
+    color_fill:	'#ff0000',
+    color_line:	'#ff0000',
+  )
 
-    root_menu_id
-  }
+  root_menu_id
 end
 
-def new_ontologies_menu(project_id, root_menu_id, themes, css, filters)
+def new_ontologies_menu(con, project_id, root_menu_id, themes, css, filters)
   themes.each{ |theme|
-    new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+    new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
   }
 end
 
-def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
+def new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
   return if !theme.present?
 
   ontology =
@@ -484,8 +480,7 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
   css_parser = CssParser::Parser.new
   css_parser.load_uri!("public/#{css}")
 
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('BEGIN')
+  con.transaction { |conn|
     poi_menu_id = insert_menu_item(
       conn,
       project_id: project_id,
@@ -542,16 +537,14 @@ def new_ontology_menu(project_id, root_menu_id, theme, css, filters)
         conn.exec('ROLLBACK TO SAVEPOINT superclass')
       end
     }
-    conn.exec('COMMIT')
   }
 end
 
-def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
+def new_source_menu(con, project_id, root_menu_id, metadatas, css, schema, filters)
   css_parser = CssParser::Parser.new
   css_parser.load_uri!("/srv/app/public#{css}")
 
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
-    conn.exec('BEGIN')
+  con.transaction { |conn|
     properties_extra = {
       'all' => schema['properties'].to_h{ |key, _sch|
         [key, nil]
@@ -589,12 +582,11 @@ def new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
 
       insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, popup_fields_id, details_fields_id, list_fields_id)
     }
-    conn.exec('COMMIT')
   }
 end
 
-def new_filter(project_id, schema, i18ns)
-  PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+def new_filter(con, project_id, schema, i18ns)
+  con.transaction { |conn|
     conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
 
     schema['properties'].transform_values{ |spec|
@@ -654,34 +646,36 @@ end
 namespace :project do
   desc 'Create a new project'
   task :new, [] => :environment do
-    set_default_languages
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
+      set_default_languages(conn)
 
-    slug, osm_id, theme, ontologies, datasources_slug, website = ARGV[2..].collect(&:presence)
-    ontologies = ontologies&.split(',')
-    datasource_url = 'https://datasources.teritorio.xyz/0.1'
+      slug, osm_id, theme, ontologies, datasources_slug, website = ARGV[2..].collect(&:presence)
+      ontologies = ontologies&.split(',')
+      datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
-    css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
-    project_id, _theme_id = new_project(slug, datasources_slug, osm_id, theme, css, website)
+      css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
+      project_id, _theme_id = new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
 
-    role_uuid, _policy_uuid = create_role(slug)
-    create_user(project_id, slug, role_uuid)
+      role_uuid, _policy_uuid = create_role(conn, slug)
+      create_user(conn, project_id, slug, role_uuid)
 
-    if datasources_slug.nil?
-      metadatas = {}
-      schema = {}
-      filters = {}
-    else
-      metadatas = load_from_source("#{datasource_url}/data", slug, datasources_slug)
-      i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
-      load_i18n(slug, i18ns)
-      schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/schema.json")
-      filters = new_filter(project_id, schema, i18ns)
-    end
-    root_menu_id = new_root_menu(project_id)
-    if !datasources_slug.nil?
-      new_ontologies_menu(project_id, root_menu_id, ontologies, css, filters)
-    end
-    new_source_menu(project_id, root_menu_id, metadatas, css, schema, filters)
+      if datasources_slug.nil?
+        metadatas = {}
+        schema = {}
+        filters = {}
+      else
+        metadatas = load_from_source(conn, "#{datasource_url}/data", slug, datasources_slug)
+        i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
+        load_i18n(conn, slug, i18ns)
+        schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/schema.json")
+        filters = new_filter(conn, project_id, schema, i18ns)
+      end
+      root_menu_id = new_root_menu(conn, project_id)
+      if !datasources_slug.nil?
+        new_ontologies_menu(conn, project_id, root_menu_id, ontologies, css, filters)
+      end
+      new_source_menu(conn, project_id, root_menu_id, metadatas, css, schema, filters)
+    }
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end

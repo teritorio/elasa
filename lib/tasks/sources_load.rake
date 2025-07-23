@@ -18,7 +18,7 @@ namespace :sources do
   desc 'Load Sources and POIs from datasource'
   task :load, [] => :environment do
     url_base, project_slug = ARGV[2..]
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       conn.exec_params('SELECT slug, datasources_slug FROM projects WHERE $1::text IS NULL OR slug = $1', [project_slug]) { |results|
         results.collect{ |row|
           project_slug = row.fetch('datasources_slug')
@@ -27,9 +27,9 @@ namespace :sources do
 
           puts "\n#{datasource_project}\n\n"
 
-          load_from_source("#{url_base}/data", project_slug, datasource_project)
+          load_from_source(conn, "#{url_base}/data", project_slug, datasource_project)
           i18ns = fetch_json("#{url_base}/data/#{datasource_project}/i18n.json")
-          load_i18n(project_slug, i18ns)
+          load_i18n(conn, project_slug, i18ns)
         }
       }
     }

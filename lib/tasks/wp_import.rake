@@ -1782,40 +1782,42 @@ end
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
-    set_default_languages
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
+      set_default_languages(conn)
 
-    url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
-    puts "\n====\n#{project_slug}\n====\n\n"
-    base_url = "#{url}/#{project_slug}/#{theme_slug}"
-    project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
+      url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
+      puts "\n====\n#{project_slug}\n====\n\n"
+      base_url = "#{url}/#{project_slug}/#{theme_slug}"
+      project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
 
-    load_articles(project_id, base_url, "#{base_url}/articles.json?slug=non-classe")
+      load_articles(project_id, base_url, "#{base_url}/articles.json?slug=non-classe")
 
-    role_uuid, policy_uuid = create_role(project_slug)
-    user_uuid = create_user(project_id, project_slug, role_uuid)
+      role_uuid, policy_uuid = create_role(conn, project_slug)
+      user_uuid = create_user(conn, project_id, project_slug, role_uuid)
 
-    theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
+      theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
-    load_from_source("#{datasource_url}/data", project_slug, datasources_slug) if datasources_slug.present?
-    i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
-    load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
-    i18ns = i18ns.transform_values{ |v|
-      {
-        '@default' => { 'fr-FR' => v.dig('label', 'fr') }.compact_blank,
-        'values' => v['values']&.transform_values{ |vv|
-          {
-            '@default:full' => { 'fr-FR' => vv.dig('label', 'fr') }.compact_blank,
-            '@default:short' => { 'fr-FR' => vv.dig('label_list', 'fr') }.compact_blank,
-          }.compact_blank
-        }
-      }.compact_blank
+      load_from_source(conn, "#{datasource_url}/data", project_slug, datasources_slug) if datasources_slug.present?
+      i18ns = fetch_json("#{base_url}/attribute_translations/fr.json")
+      load_menu(project_slug, project_id, theme_id, user_uuid, "#{base_url}/menu.json", "#{base_url}/pois.json", "#{base_url}/menu_sources.json", i18ns, policy_uuid, url_base)
+      i18ns = i18ns.transform_values{ |v|
+        {
+          '@default' => { 'fr-FR' => v.dig('label', 'fr') }.compact_blank,
+          'values' => v['values']&.transform_values{ |vv|
+            {
+              '@default:full' => { 'fr-FR' => vv.dig('label', 'fr') }.compact_blank,
+              '@default:short' => { 'fr-FR' => vv.dig('label_list', 'fr') }.compact_blank,
+            }.compact_blank
+          }
+        }.compact_blank
+      }
+      load_i18n(conn, project_slug, i18ns)
+
+      if datasources_slug.present?
+        i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
+        load_i18n(conn, project_slug, i18ns)
+      end
     }
-    load_i18n(project_slug, i18ns)
-
-    if datasources_slug.present?
-      i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
-      load_i18n(project_slug, i18ns)
-    end
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
