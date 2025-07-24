@@ -9,7 +9,7 @@ class Api02AdminController < ApplicationController
   def sources_load
     project_slug, api_key = admin_params
     PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
-      row_project = project(project_slug, api_key)
+      row_project = project(conn, project_slug, api_key)
       if row_project.present?
         url_base = ENV.fetch('DATASOURCES_URL', nil)
         datasource_project = row_project.fetch('datasources_slug')
