@@ -1782,10 +1782,11 @@ end
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
+    url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
+    base_url, project_id, settings, user_uuid, policy_uuid = nil
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       set_default_languages(conn)
 
-      url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
       puts "\n====\n#{project_slug}\n====\n\n"
       base_url = "#{url}/#{project_slug}/#{theme_slug}"
       project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
@@ -1794,7 +1795,9 @@ namespace :wp do
 
       role_uuid, policy_uuid = create_role(conn, project_slug)
       user_uuid = create_user(conn, project_id, project_slug, role_uuid)
+    }
 
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
       load_from_source(conn, "#{datasource_url}/data", project_slug, datasources_slug) if datasources_slug.present?
