@@ -5,7 +5,6 @@ require 'rake'
 require 'json'
 require 'http'
 require 'hash_diff'
-require 'damerau-levenshtein'
 
 
 class Object
@@ -402,10 +401,10 @@ def compare_pois(pois_old, pois_new)
       poi.dig('properties', 'name')&.gsub('\\', '') # WP lost some \
     }
     if a.presence && b.presence && a.size > 5 && b.size > 5
-      d = DamerauLevenshtein.distance(a, b)
-      if d <= 3
-        h[0]['properties']['name'] = h[1]['properties']['name']
-      end
+#      d = DamerauLevenshtein.distance(a, b)
+#      if d <= 3
+#        h[0]['properties']['name'] = h[1]['properties']['name']
+#      end
     end
 
     # No name, filled by API with diffrent rule from WP
