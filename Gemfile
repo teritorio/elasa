@@ -31,6 +31,7 @@ gem 'pg', '~> 1.1'
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'sorbet-runtime'
+gem 'csv'
 
 group :development do
   gem 'image_size' # WP Imort
