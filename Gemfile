@@ -4,7 +4,7 @@ source 'https://rubygems.org'
 
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '>= 3'
+ruby '>= 3.4'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem 'rails', '~> 7.0.4'
@@ -20,17 +20,19 @@ gem 'rack-cors'
 
 gem 'tzinfo-data'
 
+gem 'concurrent-ruby', '< 1.3.5' # ActiveSupport bug workarround
 gem 'http'
 gem 'json'
 gem 'json-schema'
+gem 'mutex_m'
 gem 'optparse'
+gem 'ostruct'
 gem 'pg', '~> 1.1'
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'sorbet-runtime'
 
 group :development do
-  gem 'damerau-levenshtein'
   gem 'image_size' # WP Imort
   gem 'rake'
   gem 'rubocop', require: false

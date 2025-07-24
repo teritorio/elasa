@@ -6,7 +6,8 @@ RUN apk add --no-cache --virtual \
         libbz2 \
         libpq-dev \
         postgresql-dev \
-        ruby-dev
+        ruby-dev \
+        yaml-dev
 
 WORKDIR /srv/app
 
