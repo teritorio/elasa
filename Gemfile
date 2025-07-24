@@ -20,7 +20,6 @@ gem 'rack-cors'
 
 gem 'tzinfo-data'
 
-gem 'ffi', '< 1.17' # 1.17 Require Ruby 3.2, and `bundle lock --add-platform x86_64-linux-musl` to build under alpine. Indirect use.
 gem 'http'
 gem 'json'
 gem 'json-schema'
