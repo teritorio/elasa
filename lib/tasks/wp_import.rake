@@ -1786,7 +1786,9 @@ namespace :wp do
     base_url, project_id, settings, user_uuid, policy_uuid = nil
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       set_default_languages(conn)
+    }
 
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       puts "\n====\n#{project_slug}\n====\n\n"
       base_url = "#{url}/#{project_slug}/#{theme_slug}"
       project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
