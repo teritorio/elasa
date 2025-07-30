@@ -991,12 +991,12 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
         ref = poi.dig('properties', 'osm_poi_type')[0] + poi.dig('properties', 'idosm').to_s
       end
 
-      if id.nil? || ref.nil?
-        puts "nil ref/id on #{JSON.dump(poi)}"
-        nil
-      else
+      # if id.nil? || ref.nil?
+      #   puts "nil ref/id on #{JSON.dump(poi)}"
+      #   nil
+      # else
         [id, ref, poi.dig('properties', 'metadata', 'category_ids').min]
-      end
+      # end
     }.compact_blank.collect{ |id, ref, category_id|
       [project_id, ref, { original_id: id.to_s }.to_json, category_id]
     }
@@ -1004,7 +1004,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     conn.exec("
       CREATE TEMP TABLE pois_slug_import(
         project_id varchar NOT NULL,
-        ref varchar NOT NULL,
+        ref varchar,
         original_id json NOT NULL,
         category_id varchar NOT NULL
       )
