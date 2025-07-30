@@ -758,7 +758,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
     menu_entries = menu_items.reverse
 
     # Categories not linked to datasource
-    local_poi = pois.select{ |poi| %w[tis zone].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
+    local_poi = pois.select{ |poi| %w[tis zone assmat].include?(poi['properties']['metadata']['source']) || poi.dig('properties', 'metadata', 'category_ids') == [-1] }
     local_category_ids = local_poi.collect{ |poi| poi['properties']['metadata']['category_ids'] }.flatten.uniq
     categories_local = menu_items.select{ |menu| menu['category'] && local_category_ids.include?(menu['id']) }.sort_by{ |category_local| category_local['category']['id'] }
     source_ids, deps = load_local_pois(conn, project_slug, project_id, user_uuid, categories_local, local_poi, i18ns, policy_uuid, url_base)
