@@ -1405,6 +1405,11 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
             interface = 'select-dropdown'
             options = '{"choices":[{"text":"parking","value":"parking","icon":"parking"},{"text":"start","value":"start","icon":"flag"},{"text":"waypoint","value":"waypoint","icon":"pin_drop"},{"text":"end","value":"end","icon":"emoji_flags"}]}'
             'varchar'
+          elsif key == 'download'
+            f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i.first], name).values.first }
+            interface = 'file'
+            fk = 'directus_files(id) ON DELETE SET NULL'
+            'uuid'
           elsif ['route:gpx_trace', 'route:pdf', 'image:thumbnail'].include?(key)
             f = ->(i, _j) { i.nil? ? nil : load_images(conn, project_id, user_uuid, [i], name).values.first }
             interface = key == 'image:thumbnail' ? 'file-image' : 'file'
