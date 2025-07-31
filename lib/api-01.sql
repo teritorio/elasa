@@ -983,7 +983,13 @@ CREATE OR REPLACE FUNCTION pois_(
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
-                    (coalesce(pois.properties->'natives', '{}'::jsonb) - 'name' - 'description' - 'website:details' - 'route:waypoint:type' - 'color_fill' - 'color_line') ||
+                    (coalesce(pois.properties->'natives', '{}'::jsonb)
+                        - 'name' - 'description'
+                        - 'website:details'
+                        - 'route:waypoint:type'
+                        - 'color_fill' - 'color_line'
+                        - 'download'
+                    ) ||
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
@@ -1012,6 +1018,11 @@ CREATE OR REPLACE FUNCTION pois_(
                             CASE _short_description = 'false' OR _short_description IS NULL
                             WHEN true THEN
                                 pois.properties->'natives'->'short_description'->>'fr-FR'
+                            END,
+                        'download',
+                            CASE jsonb_typeof(pois.properties->'natives'->'download')
+                                WHEN 'string' THEN jsonb_build_array(pois.properties->'natives'->'download')
+                                ELSE pois.properties->'natives'->'download'
                             END,
                         'route:point:type',  replace(coalesce(
                                 pois.properties->'tags'->'route'->>'waypoint:type',
