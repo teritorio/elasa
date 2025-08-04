@@ -995,7 +995,7 @@ def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_
       #   puts "nil ref/id on #{JSON.dump(poi)}"
       #   nil
       # else
-        [id, ref, poi.dig('properties', 'metadata', 'category_ids').min]
+      [id, ref, poi.dig('properties', 'metadata', 'category_ids').min]
       # end
     }.compact_blank.collect{ |id, ref, category_id|
       [project_id, ref, { original_id: id.to_s }.to_json, category_id]
@@ -1371,7 +1371,7 @@ def load_local_pois(conn, project_slug, project_id, user_uuid, categories_local,
     }.flatten(1).group_by(&:first).transform_values{ |key_values|
       key_values.collect(&:last).tally
     }.to_h{ |key, stats|
-      if !key.include?('color') && ((stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10)
+      if !key.include?('color') && (stats.size != 1 || stats.to_a[0][0].is_a?(String)) && stats.size > ps.size / 10
         stats = { nil => stats.size }
       end
       [key, stats]
