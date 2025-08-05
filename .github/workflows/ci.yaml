@@ -22,7 +22,16 @@ jobs:
       id-token: write
 
     steps:
-      - name: Docker Build and Push
+      - name: Docker Build and Push API
         uses: cartoway/docker-compose-build-push-action@main
         with:
           registry_password: ${{ secrets.GITHUB_TOKEN }}
+          project: teritorio/elasa-api
+          service: api
+
+      - name: Docker Build and Push Directus
+        uses: cartoway/docker-compose-build-push-action@main
+        with:
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          project: teritorio/elasa-directus
+          service: directus
