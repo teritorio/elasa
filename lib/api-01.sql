@@ -783,6 +783,134 @@ CREATE OR REPLACE FUNCTION json_flat(
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
+-- Function to decode HTML entities to their corresponding characters
+CREATE OR REPLACE FUNCTION decode_html_entities(input_text TEXT)
+RETURNS text AS $$
+DECLARE
+    result_text TEXT;
+    decimal_match TEXT;
+    hex_value TEXT;
+BEGIN
+    -- Handle null input
+    IF input_text IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    result_text := input_text;
+
+    -- Replace common named HTML entities
+    result_text := REPLACE(result_text, '&amp;', '&');
+    result_text := REPLACE(result_text, '&lt;', '<');
+    result_text := REPLACE(result_text, '&gt;', '>');
+    result_text := REPLACE(result_text, '&quot;', '"');
+    result_text := REPLACE(result_text, '&lsquo;', '‘');
+    result_text := REPLACE(result_text, '&rsquo;', '’');
+    result_text := REPLACE(result_text, '&laquo;', '«');
+    result_text := REPLACE(result_text, '&raquo;', '»');
+    result_text := REPLACE(result_text, '&ldquo;', '“');
+    result_text := REPLACE(result_text, '&rdquo;', '”');
+    result_text := REPLACE(result_text, '&#39;', '''');
+    result_text := REPLACE(result_text, '&apos;', '''');
+    result_text := REPLACE(result_text, '&nbsp;', ' ');
+    result_text := REPLACE(result_text, '&ndash;', '–');
+    result_text := REPLACE(result_text, '&mdash;', '—');
+    result_text := REPLACE(result_text, '&hellip;', '…');
+
+    -- Additional common entities
+    result_text := REPLACE(result_text, '&copy;', '©');
+    result_text := REPLACE(result_text, '&reg;', '®');
+    result_text := REPLACE(result_text, '&trade;', '™');
+    result_text := REPLACE(result_text, '&euro;', '€');
+    result_text := REPLACE(result_text, '&pound;', '£');
+    result_text := REPLACE(result_text, '&yen;', '¥');
+    result_text := REPLACE(result_text, '&cent;', '¢');
+
+    -- Accented characters
+    result_text := REPLACE(result_text, '&Agrave;','À');
+    result_text := REPLACE(result_text, '&Aacute;','Á');
+    result_text := REPLACE(result_text, '&Acirc;','Â');
+    result_text := REPLACE(result_text, '&Atilde;','Ã');
+    result_text := REPLACE(result_text, '&Auml;','Ä');
+    result_text := REPLACE(result_text, '&AElig;','Æ');
+    result_text := REPLACE(result_text, '&Ccedil;','Ç');
+    result_text := REPLACE(result_text, '&Egrave;','È');
+    result_text := REPLACE(result_text, '&Eacute;','É');
+    result_text := REPLACE(result_text, '&Ecirc;','Ê');
+    result_text := REPLACE(result_text, '&Euml;','Ë');
+    result_text := REPLACE(result_text, '&Igrave;','Ì');
+    result_text := REPLACE(result_text, '&Iacute;','Í');
+    result_text := REPLACE(result_text, '&Icirc;','Î');
+    result_text := REPLACE(result_text, '&Iuml;','Ï');
+    result_text := REPLACE(result_text, '&ETH;','Ð');
+    result_text := REPLACE(result_text, '&Ntilde;','Ñ');
+    result_text := REPLACE(result_text, '&Ograve;','Ò');
+    result_text := REPLACE(result_text, '&Oacute;','Ó');
+    result_text := REPLACE(result_text, '&Ocirc;','Ô');
+    result_text := REPLACE(result_text, '&Otilde;','Õ');
+    result_text := REPLACE(result_text, '&Ouml;','Ö');
+    result_text := REPLACE(result_text, '&Oslash;','Ø');
+    result_text := REPLACE(result_text, '&Ugrave;','Ù');
+    result_text := REPLACE(result_text, '&Uacute;','Ú');
+    result_text := REPLACE(result_text, '&Ucirc;','Û');
+    result_text := REPLACE(result_text, '&Uuml;','Ü');
+    result_text := REPLACE(result_text, '&Yacute;','Ý');
+    result_text := REPLACE(result_text, '&THORN;','Þ');
+    result_text := REPLACE(result_text, '&szlig;','ß');
+    result_text := REPLACE(result_text, '&agrave;','à');
+    result_text := REPLACE(result_text, '&aacute;','á');
+    result_text := REPLACE(result_text, '&acirc;','â');
+    result_text := REPLACE(result_text, '&atilde;','ã');
+    result_text := REPLACE(result_text, '&auml;','ä');
+    result_text := REPLACE(result_text, '&aring;','å');
+    result_text := REPLACE(result_text, '&aelig;','æ');
+    result_text := REPLACE(result_text, '&ccedil;','ç');
+    result_text := REPLACE(result_text, '&egrave;','è');
+    result_text := REPLACE(result_text, '&eacute;','é');
+    result_text := REPLACE(result_text, '&ecirc;','ê');
+    result_text := REPLACE(result_text, '&euml;','ë');
+    result_text := REPLACE(result_text, '&igrave;','ì');
+    result_text := REPLACE(result_text, '&iacute;','í');
+    result_text := REPLACE(result_text, '&icirc;','î');
+    result_text := REPLACE(result_text, '&iuml;','ï');
+    result_text := REPLACE(result_text, '&eth;','ð');
+    result_text := REPLACE(result_text, '&ntilde;','ñ');
+    result_text := REPLACE(result_text, '&ograve;','ò');
+    result_text := REPLACE(result_text, '&oacute;','ó');
+    result_text := REPLACE(result_text, '&ocirc;','ô');
+    result_text := REPLACE(result_text, '&otilde;','õ');
+    result_text := REPLACE(result_text, '&ouml;','ö');
+    result_text := REPLACE(result_text, '&oslash;','ø');
+    result_text := REPLACE(result_text, '&ugrave;','ù');
+    result_text := REPLACE(result_text, '&uacute;','ú');
+    result_text := REPLACE(result_text, '&ucirc;','û');
+    result_text := REPLACE(result_text, '&uuml;','ü');
+    result_text := REPLACE(result_text, '&yacute;','ý');
+    result_text := REPLACE(result_text, '&thorn;','þ');
+    result_text := REPLACE(result_text, '&yuml;','ÿ');
+
+    result_text := REPLACE(result_text, '&OElig;','Œ');
+    result_text := REPLACE(result_text, '&oelig;','œ');
+
+    -- Handle hexadecimal numeric entities (&#xhhhh;)
+    result_text := regexp_replace(result_text, '&#x([0-9a-fA-F]+);', E'\\x\\1', 'g');
+
+    -- Handle numeric entities (decimal format &#nnn;)
+    LOOP
+        -- Find the first decimal entity
+        SELECT substring(result_text from '&#([0-9]+);') INTO decimal_match;
+        -- Exit if no more matches
+        EXIT WHEN decimal_match IS NULL;
+        -- Convert decimal to hex
+        hex_value := to_hex(decimal_match::integer);
+        -- Replace the first occurrence
+        result_text := regexp_replace(result_text, '&#' || decimal_match || ';', chr(decimal_match::integer), '');
+    END LOOP;
+
+    RETURN result_text;
+END;
+$$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
+
+
 DROP FUNCTION IF EXISTS short_description;
 CREATE OR REPLACE FUNCTION short_description(
     _description text,
@@ -802,7 +930,7 @@ BEGIN
     INTO
         ret
     ;
-    RETURN ret;
+    RETURN decode_html_entities(ret);
 EXCEPTION WHEN OTHERS THEN
     -- Let's do the hack
     SELECT
@@ -815,7 +943,7 @@ EXCEPTION WHEN OTHERS THEN
     INTO
         ret
     ;
-    RETURN ret;
+    RETURN decode_html_entities(ret);
 END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
