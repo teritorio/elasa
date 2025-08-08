@@ -29,6 +29,14 @@ http://localhost:8055
 
 Default addmin acces to be changed: admin@example.com / d1r3ctu5
 
+## Update
+
+Update the database schema with
+```
+docker compose run --rm api bundle exec rails db:migrate
+docker compose restart directus
+```
+
 ## Create new project
 
 ```

@@ -301,6 +301,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 585	pois_pois	parent_pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 586	pois_pois	children_pois_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 587	pois_pois	index	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+588	pois	properties_id	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
+589	pois	properties_tags_name	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -688,7 +690,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 587, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 589, true);
 
 
 --
