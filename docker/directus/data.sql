@@ -114,6 +114,7 @@ COPY public.directus_extensions (enabled, id, folder, source, bundle) FROM stdin
 t	5006d916-20a3-4706-8f31-583e8cfe74cb	directus-extension-hook	local	\N
 t	a4b66d1b-c7fe-4bc2-bd22-6c3d3ab0e83f	directus-extension-create-local-table	local	\N
 t	d3a350fb-49a9-4f3a-9f1e-a4ba21e4b635	baf4208a-aab1-496b-af15-05fa841a62a8	registry	\N
+t	bfa185ec-f15c-4d3e-8e0e-06925ba6cdfe	3b80b125-4f65-4a6f-96c6-4ede2ed9f506	registry	\N
 \.
 
 
