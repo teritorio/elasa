@@ -81,7 +81,6 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     if params.require(:id).start_with?('ref:')
       ref = params.require(:id).split(':', 2).last.rpartition(':')
-      ref[0] = 'FR:CRTA' if ref[0] == 'sirtaqui'
       ref = [ref[0], ref[-1]]
     else
       id = params.require(:id).to_i
