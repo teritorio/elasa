@@ -101,7 +101,7 @@ class Api01Controller < ApplicationController
       nil,
     ])
 
-    if pois.nil?
+    if ['null', '{"type": "FeatureCollection", "features": []}'].include?(pois)
       render status: :not_found
       return
     end
