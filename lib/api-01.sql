@@ -439,7 +439,6 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.color_fill,
             menu_items.color_line,
             menu_items.href,
-            menu_items.style_class_string,
             menu_items.style_class,
             menu_items.type,
             menu_items.popup_fields_id,
@@ -542,7 +541,6 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.color_fill,
             menu_items.color_line,
             menu_items.href,
-            menu_items.style_class_string,
             menu_items.style_class,
             menu_items.type,
             menu_items.popup_fields_id,
@@ -994,7 +992,7 @@ CREATE OR REPLACE FUNCTION pois_(
                 'icon', menu_items.icon,
                 'color_fill', menu_items.color_fill,
                 'color_line', menu_items.color_line,
-                'style_class', array_to_json(menu_items.style_class)
+                'style_class', menu_items.style_class
             ) AS display
         FROM
             (

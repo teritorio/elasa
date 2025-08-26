@@ -121,7 +121,7 @@ def insert_menu_item(conn, **args)
       project_id,
       index_order, hidden, parent_id, selected_by_default,
       type,
-      icon, color_fill, color_line, style_class_string, display_mode,
+      icon, color_fill, color_line, style_class, display_mode,
       search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
       href, use_internal_details_link, use_external_details_link
     )
@@ -134,11 +134,11 @@ def insert_menu_item(conn, **args)
       args[:project_id],
       args[:index_order], args[:hidden].nil? ? false : args[:hidden], args[:parent_id], args[:selected_by_default].nil? ? false : args[:selected_by_default],
       args[:type],
-      args[:icon], args[:color_fill], args[:color_line], args[:style_class_string], args[:display_mode],
-      args[:search_indexed].nil? ? true : args[:search_indexed], args[:style_merge].nil? ? true : args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
+      args[:icon], args[:color_fill], args[:color_line], args[:style_class], args[:display_mode],
+      args[:search_indexed].nil? || args[:search_indexed], args[:style_merge].nil? || args[:style_merge], args[:zoom], args[:popup_fields_id], args[:details_fields_id], args[:list_fields_id],
       args[:href],
-      args[:use_internal_details_link].nil? ? true : args[:use_internal_details_link],
-      args[:use_external_details_link].nil? ? true : args[:use_external_details_link],
+      args[:use_internal_details_link].nil? || args[:use_internal_details_link],
+      args[:use_external_details_link].nil? || args[:use_external_details_link],
     ]
   ) { |result|
     result.first['id']
@@ -186,7 +186,7 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
-    style_class_string: class_path.join(','),
+    style_class: class_path,
     display_mode: classs['display_mode'],
   )
 end
@@ -283,7 +283,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
     icon: "teritorio teritorio-#{icon}",
     color_fill: classs['color_fill'],
     color_line: classs['color_line'],
-    style_class_string: class_path&.join(','),
+    style_class: class_path,
     display_mode: classs['display_mode'],
     zoom: classs['zoom'],
     popup_fields_id: popup_fields_id,
