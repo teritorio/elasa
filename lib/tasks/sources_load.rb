@@ -254,7 +254,10 @@ def load_from_source(con, datasource_url, project_slug, datasource_project)
         JOIN pois AS parent_pois ON
           parent_pois.source_id = sources.id
         JOIN LATERAL jsonb_array_elements(parent_pois.properties->'refs') WITH ORDINALITY AS parent_pois_refs(ref, index) ON true
+        JOIN sources AS children_sources ON
+          children_sources.project_id = projects.id
         JOIN pois AS children_pois ON
+          children_pois.source_id = children_sources.id AND
           children_pois.properties->'id' = parent_pois_refs.ref
       WHERE
           projects.slug = $1
