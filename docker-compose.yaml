@@ -100,6 +100,17 @@ services:
     command: bundle exec rails server --pid /dev/shm/server.pid --binding=0.0.0.0 --port 12000
     restart: unless-stopped
 
+  swagger:
+    image: swaggerapi/swagger-ui:v5.29.0
+    environment:
+      EMBEDDING: true
+      BASE_URL: /api/0.1/swagger-ui
+      SWAGGER_JSON_URL: /static/elasa-0.1.swagger.yaml
+    volumes:
+      - ./public/static/elasa-0.1.swagger.yaml:/etc/nginx/html/static/elasa-0.1.swagger.yaml:ro
+    ports:
+      - 12001:8080
+
 volumes:
   pg_data16:
   pg_data17:
