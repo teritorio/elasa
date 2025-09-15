@@ -110,6 +110,7 @@ services:
       - ./public/static/elasa-0.1.swagger.yaml:/etc/nginx/html/static/elasa-0.1.swagger.yaml:ro
     ports:
       - 12001:8080
+    restart: unless-stopped
 
 volumes:
   pg_data16:
