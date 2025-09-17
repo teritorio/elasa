@@ -25,10 +25,24 @@ services:
     environment:
       <<: *common-environment
     # command: postgres -c log_statement=all -c log_destination=stderr
+    healthcheck:
+      test: pg_isready
+      start_interval: 1s
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
 
   cache:
     image: redis:7
+    healthcheck:
+      test: redis-cli --raw incr ping
+      start_interval: 1s
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
 
   directus:
@@ -110,6 +124,13 @@ services:
       - ./public/static/elasa-0.1.swagger.yaml:/etc/nginx/html/static/elasa-0.1.swagger.yaml:ro
     ports:
       - 12001:8080
+    healthcheck:
+      test: curl -f http://localhost:8080/api/0.1/swagger-ui || exit 1
+      start_interval: 1s
+      start_period: 30s
+      interval: 30s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
 
 volumes:
