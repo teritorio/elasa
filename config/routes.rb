@@ -2,6 +2,8 @@
 # typed: strict
 
 Rails.application.routes.draw do
+  get 'up' => 'rails/health#show'
+
   # API
   scope '/api/0.1/:project/:theme' do
     get 'settings', controller: 'api01'
