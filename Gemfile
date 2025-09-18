@@ -7,7 +7,7 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby '>= 3.4'
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem 'rails', '~> 7.0.4'
+gem 'rails', '~> 8.0.0'
 
 # Use the Puma web server [https://github.com/puma/puma]
 gem 'puma', '~> 6.0'
@@ -21,6 +21,7 @@ gem 'rack-cors'
 gem 'tzinfo-data'
 
 gem 'concurrent-ruby', '< 1.3.5' # ActiveSupport bug workarround
+gem 'csv'
 gem 'http'
 gem 'json'
 gem 'json-schema'
@@ -31,7 +32,6 @@ gem 'pg', '~> 1.1'
 gem 'sentry-rails'
 gem 'sentry-ruby'
 gem 'sorbet-runtime'
-gem 'csv'
 
 group :development do
   gem 'image_size' # WP Imort
