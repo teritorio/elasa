@@ -33,31 +33,31 @@ Default addmin acces to be changed: admin@example.com / d1r3ctu5
 
 Update the database schema with
 ```
-docker compose run --rm api bundle exec rails db:migrate
+docker compose run --rm script bundle exec rails db:migrate
 docker compose restart directus
 ```
 
 ## Create new project
 
 ```
-docker compose run --rm api bundle exec rake project:new -- demo-bordeaux 905682 city city https://city-demo-bordeaux.beta.appcarto.teritorio.xyz
+docker compose run --rm script bundle exec rake project:new -- demo-bordeaux 905682 city city https://city-demo-bordeaux.beta.appcarto.teritorio.xyz
 ```
 
 ## Import from remote API
 
 Import from WP and load from Datasource
 ```
-docker compose run --rm api bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism https://datasources.teritorio.xyz/0.1
+docker compose run --rm script bundle exec rake wp:import -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1 seignanx tourism https://datasources.teritorio.xyz/0.1
 ```
 
 Update datasource only
 ```
-docker compose run --rm api bundle exec rake sources:load -- https://datasources.teritorio.xyz/0.1 [project_slug]
+docker compose run --rm script bundle exec rake sources:load -- https://datasources.teritorio.xyz/0.1 [project_slug]
 ```
 
 Compare original and new API results.
 ```
-docker compose run --rm api bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
+docker compose run --rm script bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
 
 ## Update Postgres version
@@ -77,9 +77,9 @@ docker compose exec -u postgres postgres psql -c "CREATE DATABASE test"
 ```
 
 ```
-docker compose run --rm api bundle exec rake test
+docker compose run --rm script bundle exec rake test
 ```
 
 ```
-docker compose run --rm api bundle exec rake api:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
+docker compose run --rm script bundle exec rake api:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```

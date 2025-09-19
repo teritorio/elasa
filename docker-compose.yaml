@@ -94,6 +94,26 @@ services:
       EXTENSIONS_AUTO_RELOAD: ${DIRECTUS_EXTENSIONS_AUTO_RELOAD}
     restart: unless-stopped
 
+  script:
+    profiles:
+      - tools
+    build:
+      context: .
+    image: ghcr.io/teritorio/elasa-api:master
+    environment:
+      <<: *common-environment
+      # RAILS_ENV: ${RAILS_ENV:-production}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-Toe8eihai5ieShai}
+      DATASOURCES_URL: ${DATASOURCES_URL}
+      SENTRY_DSN_TOOLS: ${SENTRY_DSN_TOOLS}
+      SENTRY_DSN_API: ${SENTRY_DSN_API}
+    volumes:
+      - ./:/srv/app/
+    depends_on:
+      - postgres
+    healthcheck:
+      disable: true
+
   api:
     build:
       context: .
