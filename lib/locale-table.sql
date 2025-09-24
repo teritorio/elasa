@@ -340,7 +340,7 @@ BEGIN
                     ''updated_at'', NULL,
                     ''natives'', (SELECT jsonb_object_agg(replace(key, ''___'', '':''), value) FROM jsonb_each(jsonb_strip_nulls(
                         row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
-                        CASE WHEN source.table_name_t IS NOT NULL THEN 'trans.jsonb || ' ELSE '' END || '
+                        CASE WHEN source.table_name_t IS NOT NULL THEN ' coalesce(trans.jsonb, ''{}''::jsonb) || ' ELSE '' END || '
                         jsonb_build_object(' ||
                             (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
                         ')
