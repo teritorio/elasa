@@ -132,7 +132,7 @@ class Api01Controller < ApplicationController
       params[:geometry_as],
       ActiveModel::Type::Boolean.new.cast(params[:short_description]),
       params[:start_date],
-      params[:end_date],
+      params[:end_date].presence || Time.zone.today.iso8601,
       nil,
       params[:cliping_polygon_slug],
     ]) || {}

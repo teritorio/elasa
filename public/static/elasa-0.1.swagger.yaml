@@ -728,6 +728,7 @@ components:
             end_date:
               type: string
               format: date
+              default: Today
             download:
               type: array
               items:

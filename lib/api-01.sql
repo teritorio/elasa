@@ -1194,8 +1194,16 @@ CREATE OR REPLACE FUNCTION pois_(
                 menu.menu_id = pois.menu_id AND
                 menu.source_id = pois.source_id
         WHERE
-            (_start_date IS NULL OR pois.properties->'tag'->>'start_date' IS NULL OR pois.properties->'tag'->>'start_date' <= _start_date) AND
-            (_end_date IS NULL OR pois.properties->'tag'->>'end_date' IS NULL OR pois.properties->'tag'->>'end_date' >= _end_date)
+            (
+                _start_date IS NULL OR
+                coalesce(pois.properties->'tag'->>'start_date', pois.properties->'natives'->>'start_date') IS NULL OR
+                coalesce(pois.properties->'tag'->>'start_date', pois.properties->'natives'->>'start_date') <= _start_date
+            ) AND
+            (
+                _end_date IS NULL OR
+                coalesce(pois.properties->'tag'->>'end_date', pois.properties->'natives'->>'end_date') IS NULL OR
+                coalesce(pois.properties->'tag'->>'end_date', pois.properties->'natives'->>'end_date') >= _end_date
+            )
         ORDER BY
             menu.menu_id,
             pois.slug_id
