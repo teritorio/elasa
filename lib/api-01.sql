@@ -211,19 +211,6 @@ CREATE OR REPLACE FUNCTION project(
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
                 ), array[]::text[]),
-                'articles', (
-                    SELECT
-                        jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
-                            'title', articles.title->'fr'
-                        )) ORDER BY projects_articles.index)
-                    FROM
-                        projects_articles
-                        JOIN articles_join AS articles ON
-                            articles.id = projects_articles.articles_id
-                    WHERE
-                        projects_articles.projects_id = projects.id
-                ),
                 'themes', (
                     SELECT
                         jsonb_strip_nulls(jsonb_agg(
@@ -238,7 +225,20 @@ CREATE OR REPLACE FUNCTION project(
                                 'logo_url', _base_url || '/assets/' || directus_files_logo.id::text || '/' || directus_files_logo.filename_download,
                                 'favicon_url', _base_url || '/assets/' || directus_files_favicon.id::text || '/' || directus_files_favicon.filename_download,
                                 'explorer_mode', nullif(explorer_mode, true),
-                                'favorites_mode', nullif(favorites_mode, true)
+                                'favorites_mode', nullif(favorites_mode, true),
+                                'articles', (
+                                    SELECT
+                                        jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+                                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
+                                            'title', articles.title->'fr'
+                                        )) ORDER BY themes_articles.index)
+                                    FROM
+                                        themes_articles
+                                        JOIN articles_join AS articles ON
+                                            articles.id = themes_articles.articles_id
+                                    WHERE
+                                        themes_articles.themes_id = themes.id
+                                )
                             )
                         ))
                     FROM

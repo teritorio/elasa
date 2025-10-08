@@ -81,12 +81,12 @@ pois	pin_drop	\N	{{properties}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	sources	open	\N
 pois_files	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	pois	open	\N	f
 pois_pois	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	pois	open	\N	f
 projects	house	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	\N	open	\N	f
-projects_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
 projects_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	projects	open	\N	f
 sources	database	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	7	projects	open	\N	f
 sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	sources	open	\N	f
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
+themes_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
 \.
 
 
@@ -280,7 +280,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
 561	menu_items_filters	index	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 562	articles	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
-565	articles	article_translations	translations	translations	{"defaultOpenSplitView":true,"defaultLanguage":"en-US","userLanguage":true}	translations	{"template":"{{title}}","userLanguage":true}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
+565	articles	article_translations	translations	translations	{"defaultOpenSplitView":true,"defaultLanguage":"en-US","userLanguage":true}	translations	{"template":"{{title}}","userLanguage":true,"languageField":"name"}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 566	articles_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 567	articles_translations	articles_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 568	articles_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -288,11 +288,11 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 570	articles_translations	slug	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 571	articles_translations	body	\N	input-rich-text-html	{"toolbar":["undo","redo","bold","italic","underline","h1","h2","h3","numlist","bullist","removeformat","cut","copy","paste","blockquote","customLink","customImage","customMedia","hr","code","fullscreen"],"tinymceOverrides":{"entity_encoding":"raw"}}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	t	t	2	full	\N	\N	\N	f	\N	\N	\N
-573	projects	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"id":{"_eq":"{{id}}"}}}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-574	projects_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
-575	projects_articles	projects_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
-576	projects_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-577	projects_articles	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
+573	themes	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+574	themes_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
+575	themes_articles	themes_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
+576	themes_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
+577	themes_articles	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
 578	fields	label_small	\N	boolean	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 579	fields	label_large	\N	boolean	\N	\N	\N	f	f	5	half	\N	\N	\N	f	\N	\N	\N
 580	fields_translations	name_small	\N	input	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
@@ -489,8 +489,8 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 25	projects	read	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 31	themes	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 33	themes	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-34	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,articles,default_country_state_opening_hours,default_country,polygons_extra,project_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations,logo,favicon	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+34	projects	update	{"_and":[{"id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	polygon,slug,attributions,bbox_line,name,icon_font_css_url,id,themes,default_country_state_opening_hours,default_country,polygons_extra,project_translations	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+35	themes	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	id,name,main_url,project_id,description,logo_url,slug,site_url,favicon_url,root_menu_item_id,keywords,explorer_mode,favorites_mode,theme_translations,logo,favicon,articles	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 41	themes	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 42	menu_items	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 43	menu_items	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
@@ -548,16 +548,16 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 241	fields_translations	delete	{"_and":[{"fields_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 242	articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 243	articles_translations	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-244	projects_articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+244	themes_articles	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 245	articles	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 246	articles	update	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 247	articles	delete	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 248	articles_translations	read	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 249	articles_translations	update	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 250	articles_translations	delete	{"_and":[{"articles_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-251	projects_articles	read	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-252	projects_articles	update	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-253	projects_articles	delete	{"_and":[{"projects_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+251	themes_articles	read	{"_and": [{"themes_id": {"project_id": {"_eq": "$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+252	themes_articles	update	{"_and": [{"themes_id": {"project_id": {"_eq": "$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+253	themes_articles	delete	{"_and": [{"themes_id": {"project_id": {"_eq": "$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 254	pois_pois	create	\N	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 255	pois_pois	read	{"_and":[{"pois_id":{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 \.
@@ -613,9 +613,9 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 70	filters	number_range_property	fields	\N	\N	\N	\N	\N	nullify
 71	articles_translations	languages_code	languages	\N	\N	\N	articles_id	\N	nullify
 72	articles_translations	articles_id	articles	article_translations	\N	\N	languages_code	\N	delete
-73	articles	project_id	projects	\N	\N	\N	\N	\N	nullify
-74	projects_articles	articles_id	articles	\N	\N	\N	projects_id	\N	nullify
-75	projects_articles	projects_id	projects	articles	\N	\N	articles_id	index	delete
+73	articles	themes_id	themes	\N	\N	\N	\N	\N	nullify
+74	themes_articles	articles_id	articles	\N	\N	\N	themes_id	\N	nullify
+75	themes_articles	themes_id	themes	articles	\N	\N	articles_id	index	delete
 76	pois_pois	children_pois_id	pois	\N	\N	\N	parent_pois_id	\N	nullify
 77	pois_pois	parent_pois_id	pois	parent_pois_id	\N	\N	children_pois_id	index	delete
 \.

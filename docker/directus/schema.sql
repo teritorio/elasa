@@ -1470,42 +1470,6 @@ CREATE TABLE public.projects (
 ALTER TABLE public.projects OWNER TO postgres;
 
 --
--- Name: projects_articles; Type: TABLE; Schema: public; Owner: postgres
---
-
-CREATE TABLE public.projects_articles (
-    id integer NOT NULL,
-    projects_id integer,
-    articles_id integer,
-    index integer
-);
-
-
-ALTER TABLE public.projects_articles OWNER TO postgres;
-
---
--- Name: projects_articles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
---
-
-CREATE SEQUENCE public.projects_articles_id_seq
-    AS integer
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
-ALTER SEQUENCE public.projects_articles_id_seq OWNER TO postgres;
-
---
--- Name: projects_articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
---
-
-ALTER SEQUENCE public.projects_articles_id_seq OWNED BY public.projects_articles.id;
-
-
---
 -- Name: projects_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -1665,6 +1629,42 @@ CREATE TABLE public.themes (
 
 
 ALTER TABLE public.themes OWNER TO postgres;
+
+--
+-- Name: themes_articles; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.themes_articles (
+    id integer NOT NULL,
+    articles_id integer,
+    index integer,
+    themes_id integer NOT NULL
+);
+
+
+ALTER TABLE public.themes_articles OWNER TO postgres;
+
+--
+-- Name: themes_articles_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.themes_articles_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE public.themes_articles_id_seq OWNER TO postgres;
+
+--
+-- Name: themes_articles_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.themes_articles_id_seq OWNED BY public.themes_articles.id;
+
 
 --
 -- Name: themes_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -1875,13 +1875,6 @@ ALTER TABLE ONLY public.pois_pois ALTER COLUMN id SET DEFAULT nextval('public.po
 
 
 --
--- Name: projects_articles id; Type: DEFAULT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.projects_articles ALTER COLUMN id SET DEFAULT nextval('public.projects_articles_id_seq'::regclass);
-
-
---
 -- Name: projects_translations id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -1893,6 +1886,13 @@ ALTER TABLE ONLY public.projects_translations ALTER COLUMN id SET DEFAULT nextva
 --
 
 ALTER TABLE ONLY public.sources_translations ALTER COLUMN id SET DEFAULT nextval('public.sources_translations_id_seq'::regclass);
+
+
+--
+-- Name: themes_articles id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes_articles ALTER COLUMN id SET DEFAULT nextval('public.themes_articles_id_seq'::regclass);
 
 
 --
@@ -2367,14 +2367,6 @@ ALTER TABLE ONLY public.pois_pois
 
 
 --
--- Name: projects_articles projects_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.projects_articles
-    ADD CONSTRAINT projects_articles_pkey PRIMARY KEY (id);
-
-
---
 -- Name: projects projects_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -2444,6 +2436,14 @@ ALTER TABLE ONLY public.sources_translations
 
 ALTER TABLE ONLY public.sources_translations
     ADD CONSTRAINT sources_translations_sources_id_languages_code UNIQUE (sources_id, languages_code);
+
+
+--
+-- Name: themes_articles themes_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes_articles
+    ADD CONSTRAINT themes_articles_pkey PRIMARY KEY (id);
 
 
 --
@@ -3176,22 +3176,6 @@ ALTER TABLE ONLY public.pois
 
 
 --
--- Name: projects_articles projects_articles_articles_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.projects_articles
-    ADD CONSTRAINT projects_articles_articles_id_foreign FOREIGN KEY (articles_id) REFERENCES public.articles(id) ON DELETE CASCADE;
-
-
---
--- Name: projects_articles projects_articles_projects_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.projects_articles
-    ADD CONSTRAINT projects_articles_projects_id_foreign FOREIGN KEY (projects_id) REFERENCES public.projects(id) ON DELETE CASCADE;
-
-
---
 -- Name: projects_translations projects_translations_languages_code_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3221,6 +3205,22 @@ ALTER TABLE ONLY public.sources_translations
 
 ALTER TABLE ONLY public.sources_translations
     ADD CONSTRAINT sources_translations_sources_id_foreign FOREIGN KEY (sources_id) REFERENCES public.sources(id) ON DELETE CASCADE;
+
+
+--
+-- Name: themes_articles themes_articles_articles_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes_articles
+    ADD CONSTRAINT themes_articles_articles_id_foreign FOREIGN KEY (articles_id) REFERENCES public.articles(id) ON DELETE CASCADE;
+
+
+--
+-- Name: themes_articles themes_articles_themes_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.themes_articles
+    ADD CONSTRAINT themes_articles_themes_id_fkey FOREIGN KEY (themes_id) REFERENCES public.themes(id);
 
 
 --

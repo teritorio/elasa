@@ -20,13 +20,16 @@ class Api01Controller < ApplicationController
     end
 
     project = JSON.parse(row_project)
+    project['themes'] = (project['themes'] || []).collect { |theme|
+      theme.except('articles')
+    }
     respond_to do |format|
-      format.json { render json: project.except('articles') }
+      format.json { render json: project }
     end
   end
 
   def articles
-    project_slug, = project_theme_params
+    project_slug, theme_slug = project_theme_params
 
     row_project = query('project($1, $2)', [base_url, project_slug])
 
@@ -35,7 +38,7 @@ class Api01Controller < ApplicationController
       return
     end
 
-    articles = JSON.parse(row_project)['articles'] || []
+    articles = (JSON.parse(row_project)['themes'] || []).find{ |theme| theme['slug'] == theme_slug }&.[]('articles') || []
     respond_to do |format|
       format.json {
         render json: articles
