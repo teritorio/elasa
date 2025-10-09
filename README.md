@@ -60,6 +60,25 @@ Compare original and new API results.
 docker compose run --rm script bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
 
+## Load dump from other instance
+
+Dump
+```
+docker compose exec -u postgres postgres pg_dump | gzip > pg_dump-2025-10-09.gz
+```
+
+Load
+```
+docker compose up -d postgres
+zcat pg_dump-2025-10-09.gz | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+
+# Optional, update database to current version
+docker compose run --rm script bundle exec rails db:migrate
+cat lib/api-01.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+
+docker compose up -d
+```
+
 ## Update Postgres version
 
 First, adjust version in docker compose file.
