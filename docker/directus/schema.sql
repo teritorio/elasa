@@ -111,6 +111,20 @@ CREATE TABLE public.pois_pois (
 ALTER TABLE public.pois_pois OWNER TO postgres;
 
 --
+-- Name: ar_internal_metadata; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ar_internal_metadata (
+    key character varying NOT NULL,
+    value character varying,
+    created_at timestamp(6) without time zone NOT NULL,
+    updated_at timestamp(6) without time zone NOT NULL
+);
+
+
+ALTER TABLE public.ar_internal_metadata OWNER TO postgres;
+
+--
 -- Name: articles; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1560,6 +1574,17 @@ CREATE TABLE public.property_labels (
 ALTER TABLE public.property_labels OWNER TO postgres;
 
 --
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.schema_migrations (
+    version character varying NOT NULL
+);
+
+
+ALTER TABLE public.schema_migrations OWNER TO postgres;
+
+--
 -- Name: sources; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -1875,6 +1900,14 @@ ALTER TABLE ONLY public.sources_translations ALTER COLUMN id SET DEFAULT nextval
 --
 
 ALTER TABLE ONLY public.themes_translations ALTER COLUMN id SET DEFAULT nextval('public.themes_translations_id_seq'::regclass);
+
+
+--
+-- Name: ar_internal_metadata ar_internal_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ar_internal_metadata
+    ADD CONSTRAINT ar_internal_metadata_pkey PRIMARY KEY (key);
 
 
 --
@@ -2379,6 +2412,14 @@ ALTER TABLE ONLY public.projects_translations
 
 ALTER TABLE ONLY public.property_labels
     ADD CONSTRAINT property_labels_pkey PRIMARY KEY (property);
+
+
+--
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
 
 
 --
