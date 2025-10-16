@@ -67,7 +67,8 @@ SELECT
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description) AS description,
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) AS site_url,
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) AS main_url,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords,
+    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) AS cookies_consent_message
 FROM
     themes
     JOIN themes_translations AS trans ON
@@ -211,6 +212,7 @@ CREATE OR REPLACE FUNCTION project(
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
                 ), array[]::text[]),
+                'image_proxy_hosts', projects.image_proxy_hosts,
                 'themes', (
                     SELECT
                         jsonb_strip_nulls(jsonb_agg(
@@ -238,7 +240,17 @@ CREATE OR REPLACE FUNCTION project(
                                             articles.id = themes_articles.articles_id
                                     WHERE
                                         themes_articles.themes_id = themes.id
-                                )
+                                ),
+                                'isochrone', nullif(themes.isochrone, false),
+                                'map_style_base_url', themes.map_style_base_url,
+                                'map_style_satellite_url', themes.map_style_satellite_url,
+                                'map_bicycle_style_url', themes.map_bicycle_style_url,
+                                'matomo_url', themes.matomo_url,
+                                'matomo_siteid', themes.matomo_siteid,
+                                'google_site_verification', themes.google_site_verification,
+                                'google_tag_manager_id', themes.google_tag_manager_id,
+                                'cookies_consent_message', nullif(themes.cookies_consent_message->>'fr', ''),
+                                'cookies_usage_detail_url', themes.cookies_usage_detail_url
                             )
                         ))
                     FROM

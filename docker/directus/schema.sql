@@ -1463,7 +1463,8 @@ CREATE TABLE public.projects (
     default_country_state_opening_hours character varying(255),
     polygons_extra json,
     datasources_slug character varying(255),
-    api_key uuid DEFAULT gen_random_uuid() NOT NULL
+    api_key uuid DEFAULT gen_random_uuid() NOT NULL,
+    image_proxy_hosts json
 );
 
 
@@ -1624,7 +1625,16 @@ CREATE TABLE public.themes (
     favorites_mode boolean DEFAULT true,
     explorer_mode boolean DEFAULT true,
     logo uuid,
-    favicon uuid
+    favicon uuid,
+    isochrone boolean DEFAULT false,
+    map_style_base_url character varying(255),
+    map_style_satellite_url character varying(255),
+    map_bicycle_style_url character varying(255),
+    matomo_url character varying(255),
+    matomo_siteid character varying(255),
+    google_site_verification character varying(255),
+    google_tag_manager_id character varying(255),
+    cookies_usage_detail_url character varying(255)
 );
 
 
@@ -1692,7 +1702,8 @@ CREATE TABLE public.themes_translations (
     description character varying(255),
     site_url character varying(255),
     main_url character varying(255),
-    keywords character varying(255)
+    keywords character varying(255),
+    cookies_consent_message text
 );
 
 

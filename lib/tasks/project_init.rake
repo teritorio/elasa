@@ -10,7 +10,7 @@ require_relative 'commons'
 require_relative 'sources_load'
 
 
-def new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
+def new_project(conn, slug, datasources_slug, osm_id, theme, css, website, map_apikey)
   if !osm_id.nil?
     osm_tags = fetch_json("https://www.openstreetmap.org/api/0.6/relation/#{osm_id}.json").dig('elements', 0, 'tags')
     osm_name = osm_tags['name']
@@ -64,9 +64,9 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
   ])
 
   theme_id = conn.exec('
-    INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode)
+    INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode, map_style_base_url, map_style_satellite_url, map_bicycle_style_url)
     VALUES (
-      $1, $2, $3, $4, $5, $6, $7
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
     )
     ON CONFLICT (project_id, slug)
     DO UPDATE SET
@@ -74,7 +74,10 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
       favicon = $4,
       root_menu_item_id = $5,
       favorites_mode = $6,
-      explorer_mode = $7
+      explorer_mode = $7,
+      map_style_base_url = $8,
+      map_style_satellite_url = $9,
+      map_bicycle_style_url = $10
     RETURNING
       id
   ', [
@@ -84,7 +87,10 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
     nil, # favicon
     nil, # root menu
     true, # favorite
-    true # explorer
+    true, # explorer
+    "https://merge-proxy.teritorio.xyz/styles/teritorio-city-1.0/style.json?key=#{map_apikey}",
+    "https://merge-proxy.teritorio.xyz/styles/satellite-hybrid/style.json?key=#{map_apikey}",
+    "https://merge-proxy.teritorio.xyz/styles/teritorio-bicycle-city/style.json?key=#{map_apikey}",
   ]) { |result|
     result.first['id'].to_i
   }
@@ -649,12 +655,12 @@ namespace :project do
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       set_default_languages(conn)
 
-      slug, osm_id, theme, ontologies, datasources_slug, website = ARGV[2..].collect(&:presence)
+      slug, osm_id, theme, ontologies, datasources_slug, website, map_apikey = ARGV[2..].collect(&:presence)
       ontologies = ontologies&.split(',')
       datasource_url = 'https://datasources.teritorio.xyz/0.1'
 
       css = '/static/font-teritorio-2.9.0/teritorio/teritorio.css'
-      project_id, _theme_id = new_project(conn, slug, datasources_slug, osm_id, theme, css, website)
+      project_id, _theme_id = new_project(conn, slug, datasources_slug, osm_id, theme, css, website, map_apikey)
 
       role_uuid, _policy_uuid = create_role(conn, slug)
       create_user(conn, project_id, slug, role_uuid)

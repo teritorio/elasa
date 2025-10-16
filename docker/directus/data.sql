@@ -145,7 +145,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":null}	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":null}	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
@@ -205,8 +205,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	9	half	\N	\N	\N	f	category	\N	\N
 150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	10	half	\N	\N	\N	f	category	\N	\N
 151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	11	half	\N	\N	\N	f	category	\N	\N
-160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
-161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	1	half	\N	\N	\N	f	map	\N	\N
+161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	2	half	\N	\N	\N	f	map	\N	\N
 162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 163	projects	default_country_state_opening_hours	\N	select-dropdown	{"choices":[{"text":"Nouvelle-Aquitaine","value":"Nouvelle-Aquitaine"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
 166	pois	slugs	cast-json	input-code	{"lineNumber":false}	\N	\N	t	f	3	full	\N	\N	\N	f	\N	\N	\N
@@ -259,8 +259,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 540	pois_files	index	\N	input	\N	\N	\N	f	t	4	full	\N	\N	\N	t	\N	\N	\N
-542	themes	logo	file	file-image	\N	image	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-543	themes	favicon	file	file-image	\N	image	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+542	themes	logo	file	file-image	\N	image	\N	f	f	5	half	\N	\N	\N	f	\N	\N	\N
+543	themes	favicon	file	file-image	\N	image	\N	f	f	6	half	\N	\N	\N	f	\N	\N	\N
 544	directus_folders	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
 545	fields	fields_translations	translations	translations	{"defaultLanguage":"en-US","userLanguage":true,"defaultOpenSplitView":true}	translations	{"template":"{{name}}","userLanguage":true}	f	f	3	full	\N	\N	\N	f	\N	\N	\N
 546	fields_translations	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
@@ -288,7 +288,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 570	articles_translations	slug	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 571	articles_translations	body	\N	input-rich-text-html	{"toolbar":["undo","redo","bold","italic","underline","h1","h2","h3","numlist","bullist","removeformat","cut","copy","paste","blockquote","customLink","customImage","customMedia","hr","code","fullscreen"],"tinymceOverrides":{"entity_encoding":"raw"}}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	t	t	2	full	\N	\N	\N	f	\N	\N	\N
-573	themes	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+573	themes	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 574	themes_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 575	themes_articles	themes_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 576	themes_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -305,6 +305,19 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 587	pois_pois	index	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 588	pois	properties_id	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 589	pois	properties_tags_name	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
+590	themes	isochrone	cast-boolean	boolean	\N	\N	\N	f	f	3	full	\N	\N	\N	f	map	\N	\N
+591	themes	map_style_base_url	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	t	map	\N	\N
+592	themes	map_style_satellite_url	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	t	map	\N	\N
+593	themes	map_bicycle_style_url	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	map	\N	\N
+594	themes	map	alias,no-data,group	group-detail	\N	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+595	themes	analytics	alias,no-data,group	group-detail	\N	\N	\N	f	f	11	full	\N	\N	\N	f	\N	\N	\N
+596	themes	matomo_url	\N	input	\N	\N	\N	f	f	1	half	\N	\N	\N	f	analytics	\N	\N
+597	themes	matomo_siteid	\N	input	\N	\N	\N	f	f	2	half	\N	\N	\N	f	analytics	\N	\N
+598	themes	google_site_verification	\N	input	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+599	themes	google_tag_manager_id	\N	input	\N	\N	\N	f	t	3	full	\N	\N	\N	f	analytics	\N	\N
+600	themes	cookies_usage_detail_url	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	analytics	\N	\N
+601	projects	image_proxy_hosts	cast-json	simple-list	{"size":"small"}	\N	\N	f	f	17	full	\N	\N	\N	f	\N	\N	\N
+602	themes_translations	cookies_consent_message	\N	input-multiline	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -676,7 +689,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 589, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 603, true);
 
 
 --
