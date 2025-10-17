@@ -309,22 +309,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 
 
 --
--- Data for Name: directus_folders; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.directus_folders (id, name, parent, project_id) FROM stdin;
-\.
-
-
---
--- Data for Name: directus_files; Type: TABLE DATA; Schema: public; Owner: postgres
---
-
-COPY public.directus_files (id, storage, filename_disk, filename_download, title, type, folder, uploaded_by, created_on, modified_by, modified_on, charset, filesize, width, height, duration, embed, description, location, tags, metadata, focal_point_x, focal_point_y, tus_id, tus_data, project_id, uploaded_on) FROM stdin;
-\.
-
-
---
 -- Data for Name: directus_flows; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
