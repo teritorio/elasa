@@ -64,13 +64,13 @@ docker compose run --rm script bundle exec rake api:diff -- https://carte.seigna
 
 Dump
 ```
-docker compose exec -u postgres postgres pg_dump | gzip > pg_dump-2025-10-09.gz
+docker compose exec -u postgres postgres pg_dump --exclude-schema=topology | gzip > pg_dump-2025-11-17.gz
 ```
 
 Load
 ```
 docker compose up -d postgres
-zcat pg_dump-2025-10-09.gz | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+zcat pg_dump-2025-11-17.gz | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 
 # Optional, update database to current version
 docker compose run --rm script bundle exec rails db:migrate
