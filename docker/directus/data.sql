@@ -115,6 +115,9 @@ t	5006d916-20a3-4706-8f31-583e8cfe74cb	directus-extension-hook	local	\N
 t	a4b66d1b-c7fe-4bc2-bd22-6c3d3ab0e83f	directus-extension-create-local-table	local	\N
 t	d3a350fb-49a9-4f3a-9f1e-a4ba21e4b635	baf4208a-aab1-496b-af15-05fa841a62a8	registry	\N
 t	bfa185ec-f15c-4d3e-8e0e-06925ba6cdfe	3b80b125-4f65-4a6f-96c6-4ede2ed9f506	registry	\N
+t	db7ec639-4f69-4bd2-9ef1-e169ee869423	directus-extension-custom-search	local	\N
+t	49b617db-7261-41a9-a8d7-6a038482a869	intercept-search	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
+t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 \.
 
 
@@ -318,6 +321,13 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 600	themes	cookies_usage_detail_url	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	analytics	\N	\N
 601	projects	image_proxy_hosts	cast-json	simple-list	{"size":"small"}	\N	\N	f	f	17	full	\N	\N	\N	f	\N	\N	\N
 602	themes_translations	cookies_consent_message	\N	input-multiline	\N	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+603	projects	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"project_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	18	full	\N	\N	\N	f	\N	\N	\N
+604	themes	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"theme_translations":{"name":{"_icontains":"$SEARCH"}}},{"theme_translations":{"site_url":{"_icontains":"$SEARCH"}}},{"theme_translations":{"main_url":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
+605	menu_items	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"menu_items_translations":{"name":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"name_singular":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"slug":{"_icontains":"$SEARCH"}}},{"sources":{"sources_id":{"slug":{"_icontains":"$SEARCH"}}}},{"href":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
+606	filters	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"filters_translations":{"name":{"_icontains":"$SEARCH"}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_begin":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_end":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"number_range_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+608	articles	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"article_translations":{"title":{"_icontains":"$SEARCH"}}},{"article_translations":{"slug":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
+609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -689,7 +699,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 603, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 610, true);
 
 
 --
