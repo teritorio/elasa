@@ -3,7 +3,7 @@
 class VidoConfig < ActiveRecord::Migration[8.0]
   def change
     execute <<~SQL.squish
-      ALTER TABLE projects ADD COLUMN image_proxy_hosts json;
+      ALTER TABLE projects ADD COLUMN image_proxy_hosts jsonb;
       ALTER TABLE themes
         ADD COLUMN isochrone boolean DEFAULT false,
         ADD COLUMN map_style_base_url character varying(255),

@@ -173,15 +173,16 @@ GROUP BY
     pois.slug_id
 ;
 
-DROP FUNCTION IF EXISTS project;
-CREATE OR REPLACE FUNCTION project(
+DROP FUNCTION IF EXISTS projects;
+CREATE OR REPLACE FUNCTION projects(
     _base_url text,
-    _project_slug text
+    _project_slug text,
+    _theme_slug text
 ) RETURNS TABLE (
     d text
 ) AS $$
     SELECT
-        jsonb_strip_nulls(
+        jsonb_strip_nulls(jsonb_object_agg(projects.slug,
             to_jsonb(projects.*) - 'name' - 'polygon' - 'bbox_line' - 'icon_font_css_url' - 'api_key' - 'datasources_slug' ||
             jsonb_build_object(
                 'name', projects.name->'fr',
@@ -212,10 +213,10 @@ CREATE OR REPLACE FUNCTION project(
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
                 ), array[]::text[]),
-                'image_proxy_hosts', projects.image_proxy_hosts,
+                'image_proxy_hosts', nullif(projects.image_proxy_hosts, '[]'::jsonb),
                 'themes', (
                     SELECT
-                        jsonb_strip_nulls(jsonb_agg(
+                        jsonb_strip_nulls(jsonb_object_agg(themes.slug,
                             to_jsonb(themes.*)
                                 - 'project_id' - 'root_menu_item_id'
                                 - 'name' - 'keywords'
@@ -249,7 +250,7 @@ CREATE OR REPLACE FUNCTION project(
                                 'matomo_siteid', themes.matomo_siteid,
                                 'google_site_verification', themes.google_site_verification,
                                 'google_tag_manager_id', themes.google_tag_manager_id,
-                                'cookies_consent_message', nullif(themes.cookies_consent_message->>'fr', ''),
+                                'cookies_consent_message', themes.cookies_consent_message,
                                 'cookies_usage_detail_url', themes.cookies_usage_detail_url
                             )
                         ))
@@ -260,14 +261,15 @@ CREATE OR REPLACE FUNCTION project(
                         LEFT JOIN directus_files AS directus_files_favicon ON
                             directus_files_favicon.id = themes.favicon
                     WHERE
-                        themes.project_id = projects.id
+                        themes.project_id = projects.id AND
+                        (_theme_slug IS NULL OR themes.slug = _theme_slug)
                 )
             )
-        )::text
+        ))::text
     FROM
         projects_join AS projects
     WHERE
-        projects.slug = _project_slug
+        _project_slug IS NULL OR projects.slug = _project_slug
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 

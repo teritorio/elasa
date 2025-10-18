@@ -5,8 +5,9 @@ Rails.application.routes.draw do
   get 'up' => 'rails/health#show'
 
   # API
+  get '/api/0.1', controller: 'api01', action: :projects, defaults: { format: 'json' }
   scope '/api/0.1/:project/:theme' do
-    get 'settings', controller: 'api01'
+    get 'settings', controller: 'api01', action: :project
     get 'articles', controller: 'api01'
     get 'article/:slug(.:format)', controller: 'api01', action: :article
     get 'menu', controller: 'api01'

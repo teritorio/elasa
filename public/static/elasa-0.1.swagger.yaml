@@ -10,6 +10,21 @@ servers:
   - url: ../../../api/0.1
 
 paths:
+  /:
+    get:
+      tags:
+        - settings
+      summary: Metadata sites and maps settings.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/project'
+
   /{project}/{theme}/settings.json:
     get:
       tags:
@@ -24,113 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                additionalProperties: false
-                required: [slug, name, attributions, icon_font_css_url, polygon, bbox_line, default_country, default_country_state_opening_hours, themes]
-                properties:
-                  id:
-                    type: integer
-                  slug:
-                    type: string
-                  name:
-                    type: string
-                  attributions:
-                    type: array
-                    items:
-                      type: string
-                  icon_font_css_url:
-                    type: string
-                  default_country:
-                    type: string
-                    description: ISO 3166 country codes.
-                    example: fr
-                  default_country_state_opening_hours:
-                    type: string
-                    description: State code according to opening_hours. See https://github.com/opening-hours/opening_hours.js/tree/master/src/holidays
-                    example: Nouvelle-Aquitaine
-                  polygon:
-                    $ref: '#/components/schemas/tile_source'
-                    description: Main bounding GeoJSON Polygon of the territory.
-                  polygons_extra:
-                    type: object
-                    additionalProperties:
-                      $ref: '#/components/schemas/tile_source'
-                    description: Extra bounding GeoJSON Polygon of the (sub)territory.
-                  bbox_line:
-                    type: object
-                    description: GeoJSON LineString of the bbox of the polygon territory.
-                  image_proxy_hosts:
-                    type: array
-                    items:
-                      type: string
-                    description: List of image URLs to proxy.
-                  themes:
-                    type: array
-                    items:
-                      type: object
-                      additionalProperties: false
-                      required: [id, slug, title, description, logo_url, favicon_url]
-                      properties:
-                        id:
-                          type: integer
-                        slug:
-                          type: string
-                        title:
-                          $ref: '#/components/schemas/multilingual_string'
-                        description:
-                          $ref: '#/components/schemas/multilingual_string'
-                        keywords:
-                          $ref: '#/components/schemas/multilingual_string'
-                        site_url:
-                          $ref: '#/components/schemas/multilingual_string'
-                          description: URL of the this map application.
-                        main_url:
-                          $ref: '#/components/schemas/multilingual_string'
-                          description: URL of the main website using the map application.
-                        logo_url:
-                          type: string
-                          description: Logo URL.
-                        favicon_url:
-                          type: string
-                          description: Favicon URL.
-                        favorites_mode:
-                          type: boolean
-                          description: Enable or not the favorites.
-                          default: true
-                        explorer_mode:
-                          type: boolean
-                          description: Enable or not the explorer mode switch.
-                          default: true
-                        isochrone:
-                          type: boolean
-                          description: Enable or not the isochrone feature on request.
-                          default: false
-                        map_style_base_url:
-                          type: string
-                          description: URL of the default map style, including API key.
-                        map_style_satellite_url:
-                          type: string
-                          description: URL of the satellite map style, including API key.
-                        map_bicycle_style_url:
-                          type: string
-                          description: URL of the bicycle map style, including API key.
-                        matomo_url:
-                          type: string
-                          description: URL of the Matomo instance for analytics.
-                        matomo_siteid:
-                          type: string
-                          description: Site ID of the Matomo instance for analytics.
-                        google_site_verification:
-                          type: string
-                          description: Google site verification code.
-                        google_tag_manager_id:
-                          type: string
-                          description: Google Tag Manager ID.
-                        cookies_consent_message:
-                          $ref: '#/components/schemas/multilingual_string'
-                        cookies_usage_detail_url:
-                          type: string
-                          description: URL of the cookies policy page.
+                $ref: '#/components/schemas/project'
 
   /{project}/{theme}/menu.json:
     get:
@@ -948,6 +857,115 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/featureSearch'
+
+    project:
+      type: object
+      additionalProperties: false
+      required: [slug, name, attributions, icon_font_css_url, polygon, bbox_line, default_country, default_country_state_opening_hours, themes]
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        attributions:
+          type: array
+          items:
+            type: string
+        icon_font_css_url:
+          type: string
+        default_country:
+          type: string
+          description: ISO 3166 country codes.
+          example: fr
+        default_country_state_opening_hours:
+          type: string
+          description: State code according to opening_hours. See https://github.com/opening-hours/opening_hours.js/tree/master/src/holidays
+          example: Nouvelle-Aquitaine
+        polygon:
+          $ref: '#/components/schemas/tile_source'
+          description: Main bounding GeoJSON Polygon of the territory.
+        polygons_extra:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/tile_source'
+          description: Extra bounding GeoJSON Polygon of the (sub)territory.
+        bbox_line:
+          type: object
+          description: GeoJSON LineString of the bbox of the polygon territory.
+        image_proxy_hosts:
+          type: array
+          items:
+            type: string
+          description: List of image URLs to proxy.
+        themes:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required: [id, slug, title, description, logo_url, favicon_url]
+            properties:
+              id:
+                type: integer
+              slug:
+                type: string
+              title:
+                $ref: '#/components/schemas/multilingual_string'
+              description:
+                $ref: '#/components/schemas/multilingual_string'
+              keywords:
+                $ref: '#/components/schemas/multilingual_string'
+              site_url:
+                $ref: '#/components/schemas/multilingual_string'
+                description: URL of the this map application.
+              main_url:
+                $ref: '#/components/schemas/multilingual_string'
+                description: URL of the main website using the map application.
+              logo_url:
+                type: string
+                description: Logo URL.
+              favicon_url:
+                type: string
+                description: Favicon URL.
+              favorites_mode:
+                type: boolean
+                description: Enable or not the favorites.
+                default: true
+              explorer_mode:
+                type: boolean
+                description: Enable or not the explorer mode switch.
+                default: true
+              isochrone:
+                type: boolean
+                description: Enable or not the isochrone feature on request.
+                default: false
+              map_style_base_url:
+                type: string
+                description: URL of the default map style, including API key.
+              map_style_satellite_url:
+                type: string
+                description: URL of the satellite map style, including API key.
+              map_bicycle_style_url:
+                type: string
+                description: URL of the bicycle map style, including API key.
+              matomo_url:
+                type: string
+                description: URL of the Matomo instance for analytics.
+              matomo_siteid:
+                type: string
+                description: Site ID of the Matomo instance for analytics.
+              google_site_verification:
+                type: string
+                description: Google site verification code.
+              google_tag_manager_id:
+                type: string
+                description: Google Tag Manager ID.
+              cookies_consent_message:
+                $ref: '#/components/schemas/multilingual_string'
+              cookies_usage_detail_url:
+                type: string
+                description: URL of the cookies policy page.
 
   parameters:
     param_path_project:

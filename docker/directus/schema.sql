@@ -1464,7 +1464,7 @@ CREATE TABLE public.projects (
     polygons_extra json,
     datasources_slug character varying(255),
     api_key uuid DEFAULT gen_random_uuid() NOT NULL,
-    image_proxy_hosts json
+    image_proxy_hosts jsonb
 );
 
 

@@ -9,18 +9,38 @@ class Api01Controller < ApplicationController
     "https://#{request.host_with_port}"
   end
 
-  def settings
-    project_slug, = project_theme_params
+  def projects
+    row_projects = query('projects($1, $2, $3)', [base_url, nil, nil])
+    puts row_projects.inspect
 
-    row_project = query('project($1, $2)', [base_url, project_slug])
+    projects = row_projects.nil? ? [] : JSON.parse(row_projects)
+    projects = projects.transform_values { |project|
+      project['themes'].transform_values { |theme|
+        theme.except('articles')
+      }
+      project
+    }
+    respond_to do |format|
+      format.json { render json: projects }
+    end
+  end
+
+  def project
+    project_slug, theme_slug = project_theme_params
+
+    row_project = query('projects($1, $2, $3)', [base_url, project_slug, theme_slug])
 
     if row_project.nil?
       render status: :not_found
       return
     end
 
-    project = JSON.parse(row_project)
-    project['themes'] = (project['themes'] || []).collect { |theme|
+    project = JSON.parse(row_project).values.first
+    if !project['themes']
+      render status: :not_found
+      return
+    end
+    project['themes'] = project['themes'].transform_values { |theme|
       theme.except('articles')
     }
     respond_to do |format|
@@ -181,7 +201,7 @@ class Api01Controller < ApplicationController
     PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
       conn.exec('SET search_path TO api01,public')
       conn.exec_params("SELECT * FROM #{subject}", params) { |result|
-        row = result.first&.[]('d')
+        result.first&.[]('d')
       }
     }
   end
