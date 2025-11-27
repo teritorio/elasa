@@ -516,7 +516,7 @@ COPY public.directus_permissions (id, collection, action, permissions, validatio
 74	menu_items_filters	read	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 75	menu_items_filters	update	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 76	menu_items_filters	delete	{"_and":[{"filters_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	\N	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
-83	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs,override,image,website_details,properties_tags_name	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
+83	pois	read	{"_and":[{"source_id":{"project_id":{"_eq":"$CURRENT_USER.project_id"}}}]}	\N	\N	id,source_id,geom,properties,slugs,override,image,website_details,properties_tags_name,properties_id	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 84	fields	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 85	fields_fields	create	{}	{}	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
 86	fields	read	{"_and":[{"project_id":{"_eq":"$CURRENT_USER.project_id"}}]}	\N	\N	*	5979e2ac-a34f-4c70-bf9d-de48b3900a8f
