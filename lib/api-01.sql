@@ -68,7 +68,7 @@ SELECT
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) AS site_url,
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) AS main_url,
     jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) AS cookies_consent_message
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message)), '{}'::jsonb) AS cookies_consent_message
 FROM
     themes
     JOIN themes_translations AS trans ON
