@@ -102,20 +102,15 @@ class Api01Controller < ApplicationController
 
   def poi
     project_slug, theme_slug = project_theme_params
-    if params.require(:id).start_with?('ref:')
-      ref = params.require(:id).split(':', 2).last.rpartition(':')
-      ref = [ref[0], ref[-1]]
-    else
-      id = params.require(:id).to_i
-    end
+    ref_id = id_to_ref(params.require(:id))
 
     pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       nil,
-      id.nil? ? nil : PG::TextEncoder::Array.new.encode([id]),
-      PG::TextEncoder::Array.new.encode(ref),
+      ref_id[:id].nil? ? nil : PG::TextEncoder::Array.new.encode([ref_id[:id]]),
+      ref_id[:ref].nil? ? nil : PG::TextEncoder::Array.new.encode(ref_id[:ref]),
       params[:geometry_as],
       params[:short_description],
       nil,
@@ -143,15 +138,17 @@ class Api01Controller < ApplicationController
   def pois
     project_slug, theme_slug = project_theme_params
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
-    ids = params[:ids]&.split(',')&.collect(&:to_i)
+    ref_ids = params[:ids]&.split(',')&.collect{ |ref_id|
+      id_to_ref(ref_id)
+    }
 
     pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       category_id,
-      PG::TextEncoder::Array.new.encode(ids),
-      nil,
+      PG::TextEncoder::Array.new.encode(ref_ids.pluck(:id).compact),
+      PG::TextEncoder::Array.new.encode(ref_ids.pluck(:ref).compact.first),
       params[:geometry_as],
       ActiveModel::Type::Boolean.new.cast(params[:short_description]),
       params[:start_date],
@@ -196,6 +193,15 @@ class Api01Controller < ApplicationController
   end
 
   private
+
+  def id_to_ref(ref_id)
+    if ref_id.start_with?('ref:')
+      ref = ref_id.split(':', 2).last.rpartition(':')
+      { ref: [ref[0], ref[-1]] }
+    else
+      { id: ref_id.to_i }
+    end
+  end
 
   def query(subject, params)
     PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|

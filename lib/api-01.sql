@@ -1043,11 +1043,11 @@ CREATE OR REPLACE FUNCTION pois_(
                 pois_join.source_id = menu.source_id AND
                 pois_join.id = pois.id AND
                 (
-                    _poi_ids IS NULL OR
+                    nullif(_poi_ids, '{}'::bigint[]) IS NULL OR
                     pois_join.slug_id = ANY(_poi_ids)
                 ) AND
                 (
-                    _poi_ref IS NULL OR (
+                    nullif(_poi_ref, '{}'::text[]) IS NULL OR (
                         pois_join.properties->'tags' ? 'ref' AND
                         pois_join.properties->'tags'->'ref' ? _poi_ref[1] AND
                         pois_join.properties->'tags'->'ref'->>_poi_ref[1] = _poi_ref[2]
