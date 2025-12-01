@@ -104,13 +104,13 @@ class Api01Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     ref_id = id_to_ref(params.require(:id))
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       nil,
       ref_id[:id].nil? ? nil : PG::TextEncoder::Array.new.encode([ref_id[:id]]),
-      ref_id[:ref].nil? ? nil : PG::TextEncoder::Array.new.encode(ref_id[:ref]),
+      [ref_id[:ref]].to_json,
       params[:geometry_as],
       params[:short_description],
       nil,
@@ -142,13 +142,13 @@ class Api01Controller < ApplicationController
       id_to_ref(ref_id)
     }
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::text[], $7, $8, $9, $10, $11, $12)', [
+    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       category_id,
       PG::TextEncoder::Array.new.encode(ref_ids.pluck(:id).compact),
-      PG::TextEncoder::Array.new.encode(ref_ids.pluck(:ref).compact.first),
+      ref_ids.pluck(:ref).compact.to_json,
       params[:geometry_as],
       ActiveModel::Type::Boolean.new.cast(params[:short_description]),
       params[:start_date],
@@ -197,7 +197,7 @@ class Api01Controller < ApplicationController
   def id_to_ref(ref_id)
     if ref_id.start_with?('ref:')
       ref = ref_id.split(':', 2).last.rpartition(':')
-      { ref: [ref[0], ref[-1]] }
+      { ref: { ref[0] => ref[-1] } }
     else
       { id: ref_id.to_i }
     end

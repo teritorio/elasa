@@ -74,6 +74,19 @@ $_$;
 
 ALTER FUNCTION public.jsonb_pois_keys_array(jsonb) OWNER TO postgres;
 
+--
+-- Name: jsonb_to_text_array(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.jsonb_to_text_array(j jsonb) RETURNS text[]
+    LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
+    AS $$
+        SELECT array_agg(key || '=' || value) FROM jsonb_each_text(j)
+      $$;
+
+
+ALTER FUNCTION public.jsonb_to_text_array(j jsonb) OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -2515,6 +2528,13 @@ CREATE INDEX pois_idx_geom ON public.pois USING gist (geom);
 --
 
 CREATE INDEX pois_idx_ref ON public.pois USING gin ((((properties -> 'tags'::text) -> 'ref'::text))) WHERE ((properties -> 'tags'::text) ? 'ref'::text);
+
+
+--
+-- Name: pois_idx_ref_flat; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX pois_idx_ref_flat ON public.pois USING gin (public.jsonb_to_text_array(((properties -> 'tags'::text) -> 'ref'::text))) WHERE ((properties -> 'tags'::text) ? 'ref'::text);
 
 
 --

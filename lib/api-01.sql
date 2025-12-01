@@ -967,6 +967,9 @@ CREATE OR REPLACE FUNCTION array_unique (a bigint[]) RETURNS bigint[] AS $$
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
+DROP TYPE IF EXISTS ref_kv CASCADE;
+CREATE TYPE ref_kv AS (key text, value text);
+
 DROP FUNCTION IF EXISTS pois_;
 CREATE OR REPLACE FUNCTION pois_(
     _base_url text,
@@ -974,7 +977,7 @@ CREATE OR REPLACE FUNCTION pois_(
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
-    _poi_ref text[],
+    _poi_refs ref_kv[], -- array of set(ref, value)
     _geometry_as text,
     _short_description text,
     _start_date text,
@@ -1043,14 +1046,20 @@ CREATE OR REPLACE FUNCTION pois_(
                 pois_join.source_id = menu.source_id AND
                 pois_join.id = pois.id AND
                 (
-                    nullif(_poi_ids, '{}'::bigint[]) IS NULL OR
-                    pois_join.slug_id = ANY(_poi_ids)
-                ) AND
-                (
-                    nullif(_poi_ref, '{}'::text[]) IS NULL OR (
-                        pois_join.properties->'tags' ? 'ref' AND
-                        pois_join.properties->'tags'->'ref' ? _poi_ref[1] AND
-                        pois_join.properties->'tags'->'ref'->>_poi_ref[1] = _poi_ref[2]
+                    (
+                        nullif(_poi_ids, '{}'::bigint[]) IS NULL AND
+                        nullif(_poi_refs, ARRAY[]::ref_kv[]) IS NULL
+                    ) OR
+                    (
+                        nullif(_poi_ids, '{}'::bigint[]) IS NOT NULL AND
+                        pois_join.slug_id = ANY(_poi_ids)
+                    ) OR
+                    (
+                        nullif(_poi_refs, ARRAY[]::ref_kv[]) IS NOT NULL AND (
+                            pois_join.properties->'tags' ? 'ref' AND
+                            pois_join.properties->'tags'->'ref' ?| (SELECT array_agg(DISTINCT key) FROM unnest(_poi_refs)) AND
+                            jsonb_to_text_array(pois_join.properties->'tags'->'ref') && (SELECT array_agg(key || '=' || value) FROM unnest(_poi_refs))
+                        )
                     )
                 )
     ),
@@ -1241,7 +1250,7 @@ CREATE OR REPLACE FUNCTION pois(
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
-    _poi_ref text[],
+    _poi_refs jsonb, -- array of object of one key [{ref: value}, ...]
     _geometry_as text,
     _short_description text,
     _start_date text,
@@ -1280,7 +1289,8 @@ CREATE OR REPLACE FUNCTION pois(
     SELECT * FROM pois_(
         _base_url,
         (SELECT id FROM projects),
-        _theme_slug, _category_id, _poi_ids, _poi_ref, _geometry_as, _short_description, _start_date, _end_date, _with_deps,
+        _theme_slug, _category_id, _poi_ids,
+        (SELECT array_agg(row((t.t).key, (t.t).value)::ref_kv) FROM (SELECT jsonb_each_text(j) FROM jsonb_array_elements(_poi_refs) AS t(j)) AS t(t)), _geometry_as, _short_description, _start_date, _end_date, _with_deps,
         (SELECT geom FROM cliping_polygon)
     )
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
