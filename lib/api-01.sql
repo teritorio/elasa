@@ -206,9 +206,17 @@ CREATE OR REPLACE FUNCTION projects(
                 'icon_font_css_url', _base_url || projects.icon_font_css_url,
                 'attributions', coalesce((
                     SELECT
-                        array_agg(DISTINCT attribution)
+                        array_agg(DISTINCT
+                            CASE
+                                WHEN attribution NOT LIKE '<a%</a>' THEN split_attribution
+                                WHEN split_attribution NOT LIKE '%</a>' THEN split_attribution || '</a>'
+                                WHEN split_attribution NOT LIKE '<a%' THEN '<a' || split_attribution
+                                ELSE split_attribution
+                            END
+                        )
                     FROM
                         sources
+                        JOIN LATERAL string_to_table(attribution, '</a> <a') AS a(split_attribution) ON true
                     WHERE
                         sources.project_id = projects.id AND
                         attribution IS NOT NULL
