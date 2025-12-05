@@ -714,6 +714,10 @@ components:
                   type: array
                   items:
                     type: integer
+                report_issue_url:
+                  type: string
+                  description: URL to report an issue on this POI.
+                  format: uri
             display:
               type: object
               description: Properties to help how to display.
@@ -945,6 +949,10 @@ components:
               isochrone:
                 type: boolean
                 description: Enable or not the isochrone feature on request.
+                default: false
+              report_issue_url:
+                type: boolean
+                description: Enable or not the report issue for POIs.
                 default: false
               map_style_base_url:
                 type: string
