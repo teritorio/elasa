@@ -1570,7 +1570,8 @@ CREATE TABLE public.sources (
     id integer NOT NULL,
     project_id integer NOT NULL,
     slug character varying NOT NULL,
-    attribution text
+    attribution text,
+    report_issue_url_template text
 );
 
 
