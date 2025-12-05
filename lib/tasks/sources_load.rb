@@ -28,7 +28,8 @@ def load_source(conn, project_slug, metadatas)
     CREATE TEMP TABLE sources_import_raw(
       slug varchar NOT NULL,
       name json NOT NULL, -- Tanslation Object.
-      attribution text
+      attribution text,
+      report_issue text
     )
   ")
 
@@ -38,7 +39,8 @@ def load_source(conn, project_slug, metadatas)
       conn.put_copy_data([
         id,
         metadata['name'].to_json,
-        metadata['attribution']
+        metadata['attribution'],
+        metadata['report_issue'],
       ])
     }
   }
@@ -59,19 +61,21 @@ def load_source(conn, project_slug, metadatas)
     MERGE INTO
       sources
     USING
-      (SELECT DISTINCT project_id, slug, attribution FROM sources_import) AS sources_import
+      (SELECT DISTINCT project_id, slug, attribution, report_issue FROM sources_import) AS sources_import
     ON
       sources.project_id = sources_import.project_id AND
       sources.slug = sources_import.slug
     WHEN MATCHED THEN
       UPDATE SET
-        attribution = sources_import.attribution
+        attribution = sources_import.attribution,
+        report_issue = sources_import.report_issue::jsonb
     WHEN NOT MATCHED THEN
-      INSERT (project_id, slug, attribution)
+      INSERT (project_id, slug, attribution, report_issue)
       VALUES (
         sources_import.project_id,
         sources_import.slug,
-        sources_import.attribution
+        sources_import.attribution,
+        sources_import.report_issue::jsonb
       )
   ")
 

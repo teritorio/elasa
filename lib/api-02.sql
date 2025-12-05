@@ -251,6 +251,7 @@ CREATE OR REPLACE FUNCTION projects(
                                         themes_articles.themes_id = themes.id
                                 ),
                                 'isochrone', nullif(themes.isochrone, false),
+                                'report_issue', nullif(themes.report_issue, false),
                                 'map_style_base_url', themes.map_style_base_url,
                                 'map_style_satellite_url', themes.map_style_satellite_url,
                                 'map_bicycle_style_url', themes.map_bicycle_style_url,
@@ -1005,6 +1006,7 @@ CREATE OR REPLACE FUNCTION pois_(
             coalesce(menu_items.name_singular->>'fr', menu_items.name->>'fr') AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
+            sources.report_issue,
             jsonb_build_object(
                 'popup_fields', menu_items.popup_fields,
                 'details_fields', menu_items.details_fields,
@@ -1201,7 +1203,8 @@ CREATE OR REPLACE FUNCTION pois_(
                                     WHEN 'r' THEN 'relation'
                                     END
                                 END,
-                            'dep_ids', dep_original_ids
+                            'dep_ids', dep_original_ids,
+                            'report_issue_url', menu.report_issue->>'url_template'
                         ),
                         'editorial', nullif(coalesce(menu.editorial, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
                             'website:details', coalesce(

@@ -328,6 +328,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
 608	articles	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"article_translations":{"title":{"_icontains":"$SEARCH"}}},{"article_translations":{"slug":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+610	sources	report_issue	\N	input-code	{"iconLeft":"bug_report"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+611	themes	report_issue	cast-boolean	boolean	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -699,7 +701,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 610, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 612, true);
 
 
 --
