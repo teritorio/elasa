@@ -5,3 +5,5 @@ log/
 sorbet/
 tmp/
 uploads/
+log*
+*.gz
