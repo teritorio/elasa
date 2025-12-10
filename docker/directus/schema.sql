@@ -1005,7 +1005,10 @@ CREATE TABLE public.fields (
     project_id integer NOT NULL,
     label_large boolean DEFAULT false NOT NULL,
     values_translations json,
-    label_small boolean DEFAULT false NOT NULL
+    label_small boolean DEFAULT false NOT NULL,
+    multilingual boolean,
+    media_type character varying,
+    role character varying
 );
 
 
