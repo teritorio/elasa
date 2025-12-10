@@ -681,8 +681,81 @@ CREATE OR REPLACE FUNCTION fields(
                 ),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
-                'icon', fields.icon
+                'icon', fields.icon,
                 -- 'fields', null
+                'multilingual', CASE WHEN fields."group" IS NULL THEN
+                    nullif(fields.multilingual, false)
+                END,
+                'render', CASE WHEN fields."group" IS NULL THEN coalesce(
+                    fields.role,
+                    CASE fields.media_type
+                        WHEN 'text/plain' THEN 'string'
+                        WHEN 'text/html' THEN 'html'
+                        WHEN 'text/x-uri' THEN 'weblink'
+                        WHEN 'text/vnd.phone-number' THEN 'phone'
+                        WHEN 'text/vnd.osm.opening_hours' THEN 'osm:opening_hours'
+                        WHEN 'text/vnd.osm.html-color' THEN 'color'
+                        WHEN 'text/vnd.osm.stars' THEN 'osm:stars'
+                    END,
+                    CASE -- osm tags
+                        WHEN fields.field = 'string' THEN 'string'
+                        WHEN fields.field = 'description' THEN 'html'
+                        WHEN fields.field = 'short_description' THEN 'string@short'
+                        WHEN fields.field LIKE '%capacity%' THEN 'integer'
+                        -- THEN 'boolean'
+                        -- THEN 'color'
+
+                        -- Links
+                        WHEN fields.field = 'website' THEN 'weblink'
+                        WHEN fields.field = 'facebook' THEN 'weblink@scocial-network'
+                        WHEN fields.field = 'instagram' THEN 'weblink@scocial-network'
+                        WHEN fields.field = 'linkedin' THEN 'weblink@scocial-network'
+
+                        WHEN fields.field = 'download' THEN 'weblink@download'
+                        WHEN fields.field = 'route:gpx_trace' THEN 'weblink@download'
+                        WHEN fields.field = 'route:pdf' THEN 'weblink@download'
+
+                        -- Picture
+                        WHEN fields.field = 'image' THEN 'image'
+                        WHEN fields.field = 'mapillary' THEN 'mapillary'
+                        WHEN fields.field = 'panoramax' THEN 'panoramax'
+
+                        -- Tags
+                        WHEN fields.field = 'cuisine' THEN 'tag'
+
+                        -- Rating
+                        WHEN fields.field = 'stars' THEN 'osm:stars'
+
+                        -- Contact
+                        WHEN fields.field = 'email' THEN 'email'
+                        WHEN fields.field = 'phone' THEN 'phone'
+                        WHEN fields.field = 'mobile' THEN 'phone'
+
+                        -- Time
+                        WHEN fields.field = 'date' THEN 'date'
+                        WHEN fields.field = 'datetime' THEN 'datetime'
+                        WHEN fields.field = 'duration' THEN 'duration'
+                        WHEN fields.field = 'start_end_date' THEN 'start_end_date' -- Syntetic
+
+                        -- opening_hours & collection_times
+                        WHEN fields.field = 'opening_hours' THEN 'osm:opening_hours'
+                        WHEN fields.field LIKE 'opening_hours:%' THEN 'osm:opening_hours'
+                        WHEN fields.field LIKE '%:opening_hours' THEN 'osm:opening_hours'
+                        WHEN fields.field LIKE '%:opening_hours:%' THEN 'osm:opening_hours'
+                        WHEN fields.field = 'smoking_hours' THEN 'osm:opening_hours'
+                        WHEN fields.field = 'happy_hours' THEN 'osm:opening_hours'
+                        WHEN fields.field = 'lit' THEN 'osm:opening_hours'
+
+                        WHEN fields.field = 'collection_times' THEN 'osm:collection_times'
+                        WHEN fields.field = 'service_times' THEN 'osm:collection_times'
+
+                        -- Syntetic fields
+                        WHEN fields.field = 'route' THEN 'route'
+                        WHEN fields.field = 'addr' THEN 'addr'
+                        WHEN fields.field = 'coordinates' THEN 'coordinates'
+                    END,
+                    'string'
+                ) END
             )) AS json,
             fields.field IS NOT NULL AS leaf
         FROM

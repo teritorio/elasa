@@ -363,3 +363,58 @@ def load_i18n(con, project_slug, i18ns)
     )
   }
 end
+
+def load_schema(con, project_slug, schemas)
+  con.transaction{ |conn|
+    puts "schema: #{schemas['properties'].size}"
+    conn.exec("
+      DROP TABLE IF EXISTS schemas_import;
+      CREATE TEMP TABLE schemas_import(
+        field text,
+        multilingual text,
+        media_type varchar,
+        role varchar
+      )
+    ")
+
+    enco = PG::BinaryEncoder::CopyRow.new
+    conn.copy_data('COPY schemas_import FROM STDIN (FORMAT binary)', enco) {
+      schemas['properties'].each{ |key, schema|
+        item = schema['type'] == 'array' ? schema['items'] : schema
+        conn.put_copy_data([
+          key,
+          (item['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
+          item['contentMediaType'],
+          item['xContentRole'],
+        ])
+      }
+    }
+    conn.exec_params(
+      "
+      WITH schemas_import AS (
+        SELECT
+          projects.id AS project_id,
+          schemas_import.*
+        FROM
+        schemas_import
+          JOIN projects ON
+            projects.slug = $1
+      )
+      MERGE INTO
+        fields
+      USING
+      schemas_import
+      ON
+        fields.project_id = schemas_import.project_id AND
+        fields.field = schemas_import.field
+      WHEN MATCHED THEN
+        UPDATE SET
+          multilingual = schemas_import.multilingual::boolean,
+          media_type = schemas_import.media_type,
+          role = schemas_import.role
+      -- WHEN NOT MATCHED THEN -- Only if already exists
+      ",
+      [project_slug]
+    )
+  }
+end
