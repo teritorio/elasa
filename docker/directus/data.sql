@@ -330,6 +330,9 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 610	sources	report_issue	\N	input-code	{"iconLeft":"bug_report"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 611	themes	report_issue	cast-boolean	boolean	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+612	fields	multilingual	cast-boolean	\N	\N	\N	\N	f	f	3	full	\N	\N	\N	f	field_block	\N	\N
+613	fields	media_type	\N	select-dropdown	{"choices":[{"text":"text/plain","value":"Plain text"},{"text":"text/html","value":"HTML"},{"text":"text/x-uri","value":"URL"},{"text":"text/vnd.phone-number","value":"Phone number"},{"text":"text/vnd.osm.opening_hours","value":"OSM opening_hours value"},{"text":"text/vnd.osm.html-color","value":"HTML color"},{"text":"text/vnd.osm.stars","value":"OSM stars value"}]}	\N	\N	f	f	4	full	\N	\N	\N	f	field_block	\N	\N
+614	fields	role	\N	select-dropdown	{"choices":[{"text":"string","value":"string"},{"text":"html","value":"html"},{"text":"string@short","value":"string@short"},{"text":"integer","value":"integer"},{"text":"boolean","value":"boolean"},{"text":"weblink","value":"weblink"},{"text":"weblink@scocial-network","value":"weblink@scocial-network"},{"text":"weblink@download","value":"weblink@download"},{"text":"email","value":"email"},{"text":"phone","value":"phone"},{"text":"date","value":"date"},{"text":"datetime","value":"datetime"},{"text":"duration","value":"duration"},{"text":"start_end_date","value":"start_end_date"},{"text":"osm:opening_hours","value":"osm:opening_hours"},{"text":"osm:collection_times","value":"osm:collection_times"},{"text":"image","value":"image"},{"text":"mapillary","value":"mapillary"},{"text":"panoramax","value":"panoramax"},{"text":"tag","value":"tag"},{"text":"color","value":"color"},{"text":"rating-scale","value":"rating-scale"},{"text":"osm:stars","value":"osm:stars"},{"text":"coordinates","value":"coordinates"},{"text":"addr","value":"addr"},{"text":"route","value":"route"}]}	\N	\N	f	f	5	full	\N	\N	\N	f	field_block	\N	\N
 \.
 
 
@@ -701,7 +704,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 612, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 615, true);
 
 
 --

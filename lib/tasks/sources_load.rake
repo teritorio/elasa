@@ -30,6 +30,14 @@ namespace :sources do
           load_from_source(conn, "#{url_base}/data", project_slug, datasource_project)
           i18ns = fetch_json("#{url_base}/data/#{datasource_project}/i18n.json")
           load_i18n(conn, project_slug, i18ns)
+          tags_schema = fetch_json("#{url_base}/data/#{datasource_project}/tags_schema.json")
+          load_schema(conn, project_slug, tags_schema)
+          begin
+            natives_schema = fetch_json("#{url_base}/data/#{datasource_project}/natives_schema.json")
+          rescue StandardError
+            natives_schema = nil
+          end
+          load_schema(conn, project_slug, natives_schema) if natives_schema.present?
         }
       }
     }
