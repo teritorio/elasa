@@ -679,8 +679,76 @@ CREATE OR REPLACE FUNCTION fields(
                 ),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
-                'icon', fields.icon
+                'icon', fields.icon,
                 -- 'fields', null
+                'multilingual', nullif(fields.multilingual, false),
+                'render', coalesce(
+                    fields.role,
+                    CASE fields.media_type
+                        WHEN 'text/plain' THEN 'string'
+                        WHEN 'text/html' THEN 'html'
+                        WHEN 'text/x-uri' THEN 'weblink'
+                        WHEN 'text/vnd.phone-number' THEN 'phone'
+                        WHEN 'text/vnd.osm.opening_hours' THEN 'osm:opening_hours'
+                        WHEN 'text/vnd.osm.html-color' THEN 'color'
+                        WHEN 'text/vnd.osm.stars' THEN 'osm:stars'
+                    END,
+                    CASE fields.field -- osm tags
+                        WHEN 'string' THEN 'string'
+                        WHEN 'description' THEN 'html'
+                        WHEN 'short_description' THEN 'string@short'
+                        WHEN '%capacity%' THEN 'integer'
+                        -- THEN 'boolean'
+                        -- THEN 'color'
+
+                        -- Links
+                        WHEN 'website' THEN 'weblink'
+                        WHEN 'facebook' THEN 'weblink@scocial-network'
+                        WHEN 'instagram' THEN 'weblink@scocial-network'
+                        WHEN 'linkedin' THEN 'weblink@scocial-network'
+
+                        WHEN 'download' THEN 'weblink@download'
+                        WHEN 'route:gpx_trace' THEN 'weblink@download'
+                        WHEN 'route:pdf' THEN 'weblink@download'
+
+                        -- Picture
+                        WHEN 'image' THEN 'image'
+                        WHEN 'mapillary' THEN 'mapillary'
+                        WHEN 'panoramax' THEN 'panoramax'
+
+                        -- Tags
+                        WHEN 'cuisine' THEN 'tag'
+
+                        -- Rating
+                        WHEN 'stars' THEN 'osm:stars'
+
+                        -- Contact
+                        WHEN 'email' THEN 'email'
+                        WHEN 'phone' THEN 'phone'
+                        WHEN 'mobile' THEN 'phone'
+
+                        -- Time
+                        WHEN 'date' THEN 'date'
+                        WHEN 'datetime' THEN 'datetime'
+                        WHEN 'duration' THEN 'duration'
+                        WHEN 'start_end_date' THEN 'start_end_date' -- Syntetic
+
+                        -- opening_hours & collection_times
+                        WHEN 'opening_hours' THEN 'osm:opening_hours'
+                        WHEN 'smoking_hours' THEN 'osm:opening_hours'
+                        WHEN 'happy_hours' THEN 'osm:opening_hours'
+                        WHEN 'lit' THEN 'osm:opening_hours'
+
+                        WHEN 'collection_times' THEN 'osm:collection_times'
+                        WHEN 'service_times' THEN 'osm:collection_times'
+
+                        -- Syntetic fields
+                        WHEN 'route' THEN 'route'
+                        WHEN 'addr' THEN 'addr'
+                        WHEN 'coordinates' THEN 'coordinates'
+                    END,
+                    'string'
+                )
             )) AS json,
             fields.field IS NOT NULL AS leaf
         FROM
