@@ -1651,7 +1651,8 @@ CREATE TABLE public.themes (
     matomo_siteid character varying(255),
     google_site_verification character varying(255),
     google_tag_manager_id character varying(255),
-    cookies_usage_detail_url character varying(255)
+    cookies_usage_detail_url character varying(255),
+    report_issue boolean DEFAULT false
 );
 
 

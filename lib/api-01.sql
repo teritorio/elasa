@@ -251,6 +251,7 @@ CREATE OR REPLACE FUNCTION projects(
                                         themes_articles.themes_id = themes.id
                                 ),
                                 'isochrone', nullif(themes.isochrone, false),
+                                'report_issue', nullif(themes.report_issue, false),
                                 'map_style_base_url', themes.map_style_base_url,
                                 'map_style_satellite_url', themes.map_style_satellite_url,
                                 'map_bicycle_style_url', themes.map_bicycle_style_url,

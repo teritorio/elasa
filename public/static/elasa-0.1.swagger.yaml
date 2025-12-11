@@ -966,6 +966,10 @@ components:
                 type: boolean
                 description: Enable or not the isochrone feature on request.
                 default: false
+              report_issue_url:
+                type: boolean
+                description: Enable or not the report issue for POIs.
+                default: false
               map_style_base_url:
                 type: string
                 description: URL of the default map style, including API key.
