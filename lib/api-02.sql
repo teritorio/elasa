@@ -995,7 +995,9 @@ CREATE OR REPLACE FUNCTION pois_(
     _with_deps text,
     _cliping_polygon geometry(Geometry, 4326)
 ) RETURNS TABLE (
-    d text
+    feature text,
+    report_issue_url_template text,
+    report_issue_values jsonb
 ) AS $$
     WITH
     menu AS (
@@ -1101,6 +1103,9 @@ CREATE OR REPLACE FUNCTION pois_(
     json_pois AS (
         SELECT
             row_number() OVER (PARTITION BY pois.slug_id) = 1 AS first_one,
+            CASE WHEN menu.report_issue->>'url_template' IS NOT NULL THEN pois.geom END AS geom,
+            menu.report_issue->>'url_template' AS report_issue_url_template,
+            menu.report_issue->'value_extractors' AS report_issue_value_extractors,
             jsonb_strip_nulls(jsonb_build_object(
                 'type', 'Feature',
                 'geometry', ST_AsGeoJSON(
@@ -1204,7 +1209,7 @@ CREATE OR REPLACE FUNCTION pois_(
                                     END
                                 END,
                             'dep_ids', dep_original_ids,
-                            'report_issue_url', menu.report_issue->>'url_template'
+                            'report_issue_url', CASE WHEN menu.report_issue->>'url_template' IS NOT NULL THEN '__report_issue_url_template__' END
                         ),
                         'editorial', nullif(coalesce(menu.editorial, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
                             'website:details', coalesce(
@@ -1242,16 +1247,35 @@ CREATE OR REPLACE FUNCTION pois_(
         ORDER BY
             menu.menu_id,
             pois.slug_id
-    )
-    SELECT
-        replace(jsonb_build_object(
-            'type', 'FeatureCollection',
-            'features', coalesce(jsonb_agg(feature), '[]'::jsonb)
-        )::text, '__base_url__', _base_url)
-    FROM
-        json_pois
+    ),
+    json_pois_report_issue AS (
+        SELECT
+            feature,
+            report_issue_url_template,
+            (
+                SELECT
+                     jsonb_object_agg(
+                        key,
+                        CASE value
+                            WHEN '[[geom.lon]]' THEN ST_X(ST_PointOnSurface(geom))::text::jsonb
+                            WHEN '[[geom.lat]]' THEN ST_Y(ST_PointOnSurface(geom))::text::jsonb
+                            ELSE (SELECT * FROM jsonb_path_query(feature->'properties', value::jsonpath) LIMIT 1)
+                        END
+                    )
+                FROM
+                    jsonb_each_text(report_issue_value_extractors)
+            ) AS report_issue_values
+        FROM
+            json_pois
     WHERE
         first_one
+    )
+    SELECT
+        replace(feature::text, '__base_url__', _base_url) AS feature,
+        report_issue_url_template,
+        report_issue_values
+    FROM
+        json_pois_report_issue
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
@@ -1270,7 +1294,9 @@ CREATE OR REPLACE FUNCTION pois(
     _with_deps text,
     _cliping_polygon_slug text
 ) RETURNS TABLE (
-    d text
+    feature text,
+    report_issue_url_template text,
+    report_issue_values jsonb
 ) AS $$
     WITH
     projects AS (

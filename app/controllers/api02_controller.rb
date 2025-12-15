@@ -279,7 +279,14 @@ class Api02Controller < ApplicationController
       deps,
       cliping_polygon_slug,
     ]).collect{ |poi|
-      poi['feature']
+      feature = poi['feature']
+      report_issue_url_template = poi['report_issue_url_template']
+      if !report_issue_url_template.nil?
+        report_issue_values = JSON.parse(poi['report_issue_values'])
+        report_issue_url = URITemplate.new(report_issue_url_template).expand(report_issue_values)
+        feature = feature.gsub('__report_issue_url_template__', report_issue_url)
+      end
+      feature
     }
   end
 

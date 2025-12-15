@@ -40,7 +40,7 @@ def load_source(conn, project_slug, metadatas)
         id,
         metadata['name'].to_json,
         metadata['attribution'],
-        metadata['report_issue'],
+        metadata['report_issue'].to_json,
       ])
     }
   }
