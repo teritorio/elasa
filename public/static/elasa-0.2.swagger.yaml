@@ -568,6 +568,9 @@ components:
           ]
           description: How render the field.
           default: string
+        icon:
+          type: string
+          description: CSS identifier of the icons.
 
     fields_list_group:
       type: object

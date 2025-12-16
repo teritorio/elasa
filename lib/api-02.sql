@@ -681,7 +681,14 @@ CREATE OR REPLACE FUNCTION fields(
                 ),
                 'group', fields."group",
                 'display_mode', fields.display_mode,
-                'icon', fields.icon,
+                'icon', coalesce(
+                    fields.icon,
+                    CASE
+                        WHEN fields.field = 'facebook' THEN 'facebook'
+                        WHEN fields.field = 'instagram' THEN 'instagram'
+                        WHEN fields.field = 'linkedin' THEN 'linkedin'
+                    END
+                ),
                 -- 'fields', null
                 'multilingual', CASE WHEN fields."group" IS NULL THEN
                     nullif(fields.multilingual, false)
