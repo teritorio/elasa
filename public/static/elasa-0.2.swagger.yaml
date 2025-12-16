@@ -647,19 +647,6 @@ components:
             image:thumbnail:
               type: string
               description: Image thumbnail URL.
-            phone:
-              type: array
-              items:
-                type: string
-            email:
-              type: array
-              items:
-                type: string
-            website:
-              type: array
-              items:
-                type: string
-                description: External mains URL.
             route:gpx_trace:
               type: string
               description: URL of the route trace in GPX.
@@ -703,11 +690,6 @@ components:
               type: string
               format: date
               default: Today
-            download:
-              type: array
-              items:
-                type: string
-                description: Documents URL to download.
             metadata:
               type: object
               additionalProperties: false
