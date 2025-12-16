@@ -372,6 +372,7 @@ def load_schema(con, project_slug, schemas)
       CREATE TEMP TABLE schemas_import(
         field text,
         multilingual text,
+        \"array\" text,
         media_type varchar,
         role varchar
       )
@@ -384,6 +385,7 @@ def load_schema(con, project_slug, schemas)
         conn.put_copy_data([
           key,
           (item['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
+          (schema['type'] == 'array').to_s,
           item['contentMediaType'],
           item['xContentRole'],
         ])
@@ -410,6 +412,7 @@ def load_schema(con, project_slug, schemas)
       WHEN MATCHED THEN
         UPDATE SET
           multilingual = schemas_import.multilingual::boolean,
+          \"array\" = schemas_import.\"array\"::boolean,
           media_type = schemas_import.media_type,
           role = schemas_import.role
       -- WHEN NOT MATCHED THEN -- Only if already exists

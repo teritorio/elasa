@@ -1008,7 +1008,8 @@ CREATE TABLE public.fields (
     label_small boolean DEFAULT false NOT NULL,
     multilingual boolean,
     media_type character varying,
-    role character varying
+    role character varying,
+    "array" boolean
 );
 
 
