@@ -687,6 +687,10 @@ CREATE OR REPLACE FUNCTION fields(
                         WHEN fields.field = 'facebook' THEN 'facebook'
                         WHEN fields.field = 'instagram' THEN 'instagram'
                         WHEN fields.field = 'linkedin' THEN 'linkedin'
+
+                        WHEN fields.field = 'download' THEN 'arrow-circle-down'
+                        WHEN fields.field = 'route:gpx_trace' THEN 'arrow-circle-down'
+                        WHEN fields.field = 'route:pdf' THEN 'arrow-circle-down'
                     END
                 ),
                 -- 'fields', null
@@ -711,12 +715,17 @@ CREATE OR REPLACE FUNCTION fields(
                         WHEN fields.field = 'string' THEN 'string'
                         WHEN fields.field = 'description' THEN 'html'
                         WHEN fields.field = 'short_description' THEN 'string@short'
-                        WHEN fields.field LIKE '%capacity%' THEN 'integer'
+                        WHEN fields.field LIKE 'capacity' THEN 'integer'
+                        WHEN fields.field LIKE 'capacity:%' THEN 'integer'
+                        WHEN fields.field LIKE '%:capacity' THEN 'integer'
                         -- THEN 'boolean'
                         -- THEN 'color'
 
                         -- Links
                         WHEN fields.field = 'website' THEN 'weblink'
+                        WHEN fields.field = 'website:%' THEN 'weblink'
+                        WHEN fields.field = '%:website' THEN 'weblink'
+
                         WHEN fields.field = 'facebook' THEN 'weblink@social-network'
                         WHEN fields.field = 'instagram' THEN 'weblink@social-network'
                         WHEN fields.field = 'linkedin' THEN 'weblink@social-network'
