@@ -555,7 +555,7 @@ components:
           enum: [
             string, html, string@short,
             integer, boolean,
-            weblink, weblink@scocial-network, weblink@download,
+            weblink, weblink@social-network, weblink@download,
             email, phone,
             date, datetime, duration, start_end_date,
             osm:opening_hours, osm:collection_times, osm:opening_hours+values,

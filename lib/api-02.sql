@@ -714,9 +714,9 @@ CREATE OR REPLACE FUNCTION fields(
 
                         -- Links
                         WHEN fields.field = 'website' THEN 'weblink'
-                        WHEN fields.field = 'facebook' THEN 'weblink@scocial-network'
-                        WHEN fields.field = 'instagram' THEN 'weblink@scocial-network'
-                        WHEN fields.field = 'linkedin' THEN 'weblink@scocial-network'
+                        WHEN fields.field = 'facebook' THEN 'weblink@social-network'
+                        WHEN fields.field = 'instagram' THEN 'weblink@social-network'
+                        WHEN fields.field = 'linkedin' THEN 'weblink@social-network'
 
                         WHEN fields.field = 'download' THEN 'weblink@download'
                         WHEN fields.field = 'route:gpx_trace' THEN 'weblink@download'
