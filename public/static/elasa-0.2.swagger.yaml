@@ -550,6 +550,10 @@ components:
           type: boolean
           description: Is the field multilingual or not.
           default: false
+        array:
+          type: boolean
+          description: Is the field an array or not. Multilingual come first.
+          default: false
         render:
           type: string
           enum: [
