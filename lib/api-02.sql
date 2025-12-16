@@ -693,6 +693,9 @@ CREATE OR REPLACE FUNCTION fields(
                 'multilingual', CASE WHEN fields."group" IS NULL THEN
                     nullif(fields.multilingual, false)
                 END,
+                'array', CASE WHEN fields."group" IS NULL THEN
+                    nullif(fields.array, false)
+                END,
                 'render', CASE WHEN fields."group" IS NULL THEN coalesce(
                     fields.role,
                     CASE fields.media_type
