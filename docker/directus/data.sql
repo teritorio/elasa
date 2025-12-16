@@ -198,13 +198,13 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 136	fields	field	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	field_block	\N	\N
 138	fields	group	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	group_block	\N	\N
 139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
-140	fields	icon	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	group_block	\N	\N
-141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100,"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	4	full	\N	\N	\N	f	group_block	\N	\N
+140	fields	icon	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
+141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
+144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100,"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	3	full	\N	\N	\N	f	group_block	\N	\N
 145	fields_fields	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 146	fields_fields	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 147	fields_fields	related_fields_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-148	fields	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	8	full	\N	\N	\N	f	\N	\N	\N
+148	fields	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	9	full	\N	\N	\N	f	\N	\N	\N
 149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	9	half	\N	\N	\N	f	category	\N	\N
 150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	10	half	\N	\N	\N	f	category	\N	\N
 151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	11	half	\N	\N	\N	f	category	\N	\N
@@ -270,7 +270,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 547	fields_translations	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 548	fields_translations	languages_code	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 549	fields_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
-550	fields	field_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"},"hidden":true}]	f	\N	\N	\N
+550	fields	field_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"},"hidden":true}]	f	\N	\N	\N
 551	fields	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	field_block	\N	\N
 552	menu_items	translations	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"translate"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 553	filters	multiselection_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	multiselection	\N	\N
@@ -325,7 +325,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 604	themes	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"theme_translations":{"name":{"_icontains":"$SEARCH"}}},{"theme_translations":{"site_url":{"_icontains":"$SEARCH"}}},{"theme_translations":{"main_url":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
 605	menu_items	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"menu_items_translations":{"name":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"name_singular":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"slug":{"_icontains":"$SEARCH"}}},{"sources":{"sources_id":{"slug":{"_icontains":"$SEARCH"}}}},{"href":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
 606	filters	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"filters_translations":{"name":{"_icontains":"$SEARCH"}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_begin":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_end":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"number_range_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
-607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	9	full	\N	\N	\N	f	\N	\N	\N
+607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 608	articles	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"article_translations":{"title":{"_icontains":"$SEARCH"}}},{"article_translations":{"slug":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 610	sources	report_issue	\N	input-code	{"iconLeft":"bug_report"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
