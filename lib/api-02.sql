@@ -1062,6 +1062,21 @@ END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS short_description_i18n;
+CREATE OR REPLACE FUNCTION short_description_i18n(
+    _description jsonb,
+    _min_length integer
+) RETURNS jsonb AS $$
+    SELECT
+        jsonb_object_agg(
+            key,
+            short_description(value, _min_length)
+        )
+    FROM
+        jsonb_each_text(_description)
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
 CREATE OR REPLACE FUNCTION array_unique (a bigint[]) RETURNS bigint[] AS $$
   SELECT ARRAY (
     SELECT DISTINCT V FROM UNNEST(A) AS B(V) WHERE V IS NOT NULL
@@ -1097,7 +1112,7 @@ CREATE OR REPLACE FUNCTION pois_(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            coalesce(menu_items.name_singular->>'fr', menu_items.name->>'fr') AS name_singular,
+            coalesce(menu_items.name_singular->'fr', menu_items.name->'fr') AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             sources.report_issue,
@@ -1235,7 +1250,7 @@ CREATE OR REPLACE FUNCTION pois_(
                         CASE jsonb_typeof(pois.properties->'tags'->'route')
                             WHEN 'object' THEN json_flat('route',
                                     (pois.properties->'tags'->'route') - 'pdf' - 'waypoint:type' ||
-                                    jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf'->'fr-FR')
+                                    jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf')
                                 )
                             ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
                         END, '{}'::jsonb) ||
@@ -1250,31 +1265,31 @@ CREATE OR REPLACE FUNCTION pois_(
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
                         'name', coalesce(
-                            pois.properties->'tags'->'name'->>'fr-FR',
-                            pois.properties->'natives'->'name'->>'fr-FR',
-                            menu.name_singular
+                            pois.properties->'tags'->'name',
+                            pois.properties->'natives'->'name',
+                            jsonb_strip_nulls(jsonb_build_object('fr-FR', menu.name_singular->'fr'))
                         ),
-                        'official_name', pois.properties->'tags'->'official_name'->'fr-FR',
-                        'loc_name', pois.properties->'tags'->'loc_name'->'fr-FR',
-                        'alt_name', pois.properties->'tags'->'alt_name'->'fr-FR',
+                        'official_name', pois.properties->'tags'->'official_name',
+                        'loc_name', pois.properties->'tags'->'loc_name',
+                        'alt_name', pois.properties->'tags'->'alt_name',
                         'description',
                             CASE _short_description
                             -- TODO strip html tags before substr
-                            WHEN 'true' THEN short_description(coalesce(
-                                pois.properties->'tags'->'description'->>'fr-FR',
-                                pois.properties->'natives'->'short_description'->>'fr-FR',
-                                pois.properties->'natives'->'description'->>'fr-FR'
+                            WHEN 'true' THEN short_description_i18n(coalesce(
+                                pois.properties->'tags'->'description',
+                                pois.properties->'natives'->'short_description',
+                                pois.properties->'natives'->'description'
                             ), 130)
                             ELSE coalesce(
-                                pois.properties->'tags'->'description'->>'fr-FR',
-                                pois.properties->'natives'->'description'->>'fr-FR',
-                                pois.properties->'natives'->'short_description'->>'fr-FR'
+                                pois.properties->'tags'->'description',
+                                pois.properties->'natives'->'description',
+                                pois.properties->'natives'->'short_description'
                             )
                             END,
                         'short_description',
                             CASE _short_description = 'false' OR _short_description IS NULL
                             WHEN true THEN
-                                pois.properties->'natives'->'short_description'->>'fr-FR'
+                                pois.properties->'natives'->'short_description'
                             END,
                         'download',
                             CASE jsonb_typeof(pois.properties->'natives'->'download')
@@ -1304,14 +1319,14 @@ CREATE OR REPLACE FUNCTION pois_(
                             'report_issue_url', CASE WHEN menu.report_issue->>'url_template' IS NOT NULL THEN '__report_issue_url_template__' END
                         ),
                         'editorial', nullif(coalesce(menu.editorial, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
-                            'website:details', coalesce(
+                            'website:details', nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', coalesce(
                                 pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr-FR',
                                     pois.properties->'natives'->>'website:details'
                                 ) END,
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
-                            )
+                            ))), '{}'::jsonb)
                         )), '{}'::jsonb),
                         'display', nullif(coalesce(menu.display, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
                             'color_fill', coalesce(pois.properties->'natives'->>'color_fill', pois.properties->'tags'->>'colour'),

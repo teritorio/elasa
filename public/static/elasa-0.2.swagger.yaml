@@ -639,9 +639,10 @@ components:
           required: [metadata]
           properties:
             name:
-              type: string
+              $ref: '#/components/schemas/multilingual_string'
             description:
-              type: string
+              $ref: '#/components/schemas/multilingual_string'
+              format: html
               description: Content description in HTML or beginning only full text. Look at `short_description` parameter.
             image:
               type: array
@@ -774,7 +775,7 @@ components:
                   $ref: '#/components/schemas/multilingual_string'
                   description: Details POI name type.
                 website:details:
-                  type: string
+                  $ref: '#/components/schemas/multilingual_string'
                   description: Internal details URL. Alternative to external URL from `website`.
                 unavoidable:
                   type: boolean
