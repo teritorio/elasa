@@ -1122,7 +1122,7 @@ CREATE OR REPLACE FUNCTION pois_(
             sources.id AS source_id,
             menu_items.slug,
             menu_items.id AS menu_id,
-            coalesce(menu_items.name_singular->'fr', menu_items.name->'fr') AS name_singular,
+            coalesce(menu_items.name, '{}'::jsonb) || coalesce(menu_items.name_singular, '{}'::jsonb) AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             sources.report_issue,
