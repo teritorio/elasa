@@ -701,7 +701,12 @@ CREATE OR REPLACE FUNCTION fields(
                     nullif(fields.array, false)
                 END,
                 'render', CASE WHEN fields."group" IS NULL THEN coalesce(
-                    fields.role,
+                    CASE fields.role
+                        WHEN 'opening_hours' THEN 'osm:opening_hours'
+                        WHEN 'image' THEN 'image'
+                        WHEN 'phone' THEN 'phone'
+                        ELSE fields.role
+                    END,
                     CASE fields.media_type
                         WHEN 'text/plain' THEN 'string'
                         WHEN 'text/html' THEN 'html'
