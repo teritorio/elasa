@@ -763,7 +763,17 @@ CREATE OR REPLACE FUNCTION fields(
                         WHEN fields.field LIKE '%:opening_hours:%' THEN 'osm:opening_hours'
                         WHEN fields.field = 'smoking_hours' THEN 'osm:opening_hours'
                         WHEN fields.field = 'happy_hours' THEN 'osm:opening_hours'
-                        WHEN fields.field = 'lit' THEN 'osm:opening_hours'
+
+                        WHEN fields.field = 'lit' THEN 'osm:opening_hours+values'
+                        WHEN fields.field LIKE 'lit:%' THEN 'osm:opening_hours+values'
+                        WHEN fields.field = 'breakfast' THEN 'osm:opening_hours+values'
+                        WHEN fields.field LIKE 'breakfast:%' THEN 'osm:opening_hours+values'
+                        WHEN fields.field = 'lunch' THEN 'osm:opening_hours+values'
+                        WHEN fields.field LIKE 'lunch:%' THEN 'osm:opening_hours+values'
+                        WHEN fields.field = 'dinner' THEN 'osm:opening_hours+values'
+                        WHEN fields.field LIKE 'dinner:%' THEN 'osm:opening_hours+values'
+                        WHEN fields.field = 'happy_hours' THEN 'osm:opening_hours+values'
+                        WHEN fields.field LIKE 'happy_hours:%' THEN 'osm:opening_hours+values'
 
                         WHEN fields.field = 'collection_times' THEN 'osm:collection_times'
                         WHEN fields.field = 'service_times' THEN 'osm:collection_times'
