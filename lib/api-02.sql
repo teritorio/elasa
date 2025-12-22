@@ -709,7 +709,7 @@ CREATE OR REPLACE FUNCTION fields(
                     END,
                     CASE fields.media_type
                         WHEN 'text/plain' THEN 'string'
-                        WHEN 'text/html' THEN 'html'
+                        WHEN 'text/html' THEN 'text'
                         WHEN 'text/x-uri' THEN 'weblink'
                         WHEN 'text/vnd.phone-number' THEN 'phone'
                         WHEN 'text/vnd.osm.opening_hours' THEN 'osm:opening_hours'
@@ -718,8 +718,7 @@ CREATE OR REPLACE FUNCTION fields(
                     END,
                     CASE -- osm tags
                         WHEN fields.field = 'string' THEN 'string'
-                        WHEN fields.field = 'description' THEN 'html'
-                        WHEN fields.field = 'short_description' THEN 'string@short'
+                        WHEN fields.field = 'description' THEN 'text'
                         WHEN fields.field LIKE 'capacity' THEN 'integer'
                         WHEN fields.field LIKE 'capacity:%' THEN 'integer'
                         WHEN fields.field LIKE '%:capacity' THEN 'integer'
@@ -1077,16 +1076,34 @@ END;
 $$ LANGUAGE plpgsql STABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS short_description_i18n;
-CREATE OR REPLACE FUNCTION short_description_i18n(
+DROP FUNCTION IF EXISTS description_i18n;
+CREATE OR REPLACE FUNCTION description_i18n(
     _description jsonb,
-    _min_length integer
+    _short_to_length integer
 ) RETURNS jsonb AS $$
     SELECT
-        jsonb_object_agg(
+        nullif(jsonb_strip_nulls(jsonb_object_agg(
             key,
-            short_description(value, _min_length)
-        )
+            nullif(jsonb_strip_nulls(
+                CASE
+                WHEN _short_to_length IS NOT NULL AND short_description(value, _short_to_length) != short_description(value, NULL) THEN
+                    jsonb_build_object(
+                        'html', false,
+                        'value', short_description(value, _short_to_length) || '…',
+                        'is_shortened', true
+                    )
+                WHEN _short_to_length IS NOT NULL THEN
+                    jsonb_build_object(
+                        'html', false,
+                        'value', short_description(value, _short_to_length)
+                    )
+                ELSE
+                    jsonb_build_object(
+                        'value', value
+                    )
+                END
+            ), '{}'::jsonb)
+        )), '{} '::jsonb)
     FROM
         jsonb_each_text(_description)
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
@@ -1374,7 +1391,7 @@ CREATE OR REPLACE FUNCTION pois_(
                         END, '{}'::jsonb) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     (coalesce(pois.properties->'natives', '{}'::jsonb)
-                        - 'name' - 'description'
+                        - 'name' - 'description' - 'short_description'
                         - 'website:details'
                         - 'route:waypoint:type'
                         - 'color_fill' - 'color_line'
@@ -1390,18 +1407,18 @@ CREATE OR REPLACE FUNCTION pois_(
                         'official_name', pois.properties->'tags'->'official_name',
                         'loc_name', pois.properties->'tags'->'loc_name',
                         'alt_name', pois.properties->'tags'->'alt_name',
-                        'description',
-                            CASE _short_description
-                            -- TODO strip html tags before substr
-                            WHEN 'true' THEN short_description_i18n(coalesce(
-                                pois.properties->'tags'->'description',
-                                pois.properties->'natives'->'short_description',
-                                pois.properties->'natives'->'description'
-                            ), 130)
-                            ELSE coalesce(
-                                pois.properties->'tags'->'description',
-                                pois.properties->'natives'->'description',
-                                pois.properties->'natives'->'short_description'
+                        'description', CASE
+                            WHEN _short_description = 'true' THEN description_i18n(
+                                coalesce(pois.properties->'natives'->'description', '{}'::jsonb) ||
+                                coalesce(pois.properties->'natives'->'short_description', '{}'::jsonb) ||
+                                coalesce(pois.properties->'tags'->'description', '{}'::jsonb),
+                                130
+                            )
+                            ELSE description_i18n(
+                                coalesce(pois.properties->'natives'->'short_description', '{}'::jsonb) ||
+                                coalesce(pois.properties->'natives'->'description', '{}'::jsonb) ||
+                                coalesce(pois.properties->'tags'->'description', '{}'::jsonb),
+                                NULL
                             )
                             END,
                         'short_description',
