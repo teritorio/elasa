@@ -194,6 +194,22 @@ class Api01Controller < ApplicationController
     end
   end
 
+  def pois_schema
+    project_slug, _theme_slug = project_theme_params
+
+    pois_json_schema = fetch_pois_schema(project_slug)
+    respond_to do |format|
+      format.json {
+        render plain: pois_json_schema
+      }
+    end
+  end
+
+  sig { params(conn: PG::Connection, project_slug: String).returns(String) }
+  def self.fetch_pois_schema(conn, project_slug)
+    query_json(conn, 'pois_json_schema($1)', [project_slug]) || '{}'
+  end
+
   def pois_category
     params.require(%i[project theme category_id])
     pois

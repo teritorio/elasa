@@ -374,20 +374,24 @@ def load_schema(con, project_slug, schemas)
         multilingual text,
         \"array\" text,
         media_type varchar,
-        role varchar
+        role varchar,
+        json_schema text
       )
     ")
 
     enco = PG::BinaryEncoder::CopyRow.new
     conn.copy_data('COPY schemas_import FROM STDIN (FORMAT binary)', enco) {
       schemas['properties'].each{ |key, schema|
-        item = schema['type'] == 'array' ? schema['items'] : schema
+        item = schema
+        item = item['items'] if item['type'] == 'array'
+        item = schemas.dig(*item['$ref'][2..].split('/')) if !item['$ref'].nil?
         conn.put_copy_data([
           key,
-          (item['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
+          (schema['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
           (schema['type'] == 'array').to_s,
           item['contentMediaType'],
           item['xContentRole'],
+          item.to_json
         ])
       }
     }
@@ -414,7 +418,8 @@ def load_schema(con, project_slug, schemas)
           multilingual = schemas_import.multilingual::boolean,
           \"array\" = schemas_import.\"array\"::boolean,
           media_type = schemas_import.media_type,
-          role = schemas_import.role
+          role = schemas_import.role,
+          json_schema = schemas_import.json_schema::jsonb
       -- WHEN NOT MATCHED THEN -- Only if already exists
       ",
       [project_slug]
