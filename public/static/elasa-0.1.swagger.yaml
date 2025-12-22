@@ -557,7 +557,7 @@ components:
         render:
           type: string
           enum: [
-            string, html, string@short,
+            string, text,
             integer, boolean,
             weblink, weblink@social-network, weblink@download,
             email, phone,
@@ -610,6 +610,27 @@ components:
             - field: phone
             - field: email
 
+    featurePoiPropertiesText:
+      description: render "text"
+      properties:
+        html:
+          type: boolean
+          default: true
+          description: Is the text in HTML format.
+        value:
+          type: string
+          format: html
+        is_shortened:
+          type: boolean
+          default: false
+          description: Is the text shortened or not.
+
+    featurePoiPropertiesItem:
+      oneOf:
+      - type: string
+      - type: number
+      - $ref: '#/components/schemas/featurePoiPropertiesText'
+
     featurePoi:
       type: object
       additionalProperties: false
@@ -628,22 +649,23 @@ components:
           type: object
           additionalProperties:
             oneOf:
-              - type: string
-              - type: number
+              - $ref: '#/components/schemas/featurePoiPropertiesItem'
               - type: array
                 items:
+                  $ref: '#/components/schemas/featurePoiPropertiesItem'
+              - type: object
+                description: multilingual
+                items:
                   oneOf:
-                    - type: string
-                    - type: number
+                    - $ref: '#/components/schemas/featurePoiPropertiesItem'
+                    - type: array
+                      items:
+                        $ref: '#/components/schemas/featurePoiPropertiesItem'
             description: An open of first level properties can provided.
           required: [metadata]
           properties:
             name:
               $ref: '#/components/schemas/multilingual_string'
-            description:
-              $ref: '#/components/schemas/multilingual_string'
-              format: html
-              description: Content description in HTML or beginning only full text. Look at `short_description` parameter.
             image:
               type: array
               items:
