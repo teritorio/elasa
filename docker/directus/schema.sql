@@ -1009,7 +1009,8 @@ CREATE TABLE public.fields (
     multilingual boolean,
     media_type character varying,
     role character varying,
-    "array" boolean
+    "array" boolean,
+    json_schema jsonb
 );
 
 

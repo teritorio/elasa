@@ -1099,6 +1099,109 @@ CREATE OR REPLACE FUNCTION array_unique (a bigint[]) RETURNS bigint[] AS $$
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS pois_json_schema;
+CREATE OR REPLACE FUNCTION pois_json_schema(
+    _project_slug text
+) RETURNS TABLE (
+    d text
+) AS $$
+    WITH
+    properties_schema AS (
+        SELECT
+            field AS property_name,
+            "array",
+            multilingual,
+            json_schema
+        FROM
+            projects
+            JOIN fields ON
+                fields.project_id = projects.id AND
+                fields.type = 'field' AND
+                fields.json_schema IS NOT NULL AND
+                fields.field NOT IN ('ref', 'route', 'addr', 'coordinates')
+        WHERE
+            projects.slug = _project_slug
+        ORDER BY
+            field
+    ),
+    properties_schema_array AS (
+        SELECT
+            property_name,
+            multilingual,
+            CASE WHEN "array" THEN
+                jsonb_build_object(
+                    'type', 'array',
+                    'items', json_schema
+                )
+            ELSE
+                json_schema
+            END AS json_schema
+        FROM
+            properties_schema
+    ),
+    properties_schema_multilingual AS (
+        SELECT
+            property_name,
+            CASE WHEN multilingual THEN
+                jsonb_build_object(
+                    'type', 'object',
+                    'properties', json_schema
+                )
+            ELSE
+                json_schema
+            END AS json_schema
+        FROM
+            properties_schema_array
+    )
+    SELECT
+        ('{
+            "type": "object",
+            "required": ["type", "features"],
+            "additionalProperties": false,
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": ["FeatureCollection"]
+                },
+                "features": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["type", "geometry", "properties"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "type": {
+                                "type": "string",
+                                "enum": ["Feature"]
+                            },
+                            "bbox": {
+                                "type": "array",
+                                "items": {
+                                    "type": "number"
+                                },
+                                "minItems": 4,
+                                "maxItems": 4
+                            },
+                            "geometry": {
+                                "type": "object"
+                            },
+                            "properties": {
+                                "type": "object",
+                                "additionalProperties": true,
+                                "properties":
+' || jsonb_object_agg(property_name, json_schema)::text || '
+                            }
+                        }
+                    }
+                }
+            }
+        }') AS d
+    FROM
+        properties_schema_multilingual
+    ;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+
 DROP TYPE IF EXISTS ref_kv CASCADE;
 CREATE TYPE ref_kv AS (key text, value text);
 
