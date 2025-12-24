@@ -847,7 +847,7 @@ components:
                         type: integer
                       route:point:type:
                         type: string
-                        enum: ['parking', 'start', 'end', 'way_point']
+                        enum: ['parking', 'start', 'end', 'waypoint']
                       name:
                         $ref: '#/components/schemas/multilingual_string'
                       description:
