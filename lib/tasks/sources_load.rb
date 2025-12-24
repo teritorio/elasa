@@ -145,6 +145,30 @@ def load_pois(conn, project_slug, source_slug, pois)
   conn.copy_data('COPY pois_import FROM STDIN (FORMAT binary)', enco) {
     pois.each{ |feature|
       slugs = feature.dig('properties', 'tags', 'name')&.transform_values(&:parameterize)
+
+      route = feature.dig('properties', 'tags', 'route')
+      if !route.nil?
+        pdfs = feature['properties']['tags']['route']['pdf'] || { 'fr-FR' => nil }
+        feature['properties']['tags']['route'] = pdfs.to_h{ |lang, url|
+          feature['properties']['tags']['route']['pdf'] = url
+          [
+            lang,
+            feature['properties']['tags']['route'].dup
+          ]
+        }.compact
+      end
+
+      start_date = feature.dig('properties', 'tags').delete('start_date')
+      end_date = feature.dig('properties', 'tags').delete('end_date')
+      if !start_date.nil? || !end_date.nil?
+        feature['properties']['tags']['start_end_date'] = {
+          'start_date' => start_date,
+          'end_date' => end_date
+        }.compact
+      end
+
+      feature['properties']['tags'] = feature['properties']['tags'].compact
+
       conn.put_copy_data([slugs&.to_json, feature['geometry'].to_json, feature['properties'].to_json])
     }
   }
@@ -364,6 +388,51 @@ def load_i18n(con, project_slug, i18ns)
   }
 end
 
+SCHEMA_MULTILINGUAL_ROUTE = {
+  'type' => 'object',
+  'additionalProperties' => {
+    'type' => 'object',
+    'properties' => {
+        'gpx_trace' => {
+            'type' => 'string'
+        },
+        'pdf' => {
+            'type' => 'string'
+        },
+        'waypoint:type' => {
+            enum: %w[
+                parking
+                start
+                end
+                waypoint
+            ]
+        }
+    },
+    'additionalProperties' => {
+        'type' => 'object',
+        'additionalProperties' => false,
+        'properties' => {
+            'difficulty' => {
+                'enum' => %w[
+                    easy
+                    normal
+                    hard
+                ]
+            },
+            'duration' => {
+                'title' => 'Duration in minutes',
+                'type' => 'number'
+            },
+            'length' => {
+                'title' => 'Length in kilometer',
+                'type' => 'number'
+            }
+        }
+    }
+
+  }
+}.freeze
+
 def load_schema(con, project_slug, schemas)
   con.transaction{ |conn|
     puts "schema: #{schemas['properties'].size}"
@@ -379,10 +448,13 @@ def load_schema(con, project_slug, schemas)
       )
     ")
 
+    schemas['$defs'] ||= {}
+    schemas['$defs']['multilingual-route'] = SCHEMA_MULTILINGUAL_ROUTE
     enco = PG::BinaryEncoder::CopyRow.new
     conn.copy_data('COPY schemas_import FROM STDIN (FORMAT binary)', enco) {
       schemas['properties'].each{ |key, schema|
         item = schema
+        item = { '$ref' => '#/$defs/multilingual-route' } if key == 'route'
         item = item['items'] if item['type'] == 'array'
         item = schemas.dig(*item['$ref'][2..].split('/')) if !item['$ref'].nil?
         conn.put_copy_data([

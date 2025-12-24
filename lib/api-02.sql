@@ -758,7 +758,7 @@ CREATE OR REPLACE FUNCTION fields(
                         WHEN fields.field = 'date' THEN 'date'
                         WHEN fields.field = 'datetime' THEN 'datetime'
                         WHEN fields.field = 'duration' THEN 'duration'
-                        WHEN fields.field = 'start_end_date' THEN 'start_end_date' -- Syntetic
+                        WHEN fields.field = 'start_end_date' THEN 'start_end_date'
 
                         -- opening_hours & collection_times
                         WHEN fields.field = 'opening_hours' THEN 'osm:opening_hours'
@@ -782,9 +782,11 @@ CREATE OR REPLACE FUNCTION fields(
                         WHEN fields.field = 'collection_times' THEN 'osm:collection_times'
                         WHEN fields.field = 'service_times' THEN 'osm:collection_times'
 
-                        -- Syntetic fields
+                        -- Objects
                         WHEN fields.field = 'route' THEN 'route'
                         WHEN fields.field = 'addr' THEN 'addr'
+
+                        -- Syntetic fields
                         WHEN fields.field = 'coordinates' THEN 'coordinates'
                     END,
                     'string'
@@ -1135,7 +1137,7 @@ CREATE OR REPLACE FUNCTION pois_json_schema(
                 fields.project_id = projects.id AND
                 fields.type = 'field' AND
                 fields.json_schema IS NOT NULL AND
-                fields.field NOT IN ('ref', 'route', 'addr', 'coordinates')
+                fields.field NOT IN ('ref', 'coordinates')
         WHERE
             projects.slug = _project_slug
         ORDER BY
@@ -1377,18 +1379,10 @@ CREATE OR REPLACE FUNCTION pois_(
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
                         - 'description' - 'website:details'
-                        - 'addr' - 'ref' - 'route' - 'source'
+                        - 'ref' - 'source'
                         - 'colour' - 'colour:text' ||
-                    coalesce(json_flat('addr', pois.properties->'tags'->'addr'), '{}'::jsonb) ||
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
-                    coalesce(
-                        CASE jsonb_typeof(pois.properties->'tags'->'route')
-                            WHEN 'object' THEN json_flat('route',
-                                    (pois.properties->'tags'->'route') - 'pdf' - 'waypoint:type' ||
-                                    jsonb_build_object('pdf', pois.properties->'tags'->'route'->'pdf')
-                                )
-                            ELSE jsonb_build_object('route', pois.properties->'tags'->'route')
-                        END, '{}'::jsonb) ||
+                    jsonb_strip_nulls(jsonb_build_object('route', (pois.properties->'tags'->'route') - 'waypoint:type' )) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     (coalesce(pois.properties->'natives', '{}'::jsonb)
                         - 'name' - 'description' - 'short_description'
