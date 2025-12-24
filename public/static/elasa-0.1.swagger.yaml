@@ -567,8 +567,10 @@ components:
             tag,
             color,
             rating-scale, osm:stars,
+            # Objects
+            addr, route,
             # Syntetic fields
-            coordinates, addr, route
+            coordinates,
           ]
           description: How render the field.
           default: string
@@ -625,11 +627,69 @@ components:
           default: false
           description: Is the text shortened or not.
 
+    featurePoiPropertiesStartEndDate:
+      description: render "start_end_date"
+      additionalProperties: false
+      properties:
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+          default: Today
+
+    featurePoiPropertiesAddr:
+      description: render "addr"
+      additionalProperties:
+        type: string
+      properties:
+        street:
+          type: string
+        hamlet:
+          type: string
+        postcode:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+
+    featurePoiPropertiesRoute:
+      description: render "route"
+      properties:
+        type: object
+        properties:
+          gpx_trace:
+            type: string
+          pdf:
+            $ref: '#/components/schemas/multilingual_string'
+          waypoint:type:
+            type: string
+            enum: ['parking', 'start', 'end', 'waypoint']
+        additionalProperties:
+          type: object
+          additionalProperties: false
+          properties:
+            difficulty:
+              type: string
+              enum: ['easy', 'normal', 'hard']
+              description: Difficulty level of the route
+            duration:
+              type: number
+              description: Duration in minutes
+            length:
+              type: number
+              description: Length in kilometer
+
     featurePoiPropertiesItem:
       oneOf:
       - type: string
       - type: number
       - $ref: '#/components/schemas/featurePoiPropertiesText'
+      - $ref: '#/components/schemas/featurePoiPropertiesStartEndDate'
+      - $ref: '#/components/schemas/featurePoiPropertiesAddr'
+      - $ref: '#/components/schemas/featurePoiPropertiesRoute'
 
     featurePoi:
       type: object
@@ -674,49 +734,6 @@ components:
             image:thumbnail:
               type: string
               description: Image thumbnail URL.
-            route:gpx_trace:
-              type: string
-              description: URL of the route trace in GPX.
-            route:pdf:
-              type: string
-              description: PDF Route topo URL.
-            route:hiking:difficulty:
-              type: string
-              description: Difficulty level of the route by hiking.
-              enum: [easy, normal, hard]
-            route:hiking:duration:
-              type: integer
-              description: In minutes.
-            route:hiking:length:
-              type: number
-              description: In kilometers.
-            route:bicycle:difficulty:
-              type: string
-              description: Difficulty level of the route by bicycle.
-              enum: [easy, normal, hard]
-            route:bicycle:duration:
-              type: integer
-              description: In minutes.
-            route:bicycle:length:
-              type: number
-              description: In kilometers.
-            route:road:difficulty:
-              type: string
-              description: Difficulty level of the route by car on road.
-              enum: [easy, normal, hard]
-            route:road:duration:
-              type: integer
-              description: In minutes.
-            route:road:length:
-              type: number
-              description: In kilometers.
-            start_date:
-              type: string
-              format: date
-            end_date:
-              type: string
-              format: date
-              default: Today
             metadata:
               type: object
               additionalProperties: false
