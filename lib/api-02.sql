@@ -1431,10 +1431,10 @@ CREATE OR REPLACE FUNCTION pois_(
                                 WHEN 'string' THEN jsonb_build_array(pois.properties->'natives'->'download')
                                 ELSE pois.properties->'natives'->'download'
                             END,
-                        'route:point:type',  replace(coalesce(
-                                pois.properties->'tags'->'route'->>'waypoint:type',
-                                pois.properties->'natives'->>'route:waypoint:type'
-                            ), 'waypoint', 'way_point'),
+                        'route:point:type', coalesce(
+                            pois.properties->'tags'->'route'->>'waypoint:type',
+                            pois.properties->'natives'->>'route:waypoint:type'
+                        ),
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
                             -- cartocode
