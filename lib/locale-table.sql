@@ -338,13 +338,57 @@ BEGIN
                     ''id'', t.id,
                     ''source'', NULL,
                     ''updated_at'', NULL,
-                    ''natives'', (SELECT jsonb_object_agg(replace(key, ''___'', '':''), value) FROM jsonb_each(jsonb_strip_nulls(
-                        row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
-                        CASE WHEN source.table_name_t IS NOT NULL THEN ' coalesce(trans.jsonb, ''{}''::jsonb) || ' ELSE '' END || '
-                        jsonb_build_object(' ||
-                            (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
-                        ')
-                    )))
+                    ''natives'', (
+                        WITH
+                        kv AS (
+                            SELECT
+                                CASE WHEN key LIKE ''route___%'' OR key LIKE ''addr___%'' THEN
+                                    string_to_array(key, ''___'')
+                                ELSE
+                                    array[replace(key, ''___'', '':'')]
+                                END AS key,
+                                value
+                            FROM
+                                jsonb_each(jsonb_strip_nulls(
+                                row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
+                                CASE WHEN source.table_name_t IS NOT NULL THEN ' coalesce(trans.jsonb, ''{}''::jsonb) || ' ELSE '' END || '
+                                jsonb_build_object(' ||
+                                    (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                                ')
+                            ))
+                        ),
+                        m AS (
+                            SELECT
+                                key[1] AS key,
+                                value
+                            FROM
+                                ((
+                                    SELECT * FROM kv WHERE array_length(key, 1) = 1
+                                ) UNION ALL (
+                                    SELECT
+                                        array[key[1]] AS key,
+                                        jsonb_object_agg(key[2], value) AS value
+                                    FROM
+                                        ((
+                                            SELECT * FROM kv WHERE array_length(key, 1) = 2
+                                        ) UNION ALL (
+                                            SELECT
+                                                array[key[1], key[2]] as key,
+                                                jsonb_object_agg(key[3], value) AS value
+                                            FROM
+                                                kv
+                                            WHERE
+                                                array_length(key, 1) = 3
+                                            GROUP BY
+                                                key[1], key[2]
+                                        )) AS t
+                                    GROUP BY
+                                        key[1]
+                                )) AS t
+                        ),
+                        k AS (SELECT jsonb_object_agg(key, value) AS p FROM m)
+                        SELECT p - ''route'' || jsonb_strip_nulls(jsonb_build_object(''route'', nullif(jsonb_strip_nulls(jsonb_build_object(''fr-FR'', p->''route'')), ''{}''::jsonb))) FROM k
+                    )
                 )) AS properties,
                 ' || _source_id || ' AS source_id,
                 json_build_object(''original_id'', t.id) AS slugs,
