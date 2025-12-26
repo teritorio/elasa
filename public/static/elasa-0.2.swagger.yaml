@@ -149,6 +149,8 @@ paths:
                           description: CSS color.
                         style_class:
                           type: array
+                          minItems: 1
+                          maxItems: 3
                           items:
                             type: string
                           description: One up to three lenght array of class from data ontology.
@@ -163,6 +165,28 @@ paths:
                         zoom:
                           type: integer
                           description: Zoom level to show this category POI.
+                        editorial:
+                          type: object
+                          additionalProperties: false
+                          properties:
+                            popup_fields:
+                              $ref: '#/components/schemas/fields_list'
+                              description: List of properties to display in popups.
+                            details_fields:
+                              $ref: '#/components/schemas/fields_list'
+                              description: List of properties to display on details.
+                            list_fields:
+                              $ref: '#/components/schemas/fields_list'
+                              description: List of properties to display on list view.
+                            class_label:
+                              $ref: '#/components/schemas/multilingual_string'
+                              description: POI name type.
+                            class_label_popup:
+                              $ref: '#/components/schemas/multilingual_string'
+                              description: Popup POI name type.
+                            class_label_details:
+                              $ref: '#/components/schemas/multilingual_string'
+                              description: Details POI name type.
                         filters:
                           type: array
                           items:
@@ -776,9 +800,6 @@ components:
               description: Properties to help how to display.
               additionalProperties: false
               properties:
-                icon:
-                  type: string
-                  description: CSS identifier of the icons.
                 color_fill:
                   type: string
                   description: Web color identifier. Main color, for background.
@@ -788,33 +809,10 @@ components:
                 color_text:
                   type: string
                   description: Web color identifier. Text color over background of color_fill.
-                style_class:
-                  type: array
-                  items:
-                    type: string
-                  description: Three level path into the ontology classification.
             editorial:
               type: object
               additionalProperties: false
               properties:
-                popup_fields:
-                  $ref: '#/components/schemas/fields_list'
-                  description: List of properties to display in popups.
-                details_fields:
-                  $ref: '#/components/schemas/fields_list'
-                  description: List of properties to display on details.
-                list_fields:
-                  $ref: '#/components/schemas/fields_list'
-                  description: List of properties to display on list view.
-                class_label:
-                  $ref: '#/components/schemas/multilingual_string'
-                  description: POI name type.
-                class_label_popup:
-                  $ref: '#/components/schemas/multilingual_string'
-                  description: Popup POI name type.
-                class_label_details:
-                  $ref: '#/components/schemas/multilingual_string'
-                  description: Details POI name type.
                 website:details:
                   $ref: '#/components/schemas/multilingual_string'
                   description: Internal details URL. Alternative to external URL from `website`.
