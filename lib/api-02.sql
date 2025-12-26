@@ -469,9 +469,9 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.href,
             menu_items.style_class,
             menu_items.type,
-            menu_items.popup_fields_id,
-            menu_items.details_fields_id,
-            menu_items.list_fields_id,
+            fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
+            fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
+            fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             menu_items.name,
@@ -610,8 +610,18 @@ CREATE OR REPLACE FUNCTION menu(
                         'style_class', menu_items.style_class,
                         'display_mode', menu_items.display_mode,
                         'style_merge', menu_items.style_merge,
+                        'style_class', menu_items.style_class,
                         'zoom', coalesce(menu_items.zoom, 16),
-                        'filters', menu_items.filters
+                        'filters', menu_items.filters,
+                        'editorial', jsonb_build_object(
+                            'popup_fields', menu_items.popup_fields,
+                            'details_fields', menu_items.details_fields,
+                            'list_fields', menu_items.list_fields,
+                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
+                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                            -- 'unavoidable', menu_items.unavoidable -- TODO -------
+                        )
                     )
                 END,
                 'link', CASE WHEN menu_items.type = 'link' THEN
@@ -1256,32 +1266,9 @@ CREATE OR REPLACE FUNCTION pois_(
             coalesce(menu_items.name, '{}'::jsonb) || coalesce(menu_items.name_singular, '{}'::jsonb) AS name_singular,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
-            sources.report_issue,
-            jsonb_build_object(
-                'popup_fields', menu_items.popup_fields,
-                'details_fields', menu_items.details_fields,
-                'list_fields', menu_items.list_fields,
-                'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
-                -- 'unavoidable', menu_items.unavoidable -- TODO -------
-            ) AS editorial,
-            jsonb_build_object(
-                'icon', menu_items.icon,
-                'color_fill', menu_items.color_fill,
-                'color_line', menu_items.color_line,
-                'style_class', menu_items.style_class
-            ) AS display
+            sources.report_issue
         FROM
-            (
-                SELECT
-                    *,
-                    fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
-                    fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
-                    fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields
-                FROM
-                    menu_items_join AS menu_items
-            ) AS menu_items
+            menu_items_join AS menu_items
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
@@ -1451,7 +1438,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             'dep_ids', dep_original_ids,
                             'report_issue_url', CASE WHEN menu.report_issue->>'url_template' IS NOT NULL THEN '__report_issue_url_template__' END
                         ),
-                        'editorial', nullif(coalesce(menu.editorial, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
+                        'editorial', nullif(jsonb_strip_nulls(jsonb_build_object(
                             'website:details', nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', coalesce(
                                 pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
@@ -1461,7 +1448,7 @@ CREATE OR REPLACE FUNCTION pois_(
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
                             ))), '{}'::jsonb)
                         )), '{}'::jsonb),
-                        'display', nullif(coalesce(menu.display, '{}'::jsonb) || jsonb_strip_nulls(jsonb_build_object(
+                        'display', nullif(jsonb_strip_nulls(jsonb_build_object(
                             'color_fill', coalesce(pois.properties->'natives'->>'color_fill', pois.properties->'tags'->>'colour'),
                             'color_line', coalesce(pois.properties->'natives'->>'color_line', pois.properties->'tags'->>'colour'),
                             'color_text', pois.properties->'tags'->>'colour:text'
