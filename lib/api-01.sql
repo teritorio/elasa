@@ -63,11 +63,11 @@ DROP VIEW IF EXISTS themes_join;
 CREATE VIEW themes_join AS
 SELECT
     themes.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description) AS description,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) AS site_url,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) AS main_url,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description)), '{}'::jsonb) AS description,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url)), '{}'::jsonb) AS site_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url)), '{}'::jsonb) AS main_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords)), '{}'::jsonb) AS keywords,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message)), '{}'::jsonb) AS cookies_consent_message
 FROM
     themes
@@ -393,9 +393,9 @@ CREATE OR REPLACE FUNCTION filter_values(
             jsonb_agg(
                 jsonb_build_object(
                     'value', value,
-                    'name', jsonb_build_object(
+                    'name', nullif(jsonb_strip_nulls(jsonb_build_object(
                         'fr', capitalize(fields.values_translations->value->'@default:full'->>'fr-FR')
-                    )
+                    )), '{}'::jsonb)
                 )
             )
         ) AS filter_values
@@ -850,9 +850,9 @@ CREATE OR REPLACE FUNCTION menu(
                             'popup_fields', menu_items.popup_fields,
                             'details_fields', menu_items.details_fields,
                             'list_fields', menu_items.list_fields,
-                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                            'class_label', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name->'fr')), '{}'::jsonb),
+                            'class_label_popup', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name_singular->'fr')), '{}'::jsonb),
+                            'class_label_details', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name_singular->'fr')), '{}'::jsonb)
                             -- 'unavoidable', menu_items.unavoidable -- TODO -------
                         )
                     )
