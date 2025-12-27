@@ -3,23 +3,16 @@
 
 require 'csv'
 
-
 class Api02Controller < ApplicationController
+  extend T::Sig
+
+  sig { returns(String) }
   def base_url
     "https://#{request.host_with_port}"
   end
 
   def projects
-    row_projects = query_json('projects($1, $2, $3)', [base_url, nil, nil])
-    puts row_projects.inspect
-
-    projects = row_projects.nil? ? [] : JSON.parse(row_projects)
-    projects = projects.transform_values { |project|
-      project['themes'].transform_values { |theme|
-        theme.except('articles')
-      }
-      project
-    }
+    projects = self.class.fetch_projects(@db, base_url, nil, nil)
     respond_to do |format|
       format.json { render json: projects }
     end
@@ -28,37 +21,39 @@ class Api02Controller < ApplicationController
   def project
     project_slug, theme_slug = project_theme_params
 
-    row_project = query_json('projects($1, $2, $3)', [base_url, project_slug, theme_slug])
+    projects = self.class.fetch_projects(@db, base_url, project_slug, theme_slug)
 
-    if row_project.nil?
+    if projects.nil? || projects.dig(project_slug, 'themes', theme_slug).nil?
       render status: :not_found
       return
     end
 
-    project = JSON.parse(row_project).values.first
-    if !project['themes']
-      render status: :not_found
-      return
-    end
-    project['themes'] = project['themes'].transform_values { |theme|
-      theme.except('articles')
-    }
     respond_to do |format|
-      format.json { render json: project }
+      format.json { render json: projects[project_slug] }
     end
+  end
+
+  sig { params(conn: PG::Connection, base_url: String, project_slug: T.nilable(String), theme_slug: T.nilable(String)).returns(T::Hash[String, T.untyped]) }
+  def self.fetch_projects(conn, base_url, project_slug, theme_slug)
+    projects = JSON.parse(query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug])) || []
+    projects.transform_values { |project|
+      project['themes'].transform_values { |theme|
+        theme.except!('articles')
+      }
+      project
+    }
   end
 
   def articles
     project_slug, theme_slug = project_theme_params
 
-    row_project = query_json('project($1, $2)', [base_url, project_slug])
+    articles = self.class.fetch_articles(@db, base_url, project_slug, theme_slug)
 
-    if row_project.nil?
+    if articles.nil?
       render status: :not_found
       return
     end
 
-    articles = (JSON.parse(row_project)['themes'] || []).find{ |theme| theme['slug'] == theme_slug }&.[]('articles') || []
     respond_to do |format|
       format.json {
         render json: articles
@@ -66,12 +61,19 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { params(conn: PG::Connection, base_url: String, project_slug: String, theme_slug: String).returns(T::Array[Hash]) }
+  def self.fetch_articles(conn, base_url, project_slug, theme_slug)
+    projects = JSON.parse(query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug]))
+    return if projects.nil?
+
+    theme = projects.first[1]['themes'].first[1]
+    theme['articles'] || []
+  end
+
   def article
     project_slug, _theme, article_slug = params.require(%i[project theme slug])
 
-    puts [project_slug, article_slug].inspect
-    article = query_json('article($1, $2)', [project_slug, article_slug])
-    puts article.inspect
+    article = self.class.fetch_article(@db, project_slug, article_slug)
 
     if article.nil?
       render status: :not_found
@@ -85,10 +87,15 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { params(conn: PG::Connection, project_slug: String, article_slug: String).returns(T.nilable(String)) }
+  def self.fetch_article(conn, project_slug, article_slug)
+    query_json(conn, 'article($1, $2)', [project_slug, article_slug])
+  end
+
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query_json('menu($1, $2)', [project_slug, theme_slug])
+    menu_items = self.class.fetch_menu(@db, project_slug, theme_slug)
 
     if menu_items.nil?
       render status: :not_found
@@ -100,22 +107,28 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { params(conn: PG::Connection, project_slug: String, theme_slug: String).returns(T.nilable(String)) }
+  def self.fetch_menu(conn, project_slug, theme_slug)
+    query_json(conn, 'menu($1, $2)', [project_slug, theme_slug])
+  end
+
   def poi
     project_slug, theme_slug = project_theme_params
     ref_id = id_to_ref(params.require(:id))
 
-    pois = query_pois(
+    pois = self.class.fetch_pois(
+      @db,
       base_url,
       project_slug,
       theme_slug,
       nil,
-      ref_id[:id].nil? ? nil : PG::TextEncoder::Array.new.encode([ref_id[:id]]),
-      ref_id[:ref].nil? ? nil : [ref_id[:ref]].to_json,
+      ref_id[:id].nil? ? nil : [ref_id[:id]],
+      ref_id[:ref].nil? ? nil : [ref_id[:ref]],
       params[:geometry_as],
       params[:short_description],
       nil,
       nil,
-      params[:deps] == 'true',
+      params[:deps],
       nil,
     )
 
@@ -144,15 +157,16 @@ class Api02Controller < ApplicationController
       id_to_ref(ref_id)
     }
 
-    pois = query_pois(
+    pois = self.class.fetch_pois(
+      @db,
       base_url,
       project_slug,
       theme_slug,
       category_id,
-      ref_ids.nil? ? nil : PG::TextEncoder::Array.new.encode(ref_ids.pluck(:id).compact),
-      ref_ids.nil? ? nil : ref_ids.pluck(:ref).compact.to_json,
+      ref_ids&.pluck(:id)&.compact,
+      ref_ids&.pluck(:ref)&.compact,
       params[:geometry_as],
-      ActiveModel::Type::Boolean.new.cast(params[:short_description]),
+      params[:short_description],
       params[:start_date],
       params[:end_date].presence || Time.zone.today.iso8601,
       nil,
@@ -194,7 +208,7 @@ class Api02Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     lang = params[:lang]
 
-    attribute_translations = query_json('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || {}
+    attribute_translations = self.class.fetch_attribute_translations(@db, project_slug, theme_slug, lang)
     respond_to do |format|
       format.json {
         render plain: attribute_translations
@@ -202,8 +216,14 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { params(conn: PG::Connection, project_slug: String, theme_slug: String, lang: String).returns(String) }
+  def self.fetch_attribute_translations(conn, project_slug, theme_slug, lang)
+    query_json(conn, 'attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || '{}'
+  end
+
   private
 
+  sig { params(ref_id: String).returns(T::Hash[Symbol, T.untyped]) }
   def id_to_ref(ref_id)
     if ref_id.start_with?('ref:')
       ref = ref_id.split(':', 2).last.rpartition(':')
@@ -213,32 +233,45 @@ class Api02Controller < ApplicationController
     end
   end
 
-  def query_json(subject, params)
-    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
-      conn.exec('SET search_path TO api02,public')
-      conn.exec_params("SELECT * FROM #{subject}", params) { |result|
-        result.first&.[]('d')
-      }
+  sig { params(conn: PG::Connection, subject: String, params: T::Array[T.untyped]).returns(T.nilable(String)) }
+  def self.query_json(conn, subject, params)
+    conn.exec('SET search_path TO api02,public')
+    conn.exec_params("SELECT * FROM #{subject}", params) { |result|
+      result.first&.[]('d')
     }
   end
 
-  def query_rows(subject, params)
-    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
-      conn.exec('SET search_path TO api01,public')
-      conn.exec_params("SELECT * FROM #{subject}", params) { |results|
-        results.to_a
-      }
-    }
+  sig { params(conn: PG::Connection, subject: String, params: T::Array[T.untyped]).returns(T::Array[Hash]) }
+  def self.query_rows(conn, subject, params)
+    conn.exec('SET search_path TO api02,public')
+    conn.exec_params("SELECT * FROM #{subject}", params, &:to_a)
   end
 
-  def query_pois(base_url, project_slug, theme_slug, category_id, ids, refs, geometry_as, short_description, start_date, end_date, deps, cliping_polygon_slug)
-    query_rows('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
+  sig {
+    params(
+      conn: PG::Connection,
+      base_url: String,
+      project_slug: String,
+      theme_slug: String,
+      category_id: T.nilable(Integer),
+      ids: T.nilable(T::Array[Integer]),
+      refs: T.nilable(T::Array[String]),
+      geometry_as: T.nilable(String),
+      short_description: T.nilable(String),
+      start_date: T.nilable(String),
+      end_date: T.nilable(String),
+      deps: T.nilable(String),
+      cliping_polygon_slug: T.nilable(String),
+    ).returns(T::Array[String])
+  }
+  def self.fetch_pois(conn, base_url, project_slug, theme_slug, category_id, ids, refs, geometry_as, short_description, start_date, end_date, deps, cliping_polygon_slug)
+    query_rows(conn, 'pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
       base_url,
       project_slug,
       theme_slug,
       category_id,
-      ids,
-      refs,
+      ids.nil? ? nil : PG::TextEncoder::Array.new.encode(ids),
+      refs&.to_json,
       geometry_as,
       short_description,
       start_date,
@@ -254,6 +287,7 @@ class Api02Controller < ApplicationController
     params.require(%i[project theme])
   end
 
+  sig { params(hash: Hash, path: T::Array[String]).returns(T::Array[T::Array[String]]) }
   def hash_path(hash, path = [])
     hash.collect{ |key, value|
       if value.is_a?(Hash)
