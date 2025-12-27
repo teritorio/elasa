@@ -656,7 +656,7 @@ CREATE OR REPLACE FUNCTION fields(
                     false
                 ),
                 'group', fields."group",
-                'display_mode', fields.display_mode,
+                'display_mode', nullif(fields.display_mode, 'standard'),
                 'icon', fields.icon
                 -- 'fields', null
             )) AS json,
@@ -680,7 +680,7 @@ CREATE OR REPLACE FUNCTION fields(
                     false
                 ),
                 'group', fields."group",
-                'display_mode', fields.display_mode,
+                'display_mode', nullif(fields.display_mode, 'standard'),
                 'icon', coalesce(
                     fields.icon,
                     CASE
