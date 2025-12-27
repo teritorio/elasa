@@ -416,235 +416,6 @@ CREATE OR REPLACE FUNCTION filter_values(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
-DROP FUNCTION IF EXISTS menu;
-CREATE OR REPLACE FUNCTION menu(
-    _project_slug text,
-    _theme_slug text
-) RETURNS TABLE (
-    d text
-) AS $$
-    WITH
-    RECURSIVE theme_menu_items AS (
-        SELECT
-            menu_items.*,
-            NULL::bigint AS parent_slug_id
-        FROM
-            projects
-            JOIN themes ON
-                themes.project_id = projects.id AND
-                themes.slug = _theme_slug
-            JOIN menu_items_join AS menu_items ON
-                menu_items.id = themes.root_menu_item_id
-        WHERE
-            projects.slug = _project_slug
-
-        UNION ALL
-
-        SELECT
-            menu_items.*,
-            CASE
-                WHEN theme_menu_items.parent_slug_id IS NULL THEN 0
-                ELSE id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id)
-            END AS parent_slug_id
-        FROM
-            theme_menu_items
-            JOIN menu_items_join AS menu_items ON
-                menu_items.parent_id = theme_menu_items.id
-    ),
-    theme_menu_items_filters AS (
-        SELECT
-            menu_items.id,
-            menu_items.index_order,
-            menu_items.hidden,
-            menu_items.selected_by_default,
-            menu_items.parent_id,
-            menu_items.project_id,
-            menu_items.icon,
-            menu_items.display_mode,
-            menu_items.search_indexed,
-            menu_items.style_merge,
-            menu_items.zoom,
-            menu_items.color_fill,
-            menu_items.color_line,
-            menu_items.href,
-            menu_items.style_class,
-            menu_items.type,
-            fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
-            fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
-            fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields,
-            menu_items.use_internal_details_link,
-            menu_items.use_external_details_link,
-            menu_items.name,
-            menu_items.name_singular,
-            menu_items.slug,
-            menu_items.parent_slug_id,
-            nullif(jsonb_agg(
-                jsonb_build_object(
-                    'type', filters.type,
-                    'name', CASE filters.type
-                        WHEN 'boolean' THEN (
-                            SELECT
-                            jsonb_build_object(
-                                'fr', capitalize(coalesce(name_large, name, filters.name->>'fr-FR'))
-                            )
-                            FROM
-                                fields_translations
-                            WHERE
-                                fields_translations.fields_id = filters.boolean_property AND
-                                fields_translations.languages_code = 'fr-FR'
-                        )
-                        ELSE filters.name
-                    END
-                ) ||
-                CASE filters.type
-                WHEN 'multiselection' THEN
-                    jsonb_build_object(
-                        'property', fields_multiselection.field,
-                        'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
-                            '[]'::jsonb
-                        )
-                    )
-                WHEN 'checkboxes_list' THEN
-                    jsonb_build_object(
-                        'property', fields_checkboxes_list.field,
-                        'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
-                            '[]'::jsonb
-                        )
-                    )
-                WHEN 'boolean' THEN
-                    jsonb_build_object(
-                        'property', fields_boolean.field
-                    )
-                WHEN 'date_range' THEN
-                    jsonb_build_object(
-                        'property_begin', fields_date_range_begin.field,
-                        'property_end', fields_date_range_end.field
-                    )
-                WHEN 'number_range' THEN
-                    jsonb_build_object(
-                        'property', fields_number_range.field,
-                        'min', filters.min,
-                        'max', filters.max
-                    )
-                END
-            ORDER BY menu_items_filters.index), '[null]'::jsonb) AS filters
-        FROM
-            theme_menu_items AS menu_items
-            LEFT JOIN menu_items_filters ON
-                menu_items_filters.menu_items_id = menu_items.id
-            LEFT JOIN filters_join AS filters ON
-                filters.id = menu_items_filters.filters_id
-            LEFT JOIN fields AS fields_multiselection ON
-                fields_multiselection.id = filters.multiselection_property AND
-                fields_multiselection.type = 'field'
-            LEFT JOIN fields AS fields_checkboxes_list ON
-                fields_checkboxes_list.id = filters.checkboxes_list_property AND
-                fields_checkboxes_list.type = 'field'
-            LEFT JOIN fields AS fields_boolean ON
-                fields_boolean.id = filters.boolean_property AND
-                fields_boolean.type = 'field'
-            LEFT JOIN fields AS fields_date_range_begin ON
-                fields_date_range_begin.id = filters.property_begin AND
-                fields_date_range_begin.type = 'field'
-            LEFT JOIN fields AS fields_date_range_end ON
-                fields_date_range_end.id = filters.property_end AND
-                fields_date_range_end.type = 'field'
-            LEFT JOIN fields AS fields_number_range ON
-                fields_number_range.id = filters.number_range_property AND
-                fields_number_range.type = 'field'
-        GROUP BY
-            menu_items.id,
-            menu_items.index_order,
-            menu_items.hidden,
-            menu_items.selected_by_default,
-            menu_items.parent_id,
-            menu_items.project_id,
-            menu_items.icon,
-            menu_items.display_mode,
-            menu_items.search_indexed,
-            menu_items.style_merge,
-            menu_items.zoom,
-            menu_items.color_fill,
-            menu_items.color_line,
-            menu_items.href,
-            menu_items.style_class,
-            menu_items.type,
-            menu_items.popup_fields_id,
-            menu_items.details_fields_id,
-            menu_items.list_fields_id,
-            menu_items.use_internal_details_link,
-            menu_items.use_external_details_link,
-            menu_items.name,
-            menu_items.name_singular,
-            menu_items.slug,
-            menu_items.parent_slug_id
-    )
-    SELECT
-        jsonb_agg(
-            jsonb_strip_nulls(jsonb_build_object(
-                'id', id_from_slugs_menu_item(menu_items.slug, menu_items.id),
-                'parent_id', menu_items.parent_slug_id,
-                'index_order', menu_items.index_order,
-                'hidden', menu_items.hidden,
-                'selected_by_default', menu_items.selected_by_default,
-                'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
-                    jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
-                        'name', menu_items.name,
-                        'icon', menu_items.icon,
-                        'color_fill', menu_items.color_fill,
-                        'color_line', menu_items.color_line,
-                        'display_mode', menu_items.display_mode
-                    )
-                END,
-                'category', CASE WHEN menu_items.type = 'category' THEN
-                    jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
-                        'name', menu_items.name,
-                        'search_indexed', menu_items.search_indexed,
-                        'icon', menu_items.icon,
-                        'color_fill', menu_items.color_fill,
-                        'color_line', menu_items.color_line,
-                        'style_class', menu_items.style_class,
-                        'display_mode', menu_items.display_mode,
-                        'style_merge', menu_items.style_merge,
-                        'style_class', menu_items.style_class,
-                        'zoom', coalesce(menu_items.zoom, 16),
-                        'filters', menu_items.filters,
-                        'editorial', jsonb_build_object(
-                            'popup_fields', menu_items.popup_fields,
-                            'details_fields', menu_items.details_fields,
-                            'list_fields', menu_items.list_fields,
-                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
-                            -- 'unavoidable', menu_items.unavoidable -- TODO -------
-                        )
-                    )
-                END,
-                'link', CASE WHEN menu_items.type = 'link' THEN
-                    jsonb_build_object(
-                        -- 'slug', menu_items.slug->'fr',
-                        'name', menu_items.name,
-                        'href', menu_items.href,
-                        'icon', menu_items.icon,
-                        'color_fill', menu_items.color_fill,
-                        'color_line', menu_items.color_line,
-                        'display_mode', menu_items.display_mode
-                    )
-                END
-            ))
-        )::text
-    FROM
-        theme_menu_items_filters AS menu_items
-    WHERE
-        parent_id IS NOT NULL
-    ;
-$$ LANGUAGE sql STABLE PARALLEL SAFE;
-
-
 DROP TYPE IF EXISTS field_size_t CASCADE;
 CREATE TYPE field_size_t AS ENUM ('small', 'large');
 
@@ -879,6 +650,235 @@ CREATE OR REPLACE FUNCTION fields(
     FROM
         c
     LIMIT 1
+    ;
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+
+DROP FUNCTION IF EXISTS menu;
+CREATE OR REPLACE FUNCTION menu(
+    _project_slug text,
+    _theme_slug text
+) RETURNS TABLE (
+    d text
+) AS $$
+    WITH
+    RECURSIVE theme_menu_items AS (
+        SELECT
+            menu_items.*,
+            NULL::bigint AS parent_slug_id
+        FROM
+            projects
+            JOIN themes ON
+                themes.project_id = projects.id AND
+                themes.slug = _theme_slug
+            JOIN menu_items_join AS menu_items ON
+                menu_items.id = themes.root_menu_item_id
+        WHERE
+            projects.slug = _project_slug
+
+        UNION ALL
+
+        SELECT
+            menu_items.*,
+            CASE
+                WHEN theme_menu_items.parent_slug_id IS NULL THEN 0
+                ELSE id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id)
+            END AS parent_slug_id
+        FROM
+            theme_menu_items
+            JOIN menu_items_join AS menu_items ON
+                menu_items.parent_id = theme_menu_items.id
+    ),
+    theme_menu_items_filters AS (
+        SELECT
+            menu_items.id,
+            menu_items.index_order,
+            menu_items.hidden,
+            menu_items.selected_by_default,
+            menu_items.parent_id,
+            menu_items.project_id,
+            menu_items.icon,
+            menu_items.display_mode,
+            menu_items.search_indexed,
+            menu_items.style_merge,
+            menu_items.zoom,
+            menu_items.color_fill,
+            menu_items.color_line,
+            menu_items.href,
+            menu_items.style_class,
+            menu_items.type,
+            fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
+            fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
+            fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields,
+            menu_items.use_internal_details_link,
+            menu_items.use_external_details_link,
+            menu_items.name,
+            menu_items.name_singular,
+            menu_items.slug,
+            menu_items.parent_slug_id,
+            nullif(jsonb_agg(
+                jsonb_build_object(
+                    'type', filters.type,
+                    'name', CASE filters.type
+                        WHEN 'boolean' THEN (
+                            SELECT
+                            jsonb_build_object(
+                                'fr', capitalize(coalesce(name_large, name, filters.name->>'fr-FR'))
+                            )
+                            FROM
+                                fields_translations
+                            WHERE
+                                fields_translations.fields_id = filters.boolean_property AND
+                                fields_translations.languages_code = 'fr-FR'
+                        )
+                        ELSE filters.name
+                    END
+                ) ||
+                CASE filters.type
+                WHEN 'multiselection' THEN
+                    jsonb_build_object(
+                        'property', fields_multiselection.field,
+                        'values', coalesce(
+                            (SELECT filter_values FROM filter_values(_project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            '[]'::jsonb
+                        )
+                    )
+                WHEN 'checkboxes_list' THEN
+                    jsonb_build_object(
+                        'property', fields_checkboxes_list.field,
+                        'values', coalesce(
+                            (SELECT filter_values FROM filter_values(_project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
+                            '[]'::jsonb
+                        )
+                    )
+                WHEN 'boolean' THEN
+                    jsonb_build_object(
+                        'property', fields_boolean.field
+                    )
+                WHEN 'date_range' THEN
+                    jsonb_build_object(
+                        'property_begin', fields_date_range_begin.field,
+                        'property_end', fields_date_range_end.field
+                    )
+                WHEN 'number_range' THEN
+                    jsonb_build_object(
+                        'property', fields_number_range.field,
+                        'min', filters.min,
+                        'max', filters.max
+                    )
+                END
+            ORDER BY menu_items_filters.index), '[null]'::jsonb) AS filters
+        FROM
+            theme_menu_items AS menu_items
+            LEFT JOIN menu_items_filters ON
+                menu_items_filters.menu_items_id = menu_items.id
+            LEFT JOIN filters_join AS filters ON
+                filters.id = menu_items_filters.filters_id
+            LEFT JOIN fields AS fields_multiselection ON
+                fields_multiselection.id = filters.multiselection_property AND
+                fields_multiselection.type = 'field'
+            LEFT JOIN fields AS fields_checkboxes_list ON
+                fields_checkboxes_list.id = filters.checkboxes_list_property AND
+                fields_checkboxes_list.type = 'field'
+            LEFT JOIN fields AS fields_boolean ON
+                fields_boolean.id = filters.boolean_property AND
+                fields_boolean.type = 'field'
+            LEFT JOIN fields AS fields_date_range_begin ON
+                fields_date_range_begin.id = filters.property_begin AND
+                fields_date_range_begin.type = 'field'
+            LEFT JOIN fields AS fields_date_range_end ON
+                fields_date_range_end.id = filters.property_end AND
+                fields_date_range_end.type = 'field'
+            LEFT JOIN fields AS fields_number_range ON
+                fields_number_range.id = filters.number_range_property AND
+                fields_number_range.type = 'field'
+        GROUP BY
+            menu_items.id,
+            menu_items.index_order,
+            menu_items.hidden,
+            menu_items.selected_by_default,
+            menu_items.parent_id,
+            menu_items.project_id,
+            menu_items.icon,
+            menu_items.display_mode,
+            menu_items.search_indexed,
+            menu_items.style_merge,
+            menu_items.zoom,
+            menu_items.color_fill,
+            menu_items.color_line,
+            menu_items.href,
+            menu_items.style_class,
+            menu_items.type,
+            menu_items.popup_fields_id,
+            menu_items.details_fields_id,
+            menu_items.list_fields_id,
+            menu_items.use_internal_details_link,
+            menu_items.use_external_details_link,
+            menu_items.name,
+            menu_items.name_singular,
+            menu_items.slug,
+            menu_items.parent_slug_id
+    )
+    SELECT
+        jsonb_agg(
+            jsonb_strip_nulls(jsonb_build_object(
+                'id', id_from_slugs_menu_item(menu_items.slug, menu_items.id),
+                'parent_id', menu_items.parent_slug_id,
+                'index_order', menu_items.index_order,
+                'hidden', menu_items.hidden,
+                'selected_by_default', menu_items.selected_by_default,
+                'menu_group', CASE WHEN menu_items.type = 'menu_group' THEN
+                    jsonb_build_object(
+                        -- 'slug', menu_items.slug->'fr',
+                        'name', menu_items.name,
+                        'icon', menu_items.icon,
+                        'color_fill', menu_items.color_fill,
+                        'color_line', menu_items.color_line,
+                        'display_mode', menu_items.display_mode
+                    )
+                END,
+                'category', CASE WHEN menu_items.type = 'category' THEN
+                    jsonb_build_object(
+                        -- 'slug', menu_items.slug->'fr',
+                        'name', menu_items.name,
+                        'search_indexed', menu_items.search_indexed,
+                        'icon', menu_items.icon,
+                        'color_fill', menu_items.color_fill,
+                        'color_line', menu_items.color_line,
+                        'style_class', menu_items.style_class,
+                        'display_mode', menu_items.display_mode,
+                        'style_merge', menu_items.style_merge,
+                        'style_class', menu_items.style_class,
+                        'zoom', coalesce(menu_items.zoom, 16),
+                        'filters', menu_items.filters,
+                        'editorial', jsonb_build_object(
+                            'popup_fields', menu_items.popup_fields,
+                            'details_fields', menu_items.details_fields,
+                            'list_fields', menu_items.list_fields,
+                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
+                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
+                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                            -- 'unavoidable', menu_items.unavoidable -- TODO -------
+                        )
+                    )
+                END,
+                'link', CASE WHEN menu_items.type = 'link' THEN
+                    jsonb_build_object(
+                        -- 'slug', menu_items.slug->'fr',
+                        'name', menu_items.name,
+                        'href', menu_items.href,
+                        'icon', menu_items.icon,
+                        'color_fill', menu_items.color_fill,
+                        'color_line', menu_items.color_line,
+                        'display_mode', menu_items.display_mode
+                    )
+                END
+            ))
+        )::text
+    FROM
+        theme_menu_items_filters AS menu_items
+    WHERE
+        parent_id IS NOT NULL
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
