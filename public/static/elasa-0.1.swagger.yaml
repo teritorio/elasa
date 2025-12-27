@@ -527,8 +527,9 @@ components:
 
     multilingual_string:
       minProperties: 1
-      additionalProperties:
-        type: string
+      patternProperties:
+        '^[a-z]{2}-[A-Z]{2}$':
+          type: string
       description: Language as keys, translation as values.
       example:
         en: Cat
@@ -536,6 +537,7 @@ components:
 
     fields_list_item:
       type: object
+      required: [field, render]
       additionalProperties: false
       properties:
         label:
@@ -547,6 +549,7 @@ components:
 
     fields_list_group:
       type: object
+      required: [group, fields]
       additionalProperties: false
       properties:
         group:
