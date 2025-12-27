@@ -10,7 +10,7 @@ class Api02Controller < ApplicationController
   end
 
   def projects
-    row_projects = query('projects($1, $2, $3)', [base_url, nil, nil])
+    row_projects = query_json('projects($1, $2, $3)', [base_url, nil, nil])
     puts row_projects.inspect
 
     projects = row_projects.nil? ? [] : JSON.parse(row_projects)
@@ -28,7 +28,7 @@ class Api02Controller < ApplicationController
   def project
     project_slug, theme_slug = project_theme_params
 
-    row_project = query('projects($1, $2, $3)', [base_url, project_slug, theme_slug])
+    row_project = query_json('projects($1, $2, $3)', [base_url, project_slug, theme_slug])
 
     if row_project.nil?
       render status: :not_found
@@ -51,7 +51,7 @@ class Api02Controller < ApplicationController
   def articles
     project_slug, theme_slug = project_theme_params
 
-    row_project = query('project($1, $2)', [base_url, project_slug])
+    row_project = query_json('project($1, $2)', [base_url, project_slug])
 
     if row_project.nil?
       render status: :not_found
@@ -70,7 +70,7 @@ class Api02Controller < ApplicationController
     project_slug, _theme, article_slug = params.require(%i[project theme slug])
 
     puts [project_slug, article_slug].inspect
-    article = query('article($1, $2)', [project_slug, article_slug])
+    article = query_json('article($1, $2)', [project_slug, article_slug])
     puts article.inspect
 
     if article.nil?
@@ -88,7 +88,7 @@ class Api02Controller < ApplicationController
   def menu
     project_slug, theme_slug = project_theme_params
 
-    menu_items = query('menu($1, $2)', [project_slug, theme_slug])
+    menu_items = query_json('menu($1, $2)', [project_slug, theme_slug])
 
     if menu_items.nil?
       render status: :not_found
@@ -104,7 +104,7 @@ class Api02Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     ref_id = id_to_ref(params.require(:id))
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
+    pois = query_pois(
       base_url,
       project_slug,
       theme_slug,
@@ -117,9 +117,9 @@ class Api02Controller < ApplicationController
       nil,
       params[:deps] == 'true',
       nil,
-    ])
+    )
 
-    if ['null', '{"type": "FeatureCollection", "features": []}'].include?(pois)
+    if pois.empty?
       render status: :not_found
       return
     end
@@ -127,9 +127,11 @@ class Api02Controller < ApplicationController
     respond_to do |format|
       format.geojson {
         if params[:deps] == 'true'
-          render plain: pois
+          render plain: "{\"type\": \"FeatureCollection\", \"features\": [
+#{pois.join(",\n")}
+]}"
         else
-          render json: JSON.parse(pois)['features'][0]
+          render plain: pois
         end
       }
     end
@@ -142,7 +144,7 @@ class Api02Controller < ApplicationController
       id_to_ref(ref_id)
     }
 
-    pois = query('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
+    pois = query_pois(
       base_url,
       project_slug,
       theme_slug,
@@ -155,12 +157,16 @@ class Api02Controller < ApplicationController
       params[:end_date].presence || Time.zone.today.iso8601,
       nil,
       params[:cliping_polygon_slug],
-    ]) || {}
+    )
 
     respond_to do |format|
-      format.geojson { render plain: pois }
+      format.geojson {
+        render plain: "{\"type\": \"FeatureCollection\", \"features\": [
+#{pois.join(",\n")}
+]}"
+      }
       format.csv {
-        features = JSON.parse(pois)['features']
+        features = pois.collect{ |poi| JSON.parse(poi) }
         pois_hash_path = features.collect{ |poi| hash_path(poi['properties'].except('display', 'editorial')) }.flatten(1).uniq.sort
 
         # UTF-8 BOM + CSV content
@@ -188,8 +194,12 @@ class Api02Controller < ApplicationController
     project_slug, theme_slug = project_theme_params
     lang = params[:lang]
 
-    attribute_translations = query('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || {}
-    render json: attribute_translations
+    attribute_translations = query_json('attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || {}
+    respond_to do |format|
+      format.json {
+        render plain: attribute_translations
+      }
+    end
   end
 
   private
@@ -203,12 +213,40 @@ class Api02Controller < ApplicationController
     end
   end
 
-  def query(subject, params)
+  def query_json(subject, params)
     PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
       conn.exec('SET search_path TO api02,public')
       conn.exec_params("SELECT * FROM #{subject}", params) { |result|
         result.first&.[]('d')
       }
+    }
+  end
+
+  def query_rows(subject, params)
+    PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
+      conn.exec('SET search_path TO api01,public')
+      conn.exec_params("SELECT * FROM #{subject}", params) { |results|
+        results.to_a
+      }
+    }
+  end
+
+  def query_pois(base_url, project_slug, theme_slug, category_id, ids, refs, geometry_as, short_description, start_date, end_date, deps, cliping_polygon_slug)
+    query_rows('pois($1, $2, $3, $4, $5::bigint[], $6::jsonb, $7, $8, $9, $10, $11, $12)', [
+      base_url,
+      project_slug,
+      theme_slug,
+      category_id,
+      ids,
+      refs,
+      geometry_as,
+      short_description,
+      start_date,
+      end_date,
+      deps,
+      cliping_polygon_slug,
+    ]).collect{ |poi|
+      poi['feature']
     }
   end
 
