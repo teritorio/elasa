@@ -21,8 +21,8 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
+                type: object
+                additionalProperties:
                   $ref: '#/components/schemas/project'
 
   /{project}/{theme}/settings.json:
@@ -39,7 +39,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/project'
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/project'
 
   /{project}/{theme}/menu.json:
     get:
@@ -900,8 +902,9 @@ components:
             type: string
           description: List of image URLs to proxy.
         themes:
-          type: array
-          items:
+          type: object
+          minProperties: 1
+          additionalProperties:
             type: object
             additionalProperties: false
             required: [id, slug, title, description, logo_url, favicon_url]
