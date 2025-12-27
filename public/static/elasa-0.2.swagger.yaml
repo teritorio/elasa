@@ -708,19 +708,21 @@ components:
         properties:
           type: object
           additionalProperties:
-            oneOf:
-              - $ref: '#/components/schemas/featurePoiPropertiesItem'
-              - type: array
-                items:
-                  $ref: '#/components/schemas/featurePoiPropertiesItem'
-              - type: object
-                description: multilingual
-                items:
-                  oneOf:
-                    - $ref: '#/components/schemas/featurePoiPropertiesItem'
-                    - type: array
-                      items:
-                        $ref: '#/components/schemas/featurePoiPropertiesItem'
+            type: any
+            # oneOf:
+            # - $ref: '#/components/schemas/featurePoiPropertiesItem'
+            # - type: array
+            #   items:
+            #     $ref: '#/components/schemas/featurePoiPropertiesItem'
+            # - type: object
+            #   description: multilingual
+            #   minProperties: 1
+            #   additionalProperties:
+            #     oneOf:
+            #       - $ref: '#/components/schemas/featurePoiPropertiesItem'
+            #       - type: array
+            #         items:
+            #           $ref: '#/components/schemas/featurePoiPropertiesItem'
             description: An open of first level properties can provided.
           required: [metadata]
           properties:
