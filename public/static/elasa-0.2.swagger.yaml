@@ -215,7 +215,7 @@ paths:
                                         $ref: '#/components/schemas/multilingual_string'
                             - type: object
                               additionalProperties: false
-                              required: [type, property, name]
+                              required: [type, property]
                               properties:
                                 type:
                                   type: string
@@ -561,7 +561,7 @@ components:
 
     fields_list_item:
       type: object
-      required: [field, render]
+      required: [field]
       additionalProperties: false
       properties:
         label:

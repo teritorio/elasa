@@ -35,7 +35,7 @@ DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
 SELECT
     projects.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
 FROM
     projects
     JOIN projects_translations AS trans ON
@@ -48,9 +48,9 @@ DROP VIEW IF EXISTS articles_join;
 CREATE VIEW articles_join AS
 SELECT
     articles.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title) AS title,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body) AS body
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title)), '{}'::jsonb) AS title,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body)), '{}'::jsonb) AS body
 FROM
     articles
     JOIN articles_translations AS trans ON
@@ -63,11 +63,11 @@ DROP VIEW IF EXISTS themes_join;
 CREATE VIEW themes_join AS
 SELECT
     themes.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description) AS description,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) AS site_url,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) AS main_url,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) AS keywords,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description)), '{}'::jsonb) AS description,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url)), '{}'::jsonb) AS site_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url)), '{}'::jsonb) AS main_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords)), '{}'::jsonb) AS keywords,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message)), '{}'::jsonb) AS cookies_consent_message
 FROM
     themes
@@ -81,9 +81,9 @@ DROP VIEW IF EXISTS menu_items_join;
 CREATE VIEW menu_items_join AS
 SELECT
     menu_items.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular) AS name_singular,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug
 FROM
     menu_items
     JOIN menu_items_translations AS trans ON
@@ -96,7 +96,7 @@ DROP VIEW IF EXISTS filters_join;
 CREATE VIEW filters_join AS
 SELECT
     filters.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
 FROM
     filters
     JOIN filters_translations AS trans ON
@@ -397,9 +397,9 @@ CREATE OR REPLACE FUNCTION filter_values(
             jsonb_agg(
                 jsonb_build_object(
                     'value', value,
-                    'name', jsonb_build_object(
+                    'name', nullif(jsonb_strip_nulls(jsonb_build_object(
                         'fr', capitalize(fields.values_translations->value->'@default:full'->>'fr-FR')
-                    )
+                    )), '{}'::jsonb)
                 )
                 ORDER BY value
             )
@@ -855,9 +855,9 @@ CREATE OR REPLACE FUNCTION menu(
                             'popup_fields', menu_items.popup_fields,
                             'details_fields', menu_items.details_fields,
                             'list_fields', menu_items.list_fields,
-                            'class_label', jsonb_build_object('fr', menu_items.name->'fr'),
-                            'class_label_popup', jsonb_build_object('fr', menu_items.name_singular->'fr'),
-                            'class_label_details', jsonb_build_object('fr', menu_items.name_singular->'fr')
+                            'class_label', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name->'fr')), '{}'::jsonb),
+                            'class_label_popup', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name_singular->'fr')), '{}'::jsonb),
+                            'class_label_details', nullif(jsonb_strip_nulls(jsonb_build_object('fr', menu_items.name_singular->'fr')), '{}'::jsonb)
                             -- 'unavoidable', menu_items.unavoidable -- TODO -------
                         )
                     )
