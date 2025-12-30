@@ -844,11 +844,10 @@ CREATE OR REPLACE FUNCTION menu(
                         'search_indexed', menu_items.search_indexed,
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
-                        'color_line', menu_items.color_line,
-                        'style_class', menu_items.style_class,
+                        'color_line', nullif(menu_items.color_line, menu_items.color_fill),
                         'display_mode', menu_items.display_mode,
                         'style_merge', menu_items.style_merge,
-                        'style_class', menu_items.style_class,
+                        'style_class', nullif(menu_items.style_class, '[]'::jsonb),
                         'zoom', coalesce(menu_items.zoom, 16),
                         'filters', menu_items.filters,
                         'editorial', jsonb_build_object(
@@ -1384,10 +1383,11 @@ CREATE OR REPLACE FUNCTION pois_(
                     ) ||
                     (CASE WHEN pois.image IS NOT NULL THEN jsonb_build_object('image', pois.image) ELSE '{}'::jsonb END) ||
                     jsonb_build_object(
-                        'name', coalesce(
-                            pois.properties->'tags'->'name',
-                            pois.properties->'natives'->'name',
-                            jsonb_strip_nulls(jsonb_build_object('fr-FR', menu.name_singular->'fr'))
+                        'name', nullif(
+                            coalesce(jsonb_strip_nulls(jsonb_build_object('fr-FR', menu.name_singular->'fr')), '{}'::jsonb) ||
+                            coalesce(pois.properties->'natives'->'name', '{}'::jsonb) ||
+                            coalesce(pois.properties->'tags'->'name', '{}'::jsonb),
+                            '{}'::jsonb
                         ),
                         'official_name', pois.properties->'tags'->'official_name',
                         'loc_name', pois.properties->'tags'->'loc_name',
