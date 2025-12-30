@@ -23,6 +23,11 @@ def fetch_json(url)
   JSON.parse(HTTP.follow.get(url))
 end
 
+def schema_for_root
+  path = '/'.gsub('/', '~1')
+  "#/paths/#{path}/get/responses/200/content/application~1json/schema"
+end
+
 def schema_for(path)
   path = "/{project}/{theme}/#{path}".gsub('/', '~1')
   "#/paths/#{path}/get/responses/200/content/application~1json/schema"
@@ -30,6 +35,7 @@ end
 
 def validate_schema(url_base)
   schema = YAML.safe_load_file('public/static/elasa-0.2.swagger.yaml')
+  JSON::Validator.validate!(schema, fetch_json("#{url_base}/"), fragment: schema_for_root) and puts 'settings.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/settings.json"), fragment: schema_for('settings.json')) and puts 'settings.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/articles.json"), fragment: schema_for('articles.json')) and puts 'articles.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/menu.json"), fragment: schema_for('menu.json')) and puts 'menu.json [valid]'
@@ -37,16 +43,24 @@ def validate_schema(url_base)
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/attribute_translations/fr.json"), fragment: schema_for('attribute_translations/{lang}.json')) and puts 'attribute_translations/fr.json [valid]'
 end
 
-def validate_pois(conn, pois_json_schema, project_slug, theme_slug)
-  pois = conn.exec_params('SELECT * FROM pois(\'\', $1, $2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)', [project_slug, theme_slug]) { |results|
-    results.collect{ |poi| poi['feature'] }
-  }
-  pois_geojson = "{\"type\": \"FeatureCollection\", \"features\": [#{pois.join(',')}]}"
-  errors = JSON::Validator.fully_validate(pois_json_schema, JSON.parse(pois_geojson))
-  errors.each{ |error|
-    puts error
-  }
-  raise "POIs JSON validation failed for project=#{project_slug} theme=#{theme_slug}" if !errors.empty?
+def fully_validate?(schema, json, name, fragment: nil)
+  errors = JSON::Validator.fully_validate(schema, json, fragment: fragment)
+  if errors.empty?
+    puts "#{name} [valid]"
+    true
+  else
+    errors.each{ |error|
+      keys = error.match(/'(#[^']*)'/)[1][2..].split('/')
+      begin
+        keys = keys[..2].collect{ |k| Integer(k, exception: false) || k }
+        puts "#{name} #{error} #{json.dig(*keys).to_json}"
+      rescue StandardError
+        puts "#{name} #{error}"
+      end
+    }
+    puts "#{name} [#{errors.size} errors]"
+    false
+  end
 end
 
 namespace :api02 do
@@ -62,15 +76,29 @@ namespace :api02 do
     project_slug, = ARGV[2..]
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
       conn.exec('SET search_path TO api01,public')
-      pois_json_schema = conn.exec_params('SELECT * FROM pois_json_schema($1)', [project_slug]) { |results|
-        JSON.parse(results.first&.[]('d'))
-      }
-      conn.exec_params('SELECT themes.slug AS theme_slug FROM projects JOIN themes ON themes.project_id = projects.id WHERE $1::text IS NULL OR projects.slug = $1', [project_slug]) { |results|
-        results.each{ |row|
-          theme_slug = row.fetch('theme_slug')
 
+      schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
+      fully_validate?(schema, Api01Controller.fetch_projects(conn, '', nil, nil), 'projects.json', fragment: schema_for_root) or exit 1
+
+      conn.exec_params('SELECT projects.slug AS project_slug, themes.slug AS theme_slug FROM projects JOIN themes ON themes.project_id = projects.id WHERE $1::text IS NULL OR projects.slug = $1', [project_slug]) { |results|
+        results.each{ |row|
           begin
-            validate_pois(conn, pois_json_schema, project_slug, theme_slug)
+            project_slug = row.fetch('project_slug')
+            pois_json_schema = JSON.parse(Api01Controller.fetch_pois_schema(conn, project_slug))
+
+            theme_slug = row.fetch('theme_slug')
+            puts "\n#{project_slug}/#{theme_slug}\n\n"
+
+            schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
+            fully_validate?(schema, Api01Controller.fetch_projects(conn, '', project_slug, theme_slug), 'settings.json', fragment: schema_for('settings.json'))
+            fully_validate?(schema, JSON.parse(Api01Controller.fetch_menu(conn, project_slug, theme_slug)), 'menu.json', fragment: schema_for('menu.json'))
+            fully_validate?(schema, Api01Controller.fetch_articles(conn, '', project_slug, theme_slug), 'articles.json', fragment: schema_for('articles.json'))
+            fully_validate?(schema, JSON.parse(Api01Controller.fetch_attribute_translations(conn, project_slug, theme_slug, 'fr')), 'attribute_translations/fr.json', fragment: schema_for('attribute_translations/{lang}.json'))
+
+            pois = Api01Controller.fetch_pois(conn, '', project_slug, theme_slug, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+            pois_geojson = "{\"type\": \"FeatureCollection\", \"features\": [#{pois.join(',')}]}"
+            fully_validate?(schema, pois_geojson, 'pois.geojson (generic schema)', fragment: schema_for('pois.{format}'))
+            fully_validate?(pois_json_schema, pois_geojson, 'pois.geojson (project schema)')
           rescue StandardError => e
             Sentry.capture_exception(e, extra: { project_slug: project_slug, theme_slug: theme_slug })
             puts e.message
