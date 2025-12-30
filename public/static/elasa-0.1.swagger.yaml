@@ -80,7 +80,7 @@ paths:
                     menu_group:
                       type: object
                       additionalProperties: false
-                      required: [name, icon, color_fill, color_line, display_mode]
+                      required: [name, icon, color_fill, display_mode]
                       properties:
                         slug:
                           type: string
@@ -94,7 +94,7 @@ paths:
                           description: CSS color.
                         color_line:
                           type: string
-                          description: CSS color.
+                          description: CSS color. Default to color_fill.
                         display_mode:
                           type: string
                           enum: [compact, large]
@@ -103,7 +103,7 @@ paths:
                     link:
                       type: object
                       additionalProperties: false
-                      required: [href, name, icon, color_fill, color_line, display_mode]
+                      required: [href, name, icon, color_fill, display_mode]
                       properties:
                         href:
                           type: string
@@ -120,7 +120,7 @@ paths:
                           description: CSS color.
                         color_line:
                           type: string
-                          description: CSS color.
+                          description: CSS color. Default to color_fill.
                         display_mode:
                           type: string
                           enum: [compact, large]
@@ -129,7 +129,7 @@ paths:
                     category:
                       type: object
                       additionalProperties: false
-                      required: [name, icon, color_fill, color_line, style_merge, display_mode, zoom]
+                      required: [name, icon, color_fill, style_merge, display_mode, zoom]
                       properties:
                         slug:
                           type: string
@@ -146,7 +146,7 @@ paths:
                           description: CSS color.
                         color_line:
                           type: string
-                          description: CSS color.
+                          description: CSS color. Default to color_fill.
                         style_class:
                           type: array
                           minItems: 1
@@ -609,6 +609,10 @@ components:
       properties:
         group:
           type: string
+        label:
+          type: boolean
+          description: Display the group label or not.
+          default: false
         display_mode:
           type: string
           enum: [standard, card]
@@ -921,7 +925,7 @@ components:
     project:
       type: object
       additionalProperties: false
-      required: [slug, name, attributions, icon_font_css_url, polygon, bbox_line, default_country, default_country_state_opening_hours, themes]
+      required: [slug, attributions, icon_font_css_url, themes]
       properties:
         id:
           type: integer
@@ -965,7 +969,7 @@ components:
           additionalProperties:
             type: object
             additionalProperties: false
-            required: [id, slug, title, description, logo_url, favicon_url]
+            required: [id, slug, map_style_base_url, map_style_satellite_url]
             properties:
               id:
                 type: integer
