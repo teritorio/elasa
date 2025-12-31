@@ -57,7 +57,7 @@ docker compose run --rm script bundle exec rake sources:load -- https://datasour
 
 Compare original and new API results.
 ```
-docker compose run --rm script bundle exec rake ap02i:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
+docker compose run --rm script bundle exec rake api02:diff -- https://tourism-seignanx.elasa.teritorio.xyz https://tourism-seignanx.elasa-dev.teritorio.xyz seignanx tourism
 ```
 
 ## Load dump from other instance
