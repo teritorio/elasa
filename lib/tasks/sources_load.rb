@@ -434,6 +434,8 @@ SCHEMA_MULTILINGUAL_ROUTE = {
 }.freeze
 
 def load_schema(con, project_slug, schemas)
+  return if schemas['properties'].blank?
+
   con.transaction{ |conn|
     puts "schema: #{schemas['properties'].size}"
     conn.exec("

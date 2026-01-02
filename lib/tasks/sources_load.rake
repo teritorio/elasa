@@ -42,6 +42,7 @@ namespace :sources do
           rescue StandardError => e
             Sentry.capture_exception(e, extra: { project_slug: project_slug })
             puts e.message
+            puts e.backtrace.join("\n")
           end
         }
       }
