@@ -35,7 +35,7 @@ DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
 SELECT
     projects.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
 FROM
     projects
     JOIN projects_translations AS trans ON
@@ -48,9 +48,9 @@ DROP VIEW IF EXISTS articles_join;
 CREATE VIEW articles_join AS
 SELECT
     articles.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title) AS title,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body) AS body
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title)), '{}'::jsonb) AS title,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body)), '{}'::jsonb) AS body
 FROM
     articles
     JOIN articles_translations AS trans ON
@@ -81,9 +81,9 @@ DROP VIEW IF EXISTS menu_items_join;
 CREATE VIEW menu_items_join AS
 SELECT
     menu_items.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular) AS name_singular,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) AS slug
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug
 FROM
     menu_items
     JOIN menu_items_translations AS trans ON
@@ -96,7 +96,7 @@ DROP VIEW IF EXISTS filters_join;
 CREATE VIEW filters_join AS
 SELECT
     filters.*,
-    jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
 FROM
     filters
     JOIN filters_translations AS trans ON
