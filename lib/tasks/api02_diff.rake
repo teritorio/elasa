@@ -14,21 +14,13 @@ end
 
 class Array
   def compact_blank_deep
-    r = map(&:compact_blank_deep).compact_blank
-
-    r.presence
+    collect(&:compact_blank_deep).compact_blank.presence
   end
 end
 
 class Hash
   def compact_blank_deep
-    r = each_with_object({}) { |(k, v), h|
-      if (v = v.compact_blank_deep)
-        h[k] = v
-      end
-    }.compact_blank
-
-    r.presence
+    transform_values(&:compact_blank_deep).compact_blank.presence
   end
 end
 
@@ -43,10 +35,13 @@ def compare(url_old, url_new, &block)
   url_old_base = url_old.split('/')[..2].join('/').gsub('http://', 'https://')
   url_new_base = url_new.split('/')[..2].join('/').gsub('http://', 'https://')
   hashes = [url_old, url_new].collect{ |url|
+    puts url
     JSON.parse(fetch_json(url).to_json.gsub(url_old_base, url_new_base))
   }.each_with_index.collect{ |hash, index|
     block&.call(hash, index) || hash
-  }
+  }.collect(&:compact_blank_deep)
+
+  return if hashes[0].nil? && hashes[1].nil?
 
   if hashes[0].is_a?(Hash)
     keys_only0 = hashes[0].keys - hashes[1].keys
@@ -93,7 +88,11 @@ def compare_menu(url_old, url_new)
   }
 end
 
-I18N = ['name', 'website:details', 'description', 'official_name', 'short_description'].freeze
+I18N = [
+  'name', 'official_name', 'loc_name', 'alt_name',
+  'website:details',
+  'description', 'short_description',
+].freeze
 LONG = %w[description short_description].freeze
 
 def compare_pois(url_old, url_new)
@@ -120,6 +119,7 @@ def compare_pois(url_old, url_new)
             'end_date' => poi['properties'].delete('end_date'),
           }.compact_blank
         end
+        poi['properties'].delete('route') if poi['properties']['route'] == 'bus'
       else
         poi['properties']['metadata'].delete('report_issue_url')
         poi['properties'].delete('addr')
@@ -131,6 +131,10 @@ def compare_pois(url_old, url_new)
           poi['properties'][key] = { 'fr-FR' => '.' }
         end
       }
+      poi['properties']['metadata']['category_ids'].sort!
+      poi['properties']['produce']&.sort!
+
+      poi['properties'].delete('labels')
 
       poi.compact_blank_deep
     }
@@ -149,13 +153,23 @@ end
 namespace :api02 do
   desc 'Diff API'
   task :diff, [] => :environment do
+    url_api_old, url_api_new = ARGV[2..4].map{ |url| "#{url}/api/0.1/" }
     project_slug, theme_slug = ARGV[4..6]
-    url_old, url_new = ARGV[2..4].map{ |url| "#{url}/api/0.1/#{project_slug}/#{theme_slug}" }
-    compare_settings(url_old, url_new)
-    compare_articles(url_old, url_new)
-    compare_menu(url_old, url_new)
-    compare_pois(url_old, url_new)
-    compare_attribute_translations(url_old, url_new)
+    projects = fetch_json(url_api_old)
+    projects.each{ |project_key, projet|
+      next if !(project_slug.nil? || project_slug == project_key)
+
+      projet['themes'].each_key{ |theme_key|
+        next if !(theme_slug.nil? || theme_slug == theme_key)
+
+        url_old, url_new = [url_api_old, url_api_new].map{ |url| "#{url}#{project_key}/#{theme_key}" }
+        compare_settings(url_old, url_new)
+        compare_articles(url_old, url_new)
+        compare_menu(url_old, url_new)
+        compare_pois(url_old, url_new)
+        compare_attribute_translations(url_old, url_new)
+      }
+    }
 
     exit 0 # Beacause of manually deal with rake command line arguments
   end
