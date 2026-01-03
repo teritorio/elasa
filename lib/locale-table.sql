@@ -387,7 +387,13 @@ BEGIN
                                 )) AS t
                         ),
                         k AS (SELECT jsonb_object_agg(key, value) AS p FROM m)
-                        SELECT p - ''route'' || jsonb_strip_nulls(jsonb_build_object(''route'', nullif(jsonb_strip_nulls(jsonb_build_object(''fr-FR'', p->''route'')), ''{}''::jsonb))) FROM k
+                        SELECT p - ''route'' - ''start_date'' - ''end_date'' ||
+                            jsonb_strip_nulls(jsonb_build_object(''route'', nullif(jsonb_strip_nulls(jsonb_build_object(''fr-FR'', p->''route'')), ''{}''::jsonb))) ||
+                            jsonb_strip_nulls(jsonb_build_object(''start_end_date'', nullif(jsonb_strip_nulls(jsonb_build_object(
+                                ''start_date'', p->''start_date'',
+                                ''end_date'', p->''end_date''
+                            )), ''{}''::jsonb)))
+                        FROM k
                     )
                 )) AS properties,
                 ' || _source_id || ' AS source_id,
