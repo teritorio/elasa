@@ -351,7 +351,11 @@ CREATE OR REPLACE FUNCTION filter_values(
             project_id,
             menu_items_id,
             coalesce(
-                jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE WHEN _property LIKE 'route:%' OR _property LIKE 'addr:%' THEN replace(_property, ':', '.') ELSE '"' || _property || '"' END)::jsonpath),
+                jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE
+                    WHEN _property LIKE 'route:%' THEN replace(replace(_property, 'route:', 'route."fr-FR".'), ':', '.')
+                    WHEN _property LIKE 'addr:%' THEN replace(_property, ':', '.')
+                    ELSE '"' || _property || '"' END
+                )::jsonpath),
                 jsonb_path_query_first((pois.properties->'natives')::jsonb, ('$.' || '"' || _property || '"')::jsonpath)
             ) AS property
         FROM
