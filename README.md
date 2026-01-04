@@ -101,6 +101,6 @@ docker compose run --rm script bundle exec rake test
 
 ```
 docker compose run --rm script bundle exec rake api:validate -- http://api:12000/api/0.1/seignanx/tourism
-docker compose run --rm script bundle exec rake api:validate_poi -- [project_slug]
-docker compose run --rm script bundle exec rake api:diff -- https://elasa.teritorio.xyz http://api:12000 seignanx tourism
+docker compose run --rm script bundle exec rake api:validate_poi -- [project_slug] [theme_slug]
+docker compose run --rm script bundle exec rake api:diff -- https://elasa.teritorio.xyz http://api:12000 [project_slug] [theme_slug]
 ```
