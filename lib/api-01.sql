@@ -396,6 +396,7 @@ CREATE OR REPLACE FUNCTION filter_values(
                         'fr', capitalize(fields.values_translations->value->'@default:full'->>'fr-FR')
                     )
                 )
+                ORDER BY value
             )
         ) AS filter_values
     FROM
