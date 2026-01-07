@@ -11,8 +11,8 @@ Rails.application.routes.draw do
     get 'articles', controller: 'api01'
     get 'article/:slug(.:format)', controller: 'api01', action: :article
     get 'menu', controller: 'api01'
-    get 'poi/:id', controller: 'api01', action: :poi
-    get 'poi/:id/deps', controller: 'api01', action: :poi, defaults: { deps: 'true' }
+    get 'poi(.:format)/:id', controller: 'api01', action: :poi
+    get 'poi(.:format)/:id/deps', controller: 'api01', action: :poi, defaults: { deps: 'true' }
     get 'pois(.:format)', controller: 'api01', action: :pois
     get 'pois.schema.json', controller: 'api01', action: :pois_schema
     get 'pois/category/:category_id(.:format)', controller: 'api01', action: :pois_category
