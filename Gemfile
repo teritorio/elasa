@@ -45,7 +45,7 @@ group :development do
   gem 'ruby-lsp', require: false
   gem 'sorbet'
   gem 'sorbet-rails'
-  gem 'tapioca', require: false
+  gem 'tapioca', '>= 0.17', require: false
   gem 'test-unit'
 
   # Only for sorbet typechecker
