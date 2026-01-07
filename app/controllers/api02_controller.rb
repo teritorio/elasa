@@ -1,5 +1,5 @@
 # frozen_string_literal: true
-# typed: true
+# typed: strict
 
 require 'csv'
 require 'active_storage/filename'
@@ -12,6 +12,7 @@ class Api02Controller < ApplicationController
     "https://#{request.host_with_port}"
   end
 
+  sig { void }
   def projects
     projects = self.class.fetch_projects(@db, base_url, nil, nil)
     respond_to do |format|
@@ -19,12 +20,13 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { void }
   def project
     project_slug, theme_slug = project_theme_params
 
     projects = self.class.fetch_projects(@db, base_url, project_slug, theme_slug)
 
-    if projects.nil? || projects.dig(project_slug, 'themes', theme_slug).nil?
+    if projects.dig(project_slug, 'themes', theme_slug).nil?
       render status: :not_found
       return
     end
@@ -36,7 +38,10 @@ class Api02Controller < ApplicationController
 
   sig { params(conn: PG::Connection, base_url: String, project_slug: T.nilable(String), theme_slug: T.nilable(String)).returns(T::Hash[String, T.untyped]) }
   def self.fetch_projects(conn, base_url, project_slug, theme_slug)
-    projects = JSON.parse(query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug])) || []
+    q = query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug])
+    return {} if q.nil?
+
+    projects = JSON.parse(q) || []
     projects.transform_values { |project|
       project['themes'].transform_values { |theme|
         theme.except!('articles')
@@ -45,6 +50,7 @@ class Api02Controller < ApplicationController
     }
   end
 
+  sig { void }
   def articles
     project_slug, theme_slug = project_theme_params
 
@@ -62,15 +68,19 @@ class Api02Controller < ApplicationController
     end
   end
 
-  sig { params(conn: PG::Connection, base_url: String, project_slug: String, theme_slug: String).returns(T::Array[Hash]) }
+  sig { params(conn: PG::Connection, base_url: String, project_slug: String, theme_slug: String).returns(T.nilable(T::Array[T::Hash[String, T.untyped]])) }
   def self.fetch_articles(conn, base_url, project_slug, theme_slug)
-    projects = JSON.parse(query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug]))
+    q = query_json(conn, 'projects($1, $2, $3)', [base_url, project_slug, theme_slug])
+    return if q.nil?
+
+    projects = JSON.parse(q)
     return if projects.nil?
 
     theme = projects.first[1]['themes'].first[1]
     theme['articles'] || []
   end
 
+  sig { void }
   def article
     project_slug, _theme, article_slug = params.require(%i[project theme slug])
 
@@ -93,6 +103,7 @@ class Api02Controller < ApplicationController
     query_json(conn, 'article($1, $2)', [project_slug, article_slug])
   end
 
+  sig { void }
   def menu
     project_slug, theme_slug = project_theme_params
 
@@ -113,6 +124,7 @@ class Api02Controller < ApplicationController
     query_json(conn, 'menu($1, $2)', [project_slug, theme_slug])
   end
 
+  sig { void }
   def poi
     project_slug, theme_slug = project_theme_params
     ref_id = id_to_ref(params.require(:id))
@@ -160,6 +172,7 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { void }
   def pois
     project_slug, theme_slug = project_theme_params
     category_id = (params[:category_id] || params[:idmenu])&.to_i # idmenu is deprecated
@@ -208,10 +221,11 @@ class Api02Controller < ApplicationController
     end
   end
 
+  sig { void }
   def pois_schema
     project_slug, _theme_slug = project_theme_params
 
-    pois_json_schema = fetch_pois_schema(@db, project_slug)
+    pois_json_schema = self.class.fetch_pois_schema(@db, project_slug)
     respond_to do |format|
       format.json {
         render plain: pois_json_schema
@@ -224,11 +238,13 @@ class Api02Controller < ApplicationController
     query_json(conn, 'pois_json_schema($1)', [project_slug]) || '{}'
   end
 
+  sig { void }
   def pois_category
     params.require(%i[project theme category_id])
     pois
   end
 
+  sig { void }
   def attribute_translations
     params.require(%i[project theme lang])
     project_slug, theme_slug = project_theme_params
@@ -255,7 +271,7 @@ class Api02Controller < ApplicationController
     }
   end
 
-  sig { params(conn: PG::Connection, subject: String, params: T::Array[T.untyped]).returns(T::Array[Hash]) }
+  sig { params(conn: PG::Connection, subject: String, params: T::Array[T.untyped]).returns(T::Array[T::Hash[String, T.untyped]]) }
   def self.query_rows(conn, subject, params)
     conn.exec('SET search_path TO api02,public')
     conn.exec_params("SELECT * FROM #{subject}", params, &:to_a)
@@ -309,18 +325,19 @@ class Api02Controller < ApplicationController
   sig { params(ref_id: String).returns(T::Hash[Symbol, T.untyped]) }
   def id_to_ref(ref_id)
     if ref_id.start_with?('ref:')
-      ref = ref_id.split(':', 2).last.rpartition(':')
+      ref = (ref_id.split(':', 2).last || '').rpartition(':')
       { ref: { ref[0] => ref[-1] } }
     else
       { id: ref_id.to_i }
     end
   end
 
+  sig { returns([String, String]) }
   def project_theme_params
-    params.require(%i[project theme])
+    T.cast(params.require(%i[project theme]), [String, String])
   end
 
-  sig { params(hash: Hash, path: T::Array[String]).returns(T::Array[T::Array[String]]) }
+  sig { params(hash: T::Hash[String, T.untyped], path: T::Array[String]).returns(T::Array[T::Array[String]]) }
   def hash_path(hash, path = [])
     hash.collect{ |key, value|
       if value.is_a?(Hash)

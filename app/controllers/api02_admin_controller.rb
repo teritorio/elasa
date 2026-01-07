@@ -1,11 +1,14 @@
 # frozen_string_literal: true
-# typed: true
+# typed: strict
 
 require_relative '../../lib/tasks/sources_load'
 
 
 class Api02AdminController < ApplicationController
+  extend T::Sig
+
   # Load Sources and POIs from datasource
+  sig { void }
   def sources_load
     project_slug, api_key = admin_params
     row_project = project(@db, project_slug, api_key)
@@ -34,12 +37,14 @@ class Api02AdminController < ApplicationController
 
   private
 
+  sig { returns([String, String]) }
   def admin_params
-    params.require(%i[project api_key])
+    T.cast(params.require(%i[project api_key]), [String, String])
   end
 
+  sig { params(conn: PG::Connection, slug: String, api_key: String).returns(T.nilable(T::Hash[String, T.untyped])) }
   def project(conn, slug, api_key)
     conn.exec('SET search_path TO api02,public')
-    conn.exec_params('SELECT * FROM projects WHERE slug = $1 AND api_key = $2', [slug, api_key], &:first)
+    conn.exec_params('SELECT * FROM projects WHERE slug = $1 AND api_key = $2', [slug, api_key], &:first)&.to_h
   end
 end
