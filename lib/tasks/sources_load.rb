@@ -109,8 +109,7 @@ def load_source(conn, project_slug, metadatas)
       )
   ")
 
-  conn.exec_params(
-    "
+  conn.exec_params("
     DELETE FROM
       sources
     USING
@@ -121,14 +120,12 @@ def load_source(conn, project_slug, metadatas)
       LEFT JOIN sources_import ON
         sources_import.slug = self.slug
       LEFT JOIN information_schema.tables ON
-          tables.table_name = 'local-#{project_slug}-' || self.slug
+        tables.table_name = 'local-#{project_slug}-' || self.slug
     WHERE
       sources.id = self.id AND
       sources_import.slug IS NULL AND
       tables.table_name IS NULL
-    ",
-    [project_slug]
-  )
+    ", [project_slug])
 end
 
 def load_pois(conn, project_slug, source_slug, pois)

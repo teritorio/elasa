@@ -35,9 +35,9 @@ def validate(url_base)
     i18n.dig(key, 'label').nil?
   }
 
-  if !missing_keys_labels.empty?
-    puts "[ERROR] Missing labels in i18n: #{missing_keys_labels.inspect}"
-  end
+  return if missing_keys_labels.empty?
+
+  puts "[ERROR] Missing labels in i18n: #{missing_keys_labels.inspect}"
 end
 
 namespace :api02 do

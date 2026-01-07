@@ -692,7 +692,7 @@ def load_images(conn, project_id, user_uuid, image_urls, directory)
   image_urls.zip(images_uuids).to_h
 end
 
-def load_menu(project_slug, project_id, theme_id, user_uuid, url, url_pois, url_menu_sources, i18ns, policy_uuid, url_base)
+def load_menu(_project_slug, project_id, _theme_id, _user_uuid, _url, url_pois, url_menu_sources, _i18ns, _policy_uuid, _url_base)
   PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres') { |conn|
     # conn.exec('DELETE FROM menu_items WHERE project_id = $1', [project_id])
     # conn.exec('DELETE FROM filters WHERE project_id = $1', [project_id])
@@ -1183,7 +1183,7 @@ def load_local_table(conn, source_name, name, table, table_aprent, fields, ps, i
   conn.exec("CREATE TEMP TABLE \"t_#{table}\" (#{create_table})".gsub(' integer', ' text').gsub(' bigint', ' text').gsub(' uuid', ' text').gsub(/REFERENCES [^ ]+( ON DELETE SET NULL| ON DELETE CASCADE|)/, ''))
 
   vv = ps.collect{ |p|
-    values = fields_table.collect{ |field, t, _, _|
+    fields_table.collect{ |field, t, _, _|
       begin
         if %w[id pois_id].include?(field)
           p['properties']['metadata']['id']
@@ -1784,13 +1784,13 @@ end
 namespace :wp do
   desc 'Import data from API'
   task :import, [] => :environment do
-    url, project_slug, theme_slug, datasource_url, datasources_slug = ARGV[2..]
+    url, project_slug, theme_slug, _, datasources_slug = ARGV[2..]
     base_url, project_id, settings, user_uuid, policy_uuid = nil
     # PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
-    #   set_default_languages(conn)
+    #   insert_default_languages(conn)
     # }
 
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |_conn|
       #   puts "\n====\n#{project_slug}\n====\n\n"
       base_url = "#{url}/#{project_slug}/#{theme_slug}"
       project_id, settings = load_project(project_slug, datasources_slug, "#{base_url}/settings.json")
@@ -1801,7 +1801,7 @@ namespace :wp do
       #   user_uuid = create_user(conn, project_id, project_slug, role_uuid)
     }
 
-    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
+    PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |_conn|
       # theme_id, url_base = load_theme(project_id, settings, theme_slug, user_uuid)
 
       # load_from_source(conn, "#{datasource_url}/data", project_slug, datasources_slug) if datasources_slug.present?
