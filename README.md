@@ -89,7 +89,25 @@ docker compose up postgres # And stop it once initialized with ctrl-c
 docker compose --profile=* run --rm postgres-update
 ```
 
-## Test
+## Tests and Validation
+
+### Code
+
+Setup
+```
+bundle install
+bundle exec tapioca init
+bundle exec tapioca dsl
+bundle exec srb rbi suggest-typed
+```
+
+Run
+```
+bundle exec rubocop --parallel -c .rubocop.yml --autocorrect
+bundle exec srb typecheck
+```
+
+### Tests
 
 ```
 docker compose exec -u postgres postgres psql -c "CREATE DATABASE test"
@@ -98,6 +116,8 @@ docker compose exec -u postgres postgres psql -c "CREATE DATABASE test"
 ```
 docker compose run --rm script bundle exec rake test
 ```
+
+### Data
 
 ```
 docker compose run --rm script bundle exec rake api02:validate -- http://api:12000/api/0.1/seignanx/tourism
