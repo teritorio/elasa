@@ -20,6 +20,7 @@ gem 'rack-cors'
 
 gem 'tzinfo-data'
 
+gem 'builder', '~> 3.3'
 gem 'concurrent-ruby', '< 1.3.5' # ActiveSupport bug workarround
 gem 'connection_pool', '~> 2.5'
 gem 'csv'

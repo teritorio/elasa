@@ -2,6 +2,7 @@
 # typed: true
 
 require 'csv'
+require 'active_storage/filename'
 
 class Api02Controller < ApplicationController
   extend T::Sig
@@ -146,6 +147,15 @@ class Api02Controller < ApplicationController
         else
           render plain: pois
         end
+      }
+      format.gpx {
+        name, gpx = poi_deps_as_gpx(pois)
+        if gpx.nil?
+          render status: :not_acceptable
+          return
+        end
+
+        send_data gpx, filename: ActiveStorage::Filename.new("#{name || params.require(:id)}.gpx").sanitized
       }
     end
   end
@@ -319,5 +329,72 @@ class Api02Controller < ApplicationController
         [path + [key]]
       end
     }.flatten(1)
+  end
+
+  sig { params(geojson: T::Hash[String, T.untyped], xml: T.untyped).returns([T.nilable(String), T.nilable(String), T.nilable(String)]) }
+  def poi_meta(geojson, xml)
+    name = geojson.dig('properties', 'name', 'fr-FR')
+    desc = geojson.dig('properties', 'description', 'fr-FR', 'value')
+    link = geojson.dig('properties', 'editorial', 'website:details', 'fr-FR')
+    xml.name(name) if name.present?
+    xml.desc(desc) if desc.present?
+    xml.link(link) if link.present?
+    [name, desc, link]
+  end
+
+  sig { params(pois: T::Array[String]).returns(T.nilable([T.nilable(String), String])) }
+  def poi_deps_as_gpx(pois)
+    pois = pois.collect{ |poi| JSON.parse(poi) }
+    geojson = T.must(pois.first)
+    geometry = geojson['geometry']
+    if geometry.nil? || !%w[LineString MultiLineString].include?(geometry['type'])
+      return
+    end
+
+    waypoints, deps = (pois[1..] || []).partition{ |poi|
+      poi.dig('properties', 'route', 'fr-FR', 'waypoint:type').nil?
+    }
+    deps_index = deps.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
+    waypoints_index = waypoints.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
+    dep_ids = geojson.dig('properties', 'metadata', 'dep_ids')
+
+    name = T.let(nil, T.nilable(String))
+    xml = T.let(Builder::XmlMarkup.new, T.untyped) # Avoid typing error on builder
+    xml.instruct!(:xml, version: '1.0')
+    xml.gpx(xmlns: 'http://www.topografix.com/GPX/1/1', version: '1.1') {
+      xml.metadata {
+        name, = poi_meta(geojson, xml)
+        # <author><name>Author name</name></author>
+      }
+      dep_ids.each { |dep_id|
+        dep = deps_index[dep_id]
+        next if dep.nil? || dep.dig('geometry', 'type') != 'Point'
+
+        point = dep['geometry']['coordinates']
+        xml.wpt(lon: point[0], lat: point[1]) { poi_meta(dep, xml) }
+      }
+      if !waypoints_index.empty?
+        xml.rte {
+          # <type>
+          dep_ids.each { |waypoint_id|
+            waypoint = waypoints_index[waypoint_id]
+            next if waypoint.nil? || waypoint.dig('geometry', 'type') != 'Point'
+
+            point = waypoint['geometry']['coordinates']
+            xml.rtept(lon: point[0], lat: point[1]) { poi_meta(waypoint, xml) }
+          }
+        }
+      end
+      xml.trk {
+        coordinates = geometry['type'] == 'MultiLineString' ? geometry['coordinates'] : [geometry['coordinates']]
+        coordinates.each{ |segement|
+          xml.trkseg {
+            segement.each{ |point| xml.trkpt(lon: point[0], lat: point[1]) }
+          }
+        }
+      }
+    }
+
+    [name, T.cast(xml.target!, String)]
   end
 end

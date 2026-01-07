@@ -253,7 +253,7 @@ paths:
                                 max:
                                   type: number
 
-  /{project}/{theme}/poi/{id}.geojson:
+  /{project}/{theme}/poi/{id}.{format}:
     get:
       tags:
         - poi
@@ -262,6 +262,13 @@ paths:
         - $ref: '#/components/parameters/param_path_project'
         - $ref: '#/components/parameters/param_path_theme'
         - $ref: '#/components/parameters/param_path_id'
+        - in: path
+          name: format
+          schema:
+            type: string
+            enum: [geojson, gpx]
+          required: true
+          description: Output format
         - $ref: '#/components/parameters/param_query_geometry_as'
         - $ref: '#/components/parameters/param_query_short_description'
       responses:
@@ -273,7 +280,7 @@ paths:
                 $ref: '#/components/schemas/featurePoi'
 
 
-  /{project}/{theme}/poi/{id}/deps.geojson:
+  /{project}/{theme}/poi/{id}/deps.{format}:
     get:
       tags:
         - poi
@@ -282,6 +289,13 @@ paths:
         - $ref: '#/components/parameters/param_path_project'
         - $ref: '#/components/parameters/param_path_theme'
         - $ref: '#/components/parameters/param_path_id'
+        - in: path
+          name: format
+          schema:
+            type: string
+            enum: [geojson, gpx]
+          required: true
+          description: Output format
         - $ref: '#/components/parameters/param_query_geometry_as'
         - $ref: '#/components/parameters/param_query_short_description'
       responses:

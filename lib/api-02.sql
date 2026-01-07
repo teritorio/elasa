@@ -1241,6 +1241,7 @@ DROP FUNCTION IF EXISTS pois_;
 CREATE OR REPLACE FUNCTION pois_(
     _base_url text,
     _project_id integer,
+    _project_slug text,
     _theme_slug text,
     _category_id bigint,
     _poi_ids bigint[],
@@ -1377,6 +1378,7 @@ CREATE OR REPLACE FUNCTION pois_(
                     (coalesce(pois.properties->'natives', '{}'::jsonb)
                         - 'name' - 'description' - 'short_description'
                         - 'website:details'
+                        - 'route'
                         - 'route:waypoint:type'
                         - 'color_fill' - 'color_line'
                         - 'download'
@@ -1416,6 +1418,12 @@ CREATE OR REPLACE FUNCTION pois_(
                                 WHEN 'string' THEN jsonb_build_array(pois.properties->'natives'->'download')
                                 ELSE pois.properties->'natives'->'download'
                             END,
+                        'route', coalesce(
+                            pois.properties->'tags'->'route',
+                            pois.properties->'natives'->'route' || jsonb_build_object('fr-FR', (pois.properties->'natives'->'route'->'fr-FR') ||
+                                coalesce(jsonb_strip_nulls(jsonb_build_object('gpx_trace', _base_url || '/api/0.1/' || _project_slug || '/' || _theme_slug || '/poi/' || pois.slug_id || '/deps.gpx')), '{}'::jsonb)
+                            )
+                        ),
                         'route:point:type', coalesce(
                             pois.properties->'tags'->'route'->>'waypoint:type',
                             pois.properties->'natives'->>'route:waypoint:type'
@@ -1553,8 +1561,8 @@ CREATE OR REPLACE FUNCTION pois(
     )
     SELECT * FROM pois_(
         _base_url,
-        (SELECT id FROM projects),
-        _theme_slug, _category_id, _poi_ids,
+        (SELECT id FROM projects), _project_slug, _theme_slug,
+        _category_id, _poi_ids,
         (SELECT array_agg(row((t.t).key, (t.t).value)::ref_kv) FROM (SELECT jsonb_each_text(j) FROM jsonb_array_elements(_poi_refs) AS t(j)) AS t(t)), _geometry_as, _short_description, _start_date, _end_date, _with_deps,
         (SELECT geom FROM cliping_polygon)
     )
