@@ -49,11 +49,8 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website, map_a
 
   conn.exec('
     INSERT INTO projects_translations(projects_id, languages_code, name)
-    VALUES (
-      $1,
-      $2,
-      $3
-    )
+    VALUES
+      ($1, $2, $3)
     ON CONFLICT (projects_id, languages_code)
     DO UPDATE SET
       name = $3
@@ -65,9 +62,8 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website, map_a
 
   theme_id = conn.exec('
     INSERT INTO themes(project_id, slug, logo, favicon, root_menu_item_id, favorites_mode, explorer_mode, map_style_base_url, map_style_satellite_url, map_bicycle_style_url)
-    VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10
-    )
+    VALUES
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     ON CONFLICT (project_id, slug)
     DO UPDATE SET
       logo = $3,
@@ -97,9 +93,8 @@ def new_project(conn, slug, datasources_slug, osm_id, theme, css, website, map_a
 
   conn.exec('
     INSERT INTO themes_translations(themes_id, languages_code, name, description, site_url, main_url, keywords)
-    VALUES (
-      $1, $2, $3, $4, $5, $6, $7
-    )
+    VALUES
+      ($1, $2, $3, $4, $5, $6, $7)
     ON CONFLICT (themes_id, languages_code)
     DO UPDATE SET
       name = $3,
@@ -131,9 +126,8 @@ def insert_menu_item(conn, **args)
       search_indexed, style_merge, zoom, popup_fields_id, details_fields_id, list_fields_id,
       href, use_internal_details_link, use_external_details_link
     )
-    VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
-    )
+    VALUES
+      ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
     RETURNING
       id
     ', [
@@ -154,7 +148,8 @@ def insert_menu_item(conn, **args)
     conn.exec(
       '
       INSERT INTO menu_items_translations(menu_items_id, languages_code, slug, name, name_singular)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES
+        ($1, $2, $3, $4, $5)
       ON CONFLICT (menu_items_id, languages_code)
       DO UPDATE SET
         slug = $3,
@@ -197,7 +192,7 @@ def insert_menu_group(conn, project_id, parent_id, class_path, icons, css_parser
   )
 end
 
-def insert_fields_group(conn, project_id, slug, fields, group_fields_ids, fields_ids, filters)
+def insert_fields_group(conn, project_id, slug, fields, _group_fields_ids, fields_ids, _filters)
   fields_id = conn.exec(
     '
     INSERT INTO
@@ -345,7 +340,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   if id.nil?
     conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
     puts "[WARNING] Source already linked to menu_item or empty: (#{source_slug})"
-    false
+    nil
   else
     true
   end
@@ -381,7 +376,8 @@ def insert_group_fields(conn, project_id, ontology)
       field = field[0]
       field_id = conn.exec(
         'INSERT INTO fields(project_id, type, field)
-        VALUES ($1, $2, $3)
+        VALUES
+          ($1, $2, $3)
         ON CONFLICT (project_id, "group", field)
         DO UPDATE SET
           field = EXCLUDED.field -- Do nothing, but helps to return the id
@@ -472,7 +468,7 @@ def new_ontologies_menu(con, project_id, root_menu_id, themes, css, filters)
 end
 
 def new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
-  return if !theme.present?
+  return if theme.blank?
 
   ontology =
     if theme == 'bpe'
@@ -607,7 +603,8 @@ def new_filter(con, project_id, schema, i18ns)
       field_id = conn.exec(
         '
         INSERT INTO fields(project_id, type, field)
-        VALUES ($1, $2, $3)
+        VALUES
+          ($1, $2, $3)
         ON CONFLICT (project_id, "group", field)
         DO UPDATE SET
           field = EXCLUDED.field -- Do nothing, but helps to return the id
@@ -653,7 +650,7 @@ namespace :project do
   desc 'Create a new project'
   task :new, [] => :environment do
     PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
-      set_default_languages(conn)
+      insert_default_languages(conn)
 
       slug, osm_id, theme, ontologies, datasources_slug, website, map_apikey = ARGV[2..].collect(&:presence)
       ontologies = ontologies&.split(',')

@@ -247,18 +247,6 @@ class Api02Controller < ApplicationController
     query_json(conn, 'attribute_translations($1, $2, $3)', [project_slug, theme_slug, lang]) || '{}'
   end
 
-  private
-
-  sig { params(ref_id: String).returns(T::Hash[Symbol, T.untyped]) }
-  def id_to_ref(ref_id)
-    if ref_id.start_with?('ref:')
-      ref = ref_id.split(':', 2).last.rpartition(':')
-      { ref: { ref[0] => ref[-1] } }
-    else
-      { id: ref_id.to_i }
-    end
-  end
-
   sig { params(conn: PG::Connection, subject: String, params: T::Array[T.untyped]).returns(T.nilable(String)) }
   def self.query_json(conn, subject, params)
     conn.exec('SET search_path TO api02,public')
@@ -314,6 +302,18 @@ class Api02Controller < ApplicationController
       end
       feature
     }
+  end
+
+  private
+
+  sig { params(ref_id: String).returns(T::Hash[Symbol, T.untyped]) }
+  def id_to_ref(ref_id)
+    if ref_id.start_with?('ref:')
+      ref = ref_id.split(':', 2).last.rpartition(':')
+      { ref: { ref[0] => ref[-1] } }
+    else
+      { id: ref_id.to_i }
+    end
   end
 
   def project_theme_params

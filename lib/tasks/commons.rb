@@ -13,7 +13,7 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
-def set_default_languages(conn)
+def insert_default_languages(conn)
   conn.exec('INSERT INTO languages(code, name, direction) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', %w[fr-FR French ltr])
   conn.exec('INSERT INTO languages(code, name, direction) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', %w[en-US English ltr])
   conn.exec('INSERT INTO languages(code, name, direction) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING', %w[es-ES Spanish ltr])
