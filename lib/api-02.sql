@@ -720,17 +720,7 @@ CREATE OR REPLACE FUNCTION menu(
                 jsonb_build_object(
                     'type', filters.type,
                     'name', CASE filters.type
-                        WHEN 'boolean' THEN (
-                            SELECT
-                            jsonb_build_object(
-                                'fr', capitalize(coalesce(name_large, name, filters.name->>'fr-FR'))
-                            )
-                            FROM
-                                fields_translations
-                            WHERE
-                                fields_translations.fields_id = filters.boolean_property AND
-                                fields_translations.languages_code = 'fr-FR'
-                        )
+                        WHEN 'boolean' THEN jsonb_build_object('fr', capitalize(coalesce(fields_boolean_translations.name_large, fields_boolean_translations.name, filters.name->>'fr-FR')))
                         ELSE filters.name
                     END
                 ) ||
@@ -783,6 +773,9 @@ CREATE OR REPLACE FUNCTION menu(
             LEFT JOIN fields AS fields_boolean ON
                 fields_boolean.id = filters.boolean_property AND
                 fields_boolean.type = 'field'
+            LEFT JOIN fields_translations AS fields_boolean_translations ON
+                fields_boolean_translations.fields_id = filters.boolean_property AND
+                fields_boolean_translations.languages_code = 'fr-FR'
             LEFT JOIN fields AS fields_date_range_begin ON
                 fields_date_range_begin.id = filters.property_begin AND
                 fields_date_range_begin.type = 'field'
