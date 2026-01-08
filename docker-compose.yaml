@@ -109,6 +109,7 @@ services:
       SENTRY_DSN_API: ${SENTRY_DSN_API}
     volumes:
       - ./:/srv/app/
+      - ./uploads:/directus/uploads
     depends_on:
       - postgres
     healthcheck:
