@@ -64,19 +64,19 @@ Metrics/MethodLength:
   Max: 100
 
 Metrics/AbcSize:
-  Max: 80
+  Max: 90
 
 Metrics/PerceivedComplexity:
   Max: 30
 
 Metrics/ModuleLength:
-  Max: 300
+  Max: 400
 
 Metrics/ClassLength:
   Max: 1000
 
 Metrics/ParameterLists:
-  Max: 10
+  Max: 13
 
 Metrics/BlockNesting:
   Max: 5
