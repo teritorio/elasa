@@ -331,7 +331,7 @@ async function create_others(projects, policy, tableName, { withImages, withDeps
         VALUES (source.collection, source.field, source.special, source.interface, source.options)
       WHEN MATCHED THEN
         UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options
-    `, [tableName, 'associated_pois', 'm2m', 'list-m2m', { "enableCreate": false, "enableLink": true }]);
+    `, [tableName, 'associated_pois', 'm2m', 'list-m2m', { "enableCreate": false, "enableLink": true, "limit": 200 }]);
     console.info(`Field ${tableName}.deps configured`);
 
     await database.raw(`
