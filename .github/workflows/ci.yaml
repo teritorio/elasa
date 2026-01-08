@@ -11,9 +11,63 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # services:
+    #   postgres:
+    #     image: postgis/postgis
+    #     env:
+    #       POSTGRES_DB: api
+    #       POSTGRES_USER: postgres
+    #       POSTGRES_PASSWORD: postgres
+    #     options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    #     ports:
+    #       - 5432:5432
+
+    steps:
+      # - uses: awalsh128/cache-apt-pkgs-action@latest
+      #   with:
+      #     packages: postgresql-client libgeos-dev libproj-dev
+
+      - uses: actions/checkout@v3
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          cache-version: 1
+
+      - name: Run rubocop
+        run: bundle exec rubocop --parallel -c .rubocop.yml
+
+      # - name: Run typecheck
+      #   run: |
+      #     bundle exec tapioca init && \
+      #     bundle exec srb rbi suggest-typed && \
+      #     bundle exec srb typecheck -q
+      #     # bundle exec rake rails_rbi:routes && \
+      #     # bundle exec tapioca dsl && \
+
+      # - name: Run security checks
+      #   run: |
+      #     bin/bundler-audit --update
+      #     bin/brakeman -q -w2
+
+      # - name: Setup test database
+      #   env:
+      #     RAILS_ENV: test
+      #     DATABASE_URL: postgres://postgres:postgres@localhost:5432/api
+      #   run: bundle exec rails db:setup
+
+      # - name: Run tests
+      #   run: bundle exec rake test
+      #   env:
+      #     DATABASE_URL: postgres://postgres:postgres@localhost:5432/api
+
   docker:
     runs-on: ubuntu-latest
-    # needs: []
+    needs: [test]
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
 
     permissions:
