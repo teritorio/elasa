@@ -69,8 +69,8 @@ export default {
         create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, { services, database, get, env, logger, data, accountability });
         create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability });
 
-        await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
-        await database.raw(`SELECT api01.force_update_pois_local(?)`, [tableName]);
+        await database.raw('SELECT api02.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
+        await database.raw(`SELECT api02.force_update_pois_local(?)`, [tableName]);
 
         // Force database schema re-read
         const itemsService = new services.UtilsService({

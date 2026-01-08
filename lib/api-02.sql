@@ -1,5 +1,5 @@
-CREATE SCHEMA IF NOT EXISTS api01;
-SET search_path TO api01,public;
+CREATE SCHEMA IF NOT EXISTS api02;
+SET search_path TO api02,public;
 
 DROP FUNCTION IF EXISTS capitalize;
 CREATE FUNCTION capitalize(str text) RETURNS text AS $$

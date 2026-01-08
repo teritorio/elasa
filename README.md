@@ -7,7 +7,7 @@ Build
 cp .env.template .env
 docker compose --profile "*" build
 docker compose up -d postgres
-cat docker/directus/schema.sql docker/directus/data.sql docker/directus/seq.sql lib/locale-table.sql lib/api-01.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat docker/directus/schema.sql docker/directus/data.sql docker/directus/seq.sql lib/locale-table.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 ```
 
 If required entrer to Postgres shell with
@@ -57,7 +57,7 @@ docker compose run --rm script bundle exec rake sources:load -- https://datasour
 
 Compare original and new API results.
 ```
-docker compose run --rm script bundle exec rake api:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
+docker compose run --rm script bundle exec rake ap02i:diff -- https://carte.seignanx.com/content/api.teritorio/geodata/v0.1/seignanx/tourism http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```
 
 ## Load dump from other instance
@@ -74,7 +74,7 @@ zcat pg_dump-2025-11-17.gz | docker compose exec -T -u postgres postgres psql -v
 
 # Optional, update database to current version
 docker compose run --rm script bundle exec rails db:migrate
-cat lib/api-01.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 
 docker compose up -d
 ```
@@ -100,5 +100,5 @@ docker compose run --rm script bundle exec rake test
 ```
 
 ```
-docker compose run --rm script bundle exec rake api:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
+docker compose run --rm script bundle exec rake api02:validate -- http://192.168.0.14:12000/api/0.1/seignanx/tourism
 ```

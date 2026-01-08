@@ -574,7 +574,7 @@ def compare_attribute_translations(url_old, url_new)
   puts JSON.dump(json_diff) if !json_diff.empty?
 end
 
-namespace :api do
+namespace :api02 do
   desc 'Validate API JSON with Swagger Schema'
   task :diff, [] => :environment do
     url_old, url_new = ARGV[2..]

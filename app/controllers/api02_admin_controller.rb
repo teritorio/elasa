@@ -41,7 +41,7 @@ class Api02AdminController < ApplicationController
   end
 
   def project(conn, slug, api_key)
-    conn.exec('SET search_path TO api01,public')
+    conn.exec('SET search_path TO api02,public')
     conn.exec_params('SELECT * FROM projects WHERE slug = $1 AND api_key = $2', [slug, api_key]) { |result|
       result.first
     }

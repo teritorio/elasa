@@ -40,7 +40,7 @@ def validate(url_base)
   end
 end
 
-namespace :api do
+namespace :api02 do
   desc 'Validate API i18n'
   task :validate_i18n, [] => :environment do
     url_base, = ARGV[2..]

@@ -4,7 +4,7 @@
 require 'csv'
 
 
-class Api01Controller < ApplicationController
+class Api02Controller < ApplicationController
   def base_url
     "https://#{request.host_with_port}"
   end
@@ -205,7 +205,7 @@ class Api01Controller < ApplicationController
 
   def query(subject, params)
     PG.connect(host: ENV.fetch('POSTGRES_HOST', nil), dbname: ENV['RAILS_ENV'] == 'test' ? 'test' : 'postgres', user: ENV.fetch('POSTGRES_USER', nil), password: ENV.fetch('POSTGRES_PASSWORD', nil)) { |conn|
-      conn.exec('SET search_path TO api01,public')
+      conn.exec('SET search_path TO api02,public')
       conn.exec_params("SELECT * FROM #{subject}", params) { |result|
         result.first&.[]('d')
       }

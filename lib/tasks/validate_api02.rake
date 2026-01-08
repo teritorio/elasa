@@ -17,7 +17,7 @@ def schema_for(path)
 end
 
 def validate_schema(url_base)
-  schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
+  schema = YAML.safe_load_file('public/static/elasa-0.2.swagger.yaml')
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/settings.json"), fragment: schema_for('settings.json')) and puts 'settings.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/articles.json"), fragment: schema_for('articles.json')) and puts 'articles.json [valid]'
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/menu.json"), fragment: schema_for('menu.json')) and puts 'menu.json [valid]'
@@ -25,7 +25,7 @@ def validate_schema(url_base)
   JSON::Validator.validate!(schema, fetch_json("#{url_base}/attribute_translations/fr.json"), fragment: schema_for('attribute_translations/{lang}.json')) and puts 'attribute_translations/fr.json [valid]'
 end
 
-namespace :api do
+namespace :api02 do
   desc 'Validate API JSON with Swagger Schema'
   task :validate, [] => :environment do
     url_base, = ARGV[2..]
