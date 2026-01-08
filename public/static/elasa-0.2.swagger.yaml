@@ -100,6 +100,10 @@ paths:
                           enum: [compact, large]
                           description: How display the menu item.
                           default: compact
+                        filters:
+                          type: array
+                          items:
+                            $ref: '#/components/schemas/filter'
                     link:
                       type: object
                       additionalProperties: false
@@ -190,68 +194,7 @@ paths:
                         filters:
                           type: array
                           items:
-                            oneOf:
-                            - type: object
-                              additionalProperties: false
-                              required: [type, property, values]
-                              properties:
-                                type:
-                                  type: string
-                                  enum: ['multiselection', 'checkboxes_list']
-                                property:
-                                  type: string
-                                name:
-                                  $ref: '#/components/schemas/multilingual_string'
-                                values:
-                                  type: array
-                                  items:
-                                    type: object
-                                    additionalProperties: false
-                                    required: [value]
-                                    properties:
-                                      value:
-                                        type: string
-                                      name:
-                                        $ref: '#/components/schemas/multilingual_string'
-                            - type: object
-                              additionalProperties: false
-                              required: [type, property]
-                              properties:
-                                type:
-                                  type: string
-                                  enum: ['boolean']
-                                property:
-                                  type: string
-                                name:
-                                  $ref: '#/components/schemas/multilingual_string'
-                            - type: object
-                              additionalProperties: false
-                              required: [type, property_begin, property_end]
-                              properties:
-                                type:
-                                  type: string
-                                  enum: ['date_range']
-                                property_begin:
-                                  type: string
-                                property_end:
-                                  type: string
-                                name:
-                                  $ref: '#/components/schemas/multilingual_string'
-                            - type: object
-                              additionalProperties: false
-                              required: [type, property, min, max]
-                              properties:
-                                type:
-                                  type: string
-                                  enum: ['number_range']
-                                property:
-                                  type: string
-                                name:
-                                  $ref: '#/components/schemas/multilingual_string'
-                                min:
-                                  type: number
-                                max:
-                                  type: number
+                            $ref: '#/components/schemas/filter'
 
   /{project}/{theme}/poi/{id}.{format}:
     get:
@@ -573,6 +516,69 @@ components:
         en: Cat
         fr: Chat
 
+    filter:
+      oneOf:
+        - type: object
+          additionalProperties: false
+          required: [type, property, values]
+          properties:
+            type:
+              type: string
+              enum: ['multiselection', 'checkboxes_list']
+            property:
+              type: string
+            name:
+              $ref: '#/components/schemas/multilingual_string'
+            values:
+              type: array
+              items:
+                type: object
+                additionalProperties: false
+                required: [value]
+                properties:
+                  value:
+                    type: string
+                  name:
+                    $ref: '#/components/schemas/multilingual_string'
+        - type: object
+          additionalProperties: false
+          required: [type, property]
+          properties:
+            type:
+              type: string
+              enum: ['boolean']
+            property:
+              type: string
+            name:
+              $ref: '#/components/schemas/multilingual_string'
+        - type: object
+          additionalProperties: false
+          required: [type, property_begin, property_end]
+          properties:
+            type:
+              type: string
+              enum: ['date_range']
+            property_begin:
+              type: string
+            property_end:
+              type: string
+            name:
+              $ref: '#/components/schemas/multilingual_string'
+        - type: object
+          additionalProperties: false
+          required: [type, property, min, max]
+          properties:
+            type:
+              type: string
+              enum: ['number_range']
+            property:
+              type: string
+            name:
+              $ref: '#/components/schemas/multilingual_string'
+            min:
+              type: number
+            max:
+              type: number
     fields_list_item:
       type: object
       required: [field]

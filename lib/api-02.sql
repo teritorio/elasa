@@ -834,7 +834,8 @@ CREATE OR REPLACE FUNCTION menu(
                         'icon', menu_items.icon,
                         'color_fill', menu_items.color_fill,
                         'color_line', menu_items.color_line,
-                        'display_mode', menu_items.display_mode
+                        'display_mode', menu_items.display_mode,
+                        'filters', menu_items.filters
                     )
                 END,
                 'category', CASE WHEN menu_items.type = 'category' THEN
