@@ -22,6 +22,10 @@ class String
   end
 end
 
+def update_cache(conn, project_id)
+  conn.exec(File.new('lib/api-02-cache.sql').read.gsub(':project_id', project_id))
+end
+
 def load_source(conn, project_slug, metadatas)
   conn.exec('DROP TABLE IF EXISTS sources_import_raw')
   conn.exec("

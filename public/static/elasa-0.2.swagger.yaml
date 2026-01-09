@@ -191,6 +191,10 @@ paths:
                             class_label_details:
                               $ref: '#/components/schemas/multilingual_string'
                               description: Details POI name type.
+                        filterable_property:
+                          type: array
+                          items: string
+                          description: List of properties used in filters.
                         filters:
                           type: array
                           items:
