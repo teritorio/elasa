@@ -74,7 +74,7 @@ zcat pg_dump-2025-11-17.gz | docker compose exec -T -u postgres postgres psql -v
 
 # Optional, update database to current version
 docker compose run --rm script bundle exec rails db:migrate
-cat lib/locale-table-01.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat lib/locale-table-02.sql lib/api-02.sql lib/api-02-cache.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1 -v project_id=NULL
 
 docker compose up -d
 ```

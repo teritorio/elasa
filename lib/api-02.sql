@@ -1,6 +1,7 @@
 CREATE SCHEMA IF NOT EXISTS api02;
 SET search_path TO api02,public;
 
+
 DROP FUNCTION IF EXISTS capitalize;
 CREATE FUNCTION capitalize(str text) RETURNS text AS $$
     SELECT
@@ -38,6 +39,29 @@ CREATE FUNCTION id_from_slugs_menu_item(slugs jsonb, id integer) RETURNS bigint 
         )
     ;
 $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
+CREATE TABLE IF NOT EXISTS pois_property_values (
+    project_id integer REFERENCES projects(id) ON DELETE CASCADE,
+    source_id integer REFERENCES fields(id) ON DELETE CASCADE,
+    field_id integer REFERENCES sources(id) ON DELETE CASCADE,
+    property_values jsonb,
+    CONSTRAINT pois_property_values_pkey PRIMARY KEY (project_id, source_id, field_id)
+);
+
+DROP VIEW IF EXISTS pois_property_values_by_field;
+CREATE VIEW pois_property_values_by_field AS
+SELECT
+    project_id,
+    field_id,
+    jsonb_merge_agg(property_values) AS property_values
+FROM
+    pois_property_values
+GROUP BY
+    project_id,
+    field_id
+;
+
 
 DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
@@ -84,7 +108,6 @@ FROM
 GROUP BY
     themes.id
 ;
-
 
 DROP VIEW IF EXISTS pois_join CASCADE;
 CREATE VIEW pois_join AS
@@ -160,11 +183,18 @@ SELECT
     menu_items.*,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug,
+    nullif(jsonb_agg(fields.field), '[null]'::jsonb) AS filterable_property
 FROM
     menu_items
     JOIN menu_items_translations AS trans ON
         trans.menu_items_id = menu_items.id
+    LEFT JOIN menu_items_sources ON
+        menu_items_sources.menu_items_id = menu_items.id
+    LEFT JOIN pois_property_values ON
+        pois_property_values.source_id = menu_items_sources.sources_id
+    LEFT JOIN fields ON
+        fields.id = pois_property_values.field_id
 GROUP BY
     menu_items.id
 ;
@@ -321,44 +351,37 @@ CREATE OR REPLACE FUNCTION article(
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
-DROP FUNCTION IF EXISTS filter_values;
-CREATE OR REPLACE FUNCTION filter_values(
-    _project_slug text,
+
+DROP FUNCTION IF EXISTS pois_property_extract_values;
+CREATE OR REPLACE FUNCTION pois_property_extract_values(
+    _project_id integer,
+    _source_id integer,
     _property text
 )  RETURNS TABLE (
     project_id integer,
-    menu_items_id integer,
+    source_id integer,
     property text,
-    filter_values jsonb
+    property_values jsonb
 ) AS $$
     WITH
-    sources AS (
-        SELECT
-            sources.project_id,
-            menu_items_sources.menu_items_id,
-            sources.id
-        FROM
-            menu_items_sources
-            JOIN sources ON
-                sources.id = menu_items_sources.sources_id AND
-                sources.project_id = (SELECT id FROM projects WHERE slug = _project_slug)
-    ),
     pois AS (
         SELECT
             sources.project_id,
-            sources.menu_items_id,
+            sources.id AS source_id,
             pois.properties
         FROM
-            pois
-            JOIN sources ON
-                sources.id = pois.source_id
+            sources
+            JOIN pois ON
+                pois.source_id = sources.id
         WHERE
+            sources.project_id = _project_id AND
+            (_source_id IS NULL OR sources.id = _source_id) AND
             jsonb_pois_keys_array(properties) @> ARRAY[split_part(_property, ':', 1)]
     ),
     properties_values AS (
         SELECT
             project_id,
-            menu_items_id,
+            source_id,
             coalesce(
                 jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE
                     WHEN _property LIKE 'route:%' THEN replace(replace(_property, 'route:', 'route."fr-FR".'), ':', '.')
@@ -373,7 +396,7 @@ CREATE OR REPLACE FUNCTION filter_values(
     values AS (
         SELECT
             project_id,
-            menu_items_id,
+            source_id,
             jsonb_array_elements_text(
                 CASE jsonb_typeof(property)
                 wHEN 'array' THEN property
@@ -387,20 +410,20 @@ CREATE OR REPLACE FUNCTION filter_values(
             property != 'null'::jsonb
     ),
     values_uniq AS (
-        SELECT DISTINCT ON (project_id, menu_items_id, value)
+        SELECT DISTINCT ON (project_id, source_id, value)
             project_id,
-            menu_items_id,
+            source_id,
             value
         FROM
             values
         ORDER BY
             project_id,
-            menu_items_id,
+            source_id,
             value
     )
     SELECT
         values_uniq.project_id,
-        menu_items_id,
+        source_id,
         _property AS property,
         jsonb_strip_nulls(
             jsonb_agg(
@@ -412,7 +435,7 @@ CREATE OR REPLACE FUNCTION filter_values(
                 )
                 ORDER BY value
             )
-        ) AS filter_values
+        ) AS property_values
     FROM
         values_uniq
         LEFT JOIN fields ON
@@ -420,7 +443,7 @@ CREATE OR REPLACE FUNCTION filter_values(
             fields.field = _property
     GROUP BY
         values_uniq.project_id,
-        menu_items_id
+        source_id
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
@@ -725,6 +748,7 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.name_singular,
             menu_items.slug,
             menu_items.parent_slug_id,
+            menu_items.filterable_property,
             nullif(jsonb_agg(
                 jsonb_build_object(
                     'type', filters.type,
@@ -737,18 +761,12 @@ CREATE OR REPLACE FUNCTION menu(
                 WHEN 'multiselection' THEN
                     jsonb_build_object(
                         'property', fields_multiselection.field,
-                        'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, fields_multiselection.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
-                            '[]'::jsonb
-                        )
+                        'values', coalesce(filter_multiselection_values_global.property_values, '[]'::jsonb)
                     )
                 WHEN 'checkboxes_list' THEN
                     jsonb_build_object(
                         'property', fields_checkboxes_list.field,
-                        'values', coalesce(
-                            (SELECT filter_values FROM filter_values(_project_slug, fields_checkboxes_list.field) AS f WHERE f.project_id = menu_items.project_id AND f.menu_items_id = menu_items.id),
-                            '[]'::jsonb
-                        )
+                        'values', coalesce(filter_checkboxes_list_values_global.property_values, '[]'::jsonb)
                     )
                 WHEN 'boolean' THEN
                     jsonb_build_object(
@@ -776,9 +794,15 @@ CREATE OR REPLACE FUNCTION menu(
             LEFT JOIN fields AS fields_multiselection ON
                 fields_multiselection.id = filters.multiselection_property AND
                 fields_multiselection.type = 'field'
+            LEFT JOIN pois_property_values AS filter_multiselection_values_global ON
+                filter_multiselection_values_global.project_id = filters.project_id AND
+                filter_multiselection_values_global.field_id = filters.multiselection_property
             LEFT JOIN fields AS fields_checkboxes_list ON
                 fields_checkboxes_list.id = filters.checkboxes_list_property AND
                 fields_checkboxes_list.type = 'field'
+            LEFT JOIN pois_property_values AS filter_checkboxes_list_values_global ON
+                filter_checkboxes_list_values_global.project_id = filters.project_id AND
+                filter_checkboxes_list_values_global.field_id = filters.checkboxes_list_property
             LEFT JOIN fields AS fields_boolean ON
                 fields_boolean.id = filters.boolean_property AND
                 fields_boolean.type = 'field'
@@ -819,7 +843,8 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.name,
             menu_items.name_singular,
             menu_items.slug,
-            menu_items.parent_slug_id
+            menu_items.parent_slug_id,
+            menu_items.filterable_property
     )
     SELECT
         jsonb_agg(
@@ -852,6 +877,7 @@ CREATE OR REPLACE FUNCTION menu(
                         'style_merge', menu_items.style_merge,
                         'style_class', nullif(menu_items.style_class, '[]'::jsonb),
                         'zoom', coalesce(menu_items.zoom, 16),
+                        'filterable_property', menu_items.filterable_property,
                         'filters', menu_items.filters,
                         'editorial', jsonb_build_object(
                             'popup_fields', menu_items.popup_fields,
