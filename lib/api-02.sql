@@ -85,33 +85,6 @@ GROUP BY
     themes.id
 ;
 
-DROP VIEW IF EXISTS menu_items_join;
-CREATE VIEW menu_items_join AS
-SELECT
-    menu_items.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug
-FROM
-    menu_items
-    JOIN menu_items_translations AS trans ON
-        trans.menu_items_id = menu_items.id
-GROUP BY
-    menu_items.id
-;
-
-DROP VIEW IF EXISTS filters_join;
-CREATE VIEW filters_join AS
-SELECT
-    filters.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
-FROM
-    filters
-    JOIN filters_translations AS trans ON
-        trans.filters_id = filters.id
-GROUP BY
-    filters.id
-;
 
 DROP VIEW IF EXISTS pois_join CASCADE;
 CREATE VIEW pois_join AS
@@ -179,6 +152,34 @@ GROUP BY
     pois.website_details,
     pois.image,
     pois.slug_id
+;
+
+DROP VIEW IF EXISTS menu_items_join;
+CREATE VIEW menu_items_join AS
+SELECT
+    menu_items.*,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug
+FROM
+    menu_items
+    JOIN menu_items_translations AS trans ON
+        trans.menu_items_id = menu_items.id
+GROUP BY
+    menu_items.id
+;
+
+DROP VIEW IF EXISTS filters_join;
+CREATE VIEW filters_join AS
+SELECT
+    filters.*,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
+FROM
+    filters
+    JOIN filters_translations AS trans ON
+        trans.filters_id = filters.id
+GROUP BY
+    filters.id
 ;
 
 DROP FUNCTION IF EXISTS projects;
