@@ -67,10 +67,10 @@ DROP VIEW IF EXISTS projects_join;
 CREATE VIEW projects_join AS
 SELECT
     projects.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name
 FROM
     projects
-    JOIN projects_translations AS trans ON
+    LEFT JOIN projects_translations AS trans ON
         trans.projects_id = projects.id
 GROUP BY
     projects.id
@@ -80,12 +80,12 @@ DROP VIEW IF EXISTS articles_join;
 CREATE VIEW articles_join AS
 SELECT
     articles.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title)), '{}'::jsonb) AS title,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body)), '{}'::jsonb) AS body
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.title) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS title,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS slug,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.body) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS body
 FROM
     articles
-    JOIN articles_translations AS trans ON
+    LEFT JOIN articles_translations AS trans ON
         trans.articles_id = articles.id
 GROUP BY
     articles.id
@@ -95,15 +95,15 @@ DROP VIEW IF EXISTS themes_join;
 CREATE VIEW themes_join AS
 SELECT
     themes.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description)), '{}'::jsonb) AS description,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url)), '{}'::jsonb) AS site_url,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url)), '{}'::jsonb) AS main_url,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords)), '{}'::jsonb) AS keywords,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message)), '{}'::jsonb) AS cookies_consent_message
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.description) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS description,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS site_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS main_url,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS keywords,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS cookies_consent_message
 FROM
     themes
-    JOIN themes_translations AS trans ON
+    LEFT JOIN themes_translations AS trans ON
         trans.themes_id = themes.id
 GROUP BY
     themes.id
@@ -181,9 +181,9 @@ DROP VIEW IF EXISTS menu_items_join;
 CREATE VIEW menu_items_join AS
 SELECT
     menu_items.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular)), '{}'::jsonb) AS name_singular,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug)), '{}'::jsonb) AS slug,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name_singular,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS slug,
     nullif(jsonb_agg(fields.field), '[null]'::jsonb) AS filterable_property
 FROM
     menu_items
@@ -203,10 +203,10 @@ DROP VIEW IF EXISTS filters_join;
 CREATE VIEW filters_join AS
 SELECT
     filters.*,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name)), '{}'::jsonb) AS name
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name
 FROM
     filters
-    JOIN filters_translations AS trans ON
+    LEFT JOIN filters_translations AS trans ON
         trans.filters_id = filters.id
 GROUP BY
     filters.id
