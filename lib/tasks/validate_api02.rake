@@ -75,10 +75,10 @@ namespace :api02 do
   task :validate_poi, [] => :environment do
     project_slug, theme_slug = ARGV[2..4]
     projects = PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
-      conn.exec('SET search_path TO api01,public')
+      conn.exec('SET search_path TO api02,public')
 
-      schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
-      projects = Api01Controller.fetch_projects(conn, '', nil, nil)
+      schema = YAML.safe_load_file('public/static/elasa-0.2.swagger.yaml')
+      projects = Api02Controller.fetch_projects(conn, '', nil, nil)
       fully_validate?(schema, projects, 'projects.json', fragment: schema_for_root) or exit 1
       projects
     }
@@ -93,15 +93,15 @@ namespace :api02 do
           PG.connect(host: 'postgres', dbname: 'postgres', user: 'postgres', password: 'postgres').transaction { |conn|
             puts "\n#{project_key}/#{theme_key}\n\n"
 
-            pois_json_schema = JSON.parse(Api01Controller.fetch_pois_schema(conn, project_key))
+            pois_json_schema = JSON.parse(Api02Controller.fetch_pois_schema(conn, project_key))
 
-            schema = YAML.safe_load_file('public/static/elasa-0.1.swagger.yaml')
-            fully_validate?(schema, Api01Controller.fetch_projects(conn, '', project_key, theme_key), 'settings.json', fragment: schema_for('settings.json'))
-            fully_validate?(schema, JSON.parse(Api01Controller.fetch_menu(conn, project_key, theme_key)), 'menu.json', fragment: schema_for('menu.json'))
-            fully_validate?(schema, Api01Controller.fetch_articles(conn, '', project_key, theme_key), 'articles.json', fragment: schema_for('articles.json'))
-            fully_validate?(schema, JSON.parse(Api01Controller.fetch_attribute_translations(conn, project_key, theme_key, 'fr')), 'attribute_translations/fr.json', fragment: schema_for('attribute_translations/{lang}.json'))
+            schema = YAML.safe_load_file('public/static/elasa-0.2.swagger.yaml')
+            fully_validate?(schema, Api02Controller.fetch_projects(conn, '', project_key, theme_key), 'settings.json', fragment: schema_for('settings.json'))
+            fully_validate?(schema, JSON.parse(Api02Controller.fetch_menu(conn, project_key, theme_key)), 'menu.json', fragment: schema_for('menu.json'))
+            fully_validate?(schema, Api02Controller.fetch_articles(conn, '', project_key, theme_key), 'articles.json', fragment: schema_for('articles.json'))
+            fully_validate?(schema, JSON.parse(Api02Controller.fetch_attribute_translations(conn, project_key, theme_key, 'fr')), 'attribute_translations/fr.json', fragment: schema_for('attribute_translations/{lang}.json'))
 
-            pois = Api01Controller.fetch_pois(conn, '', project_key, theme_key, nil, nil, nil, nil, nil, nil, nil, nil, nil)
+            pois = Api02Controller.fetch_pois(conn, '', project_key, theme_key, nil, nil, nil, nil, nil, nil, nil, nil, nil)
             pois_geojson = "{\"type\": \"FeatureCollection\", \"features\": [#{pois.join(',')}]}"
             fully_validate?(schema, pois_geojson, 'pois.geojson (generic schema)', fragment: schema_for('pois.{format}'))
             fully_validate?(pois_json_schema, pois_geojson, 'pois.geojson (project schema)')
