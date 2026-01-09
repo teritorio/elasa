@@ -10,6 +10,14 @@ CREATE FUNCTION capitalize(str text) RETURNS text AS $$
 $$ LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE;
 
 
+CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
+(
+    sfunc = jsonb_concat,
+    stype = jsonb,
+    initcond = '{}'
+);
+
+
 DROP FUNCTION IF EXISTS id_from_slugs CASCADE;
 CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
     SELECT
@@ -1562,13 +1570,6 @@ CREATE OR REPLACE FUNCTION pois(
     )
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
-
-CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
-(
-    sfunc = jsonb_concat,
-    stype = jsonb,
-    initcond = '{}'
-);
 
 DROP FUNCTION IF EXISTS attribute_translations;
 CREATE OR REPLACE FUNCTION attribute_translations(
