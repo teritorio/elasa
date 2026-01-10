@@ -750,13 +750,13 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.parent_slug_id,
             menu_items.filterable_property,
             nullif(jsonb_agg(
-                jsonb_build_object(
+                jsonb_strip_nulls(jsonb_build_object(
                     'type', filters.type,
-                    'name', CASE filters.type
-                        WHEN 'boolean' THEN jsonb_build_object('fr', capitalize(coalesce(fields_boolean_translations.name_large, fields_boolean_translations.name, filters.name->>'fr-FR')))
+                    'name', nullif(CASE filters.type
+                        WHEN 'boolean' THEN jsonb_strip_nulls(jsonb_build_object('fr', capitalize(coalesce(fields_boolean_translations.name_large, fields_boolean_translations.name, filters.name->>'fr-FR'))))
                         ELSE filters.name
-                    END
-                ) ||
+                    END, '{}'::jsonb)
+                )) ||
                 CASE filters.type
                 WHEN 'multiselection' THEN
                     jsonb_build_object(
