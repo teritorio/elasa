@@ -186,7 +186,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 116	filters	boolean	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"boolean"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 121	pois	id	\N	\N	\N	\N	\N	t	f	1	full	\N	\N	\N	f	\N	\N	\N
 123	pois	geom	geometry	\N	\N	\N	\N	t	f	5	full	\N	\N	\N	f	\N	\N	\N
-124	pois	properties	cast-json	\N	\N	\N	\N	t	f	4	full	\N	\N	\N	f	\N	\N	\N
+124	pois	properties	cast-json	input-code	{"size":"small","lineNumber":false}	\N	\N	t	f	4	full	\N	\N	\N	f	\N	\N	\N
 125	pois	source_id	m2o	select-dropdown-m2o	{"template":"{{slug}}"}	related-values	{"template":"{{slug}}"}	t	f	2	full	\N	\N	\N	f	\N	\N	\N
 126	sources	pois	o2m	list-o2m	{"enableLink":true}	\N	\N	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 127	menu_items	style_class_string	\N	input	\N	\N	\N	f	f	5	half	\N	\N	\N	f	category	\N	\N

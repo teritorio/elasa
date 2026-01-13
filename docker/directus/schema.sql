@@ -80,9 +80,7 @@ ALTER FUNCTION public.jsonb_pois_keys_array(jsonb) OWNER TO postgres;
 
 CREATE FUNCTION public.jsonb_to_text_array(j jsonb) RETURNS text[]
     LANGUAGE sql IMMUTABLE STRICT PARALLEL SAFE
-    AS $$
-        SELECT array_agg(key || '=' || value) FROM jsonb_each_text(j)
-      $$;
+    AS $$ SELECT array_agg(key || '=' || value) FROM jsonb_each_text(j) $$;
 
 
 ALTER FUNCTION public.jsonb_to_text_array(j jsonb) OWNER TO postgres;
