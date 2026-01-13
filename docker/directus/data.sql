@@ -118,6 +118,7 @@ t	bfa185ec-f15c-4d3e-8e0e-06925ba6cdfe	3b80b125-4f65-4a6f-96c6-4ede2ed9f506	regi
 t	db7ec639-4f69-4bd2-9ef1-e169ee869423	directus-extension-custom-search	local	\N
 t	49b617db-7261-41a9-a8d7-6a038482a869	intercept-search	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
+t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	91e6a795-a123-4426-b113-0288970f61e4	registry	\N
 \.
 
 
