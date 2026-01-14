@@ -715,7 +715,8 @@ components:
           gpx_trace:
             type: string
           pdf:
-            $ref: '#/components/schemas/multilingual_string'
+            type: string
+            format: uri
         additionalProperties:
           type: object
           additionalProperties: false
