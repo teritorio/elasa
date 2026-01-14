@@ -342,7 +342,7 @@ BEGIN
                         WITH
                         kv AS (
                             SELECT
-                                CASE WHEN key LIKE ''route___%'' OR key LIKE ''addr___%'' THEN
+                                CASE WHEN (key LIKE ''route___%'' AND key != ''route___waypoint___type'') OR key LIKE ''addr___%'' THEN
                                     string_to_array(key, ''___'')
                                 ELSE
                                     array[replace(key, ''___'', '':'')]

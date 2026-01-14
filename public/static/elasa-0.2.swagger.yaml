@@ -716,9 +716,6 @@ components:
             type: string
           pdf:
             $ref: '#/components/schemas/multilingual_string'
-          waypoint:type:
-            type: string
-            enum: ['parking', 'start', 'end', 'waypoint']
         additionalProperties:
           type: object
           additionalProperties: false

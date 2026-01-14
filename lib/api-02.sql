@@ -384,7 +384,7 @@ CREATE OR REPLACE FUNCTION pois_property_extract_values(
             source_id,
             coalesce(
                 jsonb_path_query_first((pois.properties->'tags')::jsonb, ('$.' || CASE
-                    WHEN _property LIKE 'route:%' THEN replace(replace(_property, 'route:', 'route."fr-FR".'), ':', '.')
+                    WHEN _property LIKE 'route:%' AND  _property != 'route:point:type'  THEN replace(replace(_property, 'route:', 'route."fr-FR".'), ':', '.')
                     WHEN _property LIKE 'addr:%' THEN replace(_property, ':', '.')
                     ELSE '"' || _property || '"' END
                 )::jsonpath),
@@ -1399,10 +1399,10 @@ CREATE OR REPLACE FUNCTION pois_(
                     coalesce(pois.properties->'tags', '{}'::jsonb)
                         - 'name' - 'official_name' - 'loc_name' - 'alt_name'
                         - 'description' - 'website:details'
+                        - 'route'
                         - 'ref' - 'source'
                         - 'colour' - 'colour:text' ||
                     coalesce(json_flat('ref', pois.properties->'tags'->'ref'), '{}'::jsonb) ||
-                    jsonb_strip_nulls(jsonb_build_object('route', (pois.properties->'tags'->'route') - 'waypoint:type' )) ||
                     coalesce(json_flat('source', pois.properties->'tags'->'source'), '{}'::jsonb) ||
                     (coalesce(pois.properties->'natives', '{}'::jsonb)
                         - 'name' - 'description' - 'short_description'
@@ -1448,14 +1448,14 @@ CREATE OR REPLACE FUNCTION pois_(
                                 ELSE pois.properties->'natives'->'download'
                             END,
                         'route', coalesce(
-                            pois.properties->'tags'->'route',
-                            pois.properties->'natives'->'route' || jsonb_build_object('fr-FR', (pois.properties->'natives'->'route'->'fr-FR') ||
+                            nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', nullif(jsonb_strip_nulls((pois.properties->'tags'->'route'->'fr-FR') - 'waypoint:type'), '{}'::jsonb))), '{}'::jsonb),
+                            nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', nullif(jsonb_strip_nulls((pois.properties->'natives'->'route'->'fr-FR') ||
                                 coalesce(jsonb_strip_nulls(jsonb_build_object('gpx_trace', _base_url || '/api/0.1/' || _project_slug || '/' || _theme_slug || '/poi/' || pois.slug_id || '/deps.gpx')), '{}'::jsonb)
-                            )
+                            ), '{}'::jsonb))), '{}'::jsonb)
                         ),
                         'route:point:type', coalesce(
-                            pois.properties->'tags'->'route'->>'waypoint:type',
-                            pois.properties->'natives'->>'route:waypoint:type'
+                            pois.properties->'tags'->'route'->'fr-FR'->'waypoint:type',
+                            pois.properties->'natives'->'route:waypoint:type'
                         ),
                         'metadata', jsonb_build_object(
                             'id', pois.slug_id,
