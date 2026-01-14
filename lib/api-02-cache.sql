@@ -4,10 +4,10 @@ BEGIN;
 
 TRUNCATE pois_property_values;
 INSERT INTO pois_property_values
-SELECT DISTINCT ON (t.project_id, fields.id, t.source_id)
+SELECT DISTINCT ON (t.project_id, t.source_id, fields.id)
     t.project_id,
-    fields.id,
     t.source_id,
+    fields.id,
     t.property_values
 FROM
     filters

@@ -43,20 +43,33 @@ $$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
 
 CREATE TABLE IF NOT EXISTS pois_property_values (
     project_id integer REFERENCES projects(id) ON DELETE CASCADE,
-    source_id integer REFERENCES fields(id) ON DELETE CASCADE,
-    field_id integer REFERENCES sources(id) ON DELETE CASCADE,
+    source_id integer REFERENCES sources(id) ON DELETE CASCADE,
+    field_id integer REFERENCES fields(id) ON DELETE CASCADE,
     property_values jsonb,
     CONSTRAINT pois_property_values_pkey PRIMARY KEY (project_id, source_id, field_id)
 );
 
 DROP VIEW IF EXISTS pois_property_values_by_field;
 CREATE VIEW pois_property_values_by_field AS
+WITH t AS (
+SELECT DISTINCT ON (project_id, field_id, property_value->>'value')
+    project_id,
+    field_id,
+    property_value
+FROM
+    pois_property_values
+    JOIN LATERAL jsonb_array_elements(property_values) AS t(property_value) ON true
+ORDER BY
+    project_id,
+    field_id,
+    property_value->>'value'
+)
 SELECT
     project_id,
     field_id,
-    jsonb_merge_agg(property_values) AS property_values
+    jsonb_agg(property_value) AS property_values
 FROM
-    pois_property_values
+    t
 GROUP BY
     project_id,
     field_id
@@ -794,13 +807,13 @@ CREATE OR REPLACE FUNCTION menu(
             LEFT JOIN fields AS fields_multiselection ON
                 fields_multiselection.id = filters.multiselection_property AND
                 fields_multiselection.type = 'field'
-            LEFT JOIN pois_property_values AS filter_multiselection_values_global ON
+            LEFT JOIN pois_property_values_by_field AS filter_multiselection_values_global ON
                 filter_multiselection_values_global.project_id = filters.project_id AND
                 filter_multiselection_values_global.field_id = filters.multiselection_property
             LEFT JOIN fields AS fields_checkboxes_list ON
                 fields_checkboxes_list.id = filters.checkboxes_list_property AND
                 fields_checkboxes_list.type = 'field'
-            LEFT JOIN pois_property_values AS filter_checkboxes_list_values_global ON
+            LEFT JOIN pois_property_values_by_field AS filter_checkboxes_list_values_global ON
                 filter_checkboxes_list_values_global.project_id = filters.project_id AND
                 filter_checkboxes_list_values_global.field_id = filters.checkboxes_list_property
             LEFT JOIN fields AS fields_boolean ON
