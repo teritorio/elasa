@@ -87,6 +87,7 @@ sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	source
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
 themes_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+local_extension_sources	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	sources	open	\N	f
 \.
 
 
@@ -336,6 +337,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 614	fields	role	\N	select-dropdown	{"choices":[{"text":"string","value":"string"},{"text":"text","value":"text"},{"text":"integer","value":"integer"},{"text":"boolean","value":"boolean"},{"text":"weblink","value":"weblink"},{"text":"weblink@social-network","value":"weblink@social-network"},{"text":"weblink@download","value":"weblink@download"},{"text":"email","value":"email"},{"text":"phone","value":"phone"},{"text":"date","value":"date"},{"text":"datetime","value":"datetime"},{"text":"duration","value":"duration"},{"text":"start_end_date","value":"start_end_date"},{"text":"osm:opening_hours","value":"osm:opening_hours"},{"text":"osm:collection_times","value":"osm:collection_times"},{"text":"image","value":"image"},{"text":"mapillary","value":"mapillary"},{"text":"panoramax","value":"panoramax"},{"text":"tag","value":"tag"},{"text":"color","value":"color"},{"text":"rating-scale","value":"rating-scale"},{"text":"osm:stars","value":"osm:stars"},{"text":"coordinates","value":"coordinates"},{"text":"addr","value":"addr"},{"text":"route","value":"route"}]}	\N	\N	f	f	6	full	\N	\N	\N	f	field_block	\N	\N
 615	fields	array	\N	boolean	\N	\N	\N	f	f	4	full	\N	\N	\N	f	field_block	\N	\N
 616	fields	json_schema	cast-json	input-code	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
+617	sources	extends_source_id	\N	select-dropdown-m2o	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]},"template":"{{slug}}","enableCreate":false}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -707,7 +709,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 617, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 618, true);
 
 
 --

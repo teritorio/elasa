@@ -11,6 +11,7 @@ export default {
           slug,
           sources.id,
           project_id,
+          extends_source_id,
           jsonb_agg(jsonb_build_object('language', languages_code, 'translation', name)) AS translations
         FROM
           sources
@@ -66,11 +67,16 @@ export default {
 
         const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
         const tableNameT = tableName.slice(-63 + 2) + '_t';
-        create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, { services, database, get, env, logger, data, accountability });
+        const withExtendsSourceId = source.extends_source_id;
+        create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability });
         create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability });
 
-        await database.raw('SELECT api02.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
-        await database.raw(`SELECT api02.force_update_pois_local(?)`, [tableName]);
+        if (withExtendsSourceId) {
+          console.log('SELECT api01.fill_pois_local_join(?, ?, ?)', [projects.id, source.id, tableName]);
+          await database.raw('SELECT api01.fill_pois_local_join(?, ?, ?)', [projects.id, source.id, tableName]);
+        }
+        await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, source.id, tableName]);
+        await database.raw(`SELECT api01.force_update_pois_local(?)`, [tableName]);
 
         // Force database schema re-read
         const itemsService = new services.UtilsService({
@@ -85,13 +91,17 @@ export default {
   },
 };
 
-async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, { services, database, get, env, logger, data, accountability }) {
-  await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY, geom geometry(Geometry,4326) NOT NULL)`);
+async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability }) {
+  await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (
+    id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY,
+    geom geometry(Geometry,4326)` + (withExtendsSourceId ? '' : 'NOT NULL') + `
+  )`);
   await database.raw(`CREATE INDEX IF NOT EXISTS "${tableName.slice(-63 + 9)}_idx_geom" ON "${tableName}" USING gist(geom)`);
   Object.entries(fields).forEach(async ([field, type]) => {
     await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS ${field} ${type}`);
   });
   if (withThumbnail) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS thumbnail uuid REFERENCES directus_files(id) ON DELETE CASCADE`); }
+  if (withExtendsSourceId) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS extends_poi_id integer REFERENCES pois(id) ON DELETE CASCADE`); }
   console.info(`Table ${tableName} done`);
 
   await database.raw(`
@@ -102,24 +112,66 @@ async function create_main(projects, policy, tableName, tableNameT, translations
       icon = :icon,
       "group" = :group,
       translations = :translations::json
-`, { collection: tableName, icon: 'pin_drop', group: 'local_sources', translations: JSON.stringify(translations) });
+`, { collection: tableName, icon: 'pin_drop', group: withExtendsSourceId ? 'local_extension_sources' : 'local_sources', translations: JSON.stringify(translations) });
   console.info(`Collection ${tableName} configured`);
 
-  ['id', 'geom', 'thumbnail'].concat(Object.keys(fields)).forEach(async (field) => {
+  let directus_fields = [];
+  if (withExtendsSourceId) {
+    directus_fields = directus_fields.concat([
+      {field: 'extends_poi', special: 'alias,no-data,group', interface: 'group-detail'},
+      {group: 'extends_poi', field: 'extends_poi_id', readonly: true, special: 'm2o', interface: 'select-dropdown-m2o', options: '{"enableCreate":false,"filter":{"_and":[{"source_id":{"_eq":"' + withExtendsSourceId + '"}}]},"template":"{{id}} {{slugs}}"}', display_options: '{"template":"{{id}} {{slugs}}"}'},
+      {group: 'extends_poi', field: 'extends_poi_properties', readonly: true, special: 'alias,no-data', interface: 'm2o-presentation', options: '{"m2oField":"extends_poi_id","presentationField":"properties"}'},
+      {group: 'extends_poi', field: '_search_config', readonly: true, special: 'alias,no-data', interface: 'search-configuration', options: '{"search_config":{"_and":[{"extends_poi_id":{"properties_tags_name":{"_icontains":"$SEARCH"}}}]}}'},
+      {field: 'local', special: 'alias,no-data,group', interface: 'group-detail'},
+    ])
+  }
+  directus_fields = directus_fields.concat([
+    {field: 'id', readonly: true},
+  ]);
+  directus_fields = directus_fields.concat(Object.keys(fields).map((k) => ({field: k})));
+  if (withThumbnail) {
+    directus_fields = directus_fields.concat([
+      {field: 'thumbnail', interface: 'file-image'}
+    ]);
+  }
+  directus_fields = directus_fields.concat([
+    {field: 'geom'},
+  ]);
+  let sort_shift = 0
+  let translations_sort = null;
+  directus_fields.forEach(async (field, sort) => {
+    if (withExtendsSourceId && !field.group && field.interface != 'group-detail') {
+      field.group = 'local';
+    }
+    if (field.field === 'geom') {
+      translations_sort = sort;
+      sort_shift += 1;
+    }
     await database.raw(`
       MERGE INTO directus_fields
-      USING (SELECT ?, ?, ?::boolean, ?) AS source(collection, field, readonly, interface)
+      USING (SELECT ?, ?, ?::boolean, ?::text, ?::text, ?::json, ?::json, ?::text, ?::integer) AS source(collection, field, readonly, special, interface, options, display_options, "group", sort)
       ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
       WHEN NOT MATCHED THEN
-        INSERT (collection, field, readonly, interface)
-        VALUES (source.collection, source.field, source.readonly, source.interface)
+        INSERT (collection, field, readonly, special, interface, options, display_options, "group", sort)
+        VALUES (source.collection, source.field, source.readonly, source.special, source.interface, source.options, source.display_options, source."group", source.sort)
       WHEN MATCHED THEN
-        UPDATE SET collection = source.collection, field = source.field, readonly = source.readonly, interface = source.interface
-    `, [tableName, field, field == 'id', field == 'thumbnail' ? 'file-image' : field.includes('color') ? 'select-color' : null]);
-    console.info(`Field ${tableName}.${field} configured`);
+        UPDATE SET collection = source.collection, field = source.field, readonly = source.readonly, special = source.special, interface = source.interface, options = source.options, display_options = source.display_options, "group" = source."group", sort = source.sort
+    `, [
+      tableName,
+      field.field,
+      !!field.readonly,
+      field.special || null,
+      field.field === 'color' ? 'select-color' : field.interface || null,
+      field.options || null,
+      field.display_options || null,
+      field.group || null,
+      sort + sort_shift,
+    ]);
+    console.info(`Field ${tableName}.${field.field} configured`);
   });
 
-  ['create', 'read', 'update', 'delete'].forEach(async (action) => {
+  const rights = withExtendsSourceId ? ['read', 'update'] : ['create', 'read', 'update', 'delete'];
+  rights.forEach(async (action) => {
     await database.raw(`
       MERGE INTO directus_permissions
       USING (SELECT ?::uuid, ?, ?, ?::json, ?) AS source(policy, collection, action, permissions, fields)
@@ -160,14 +212,14 @@ async function create_main(projects, policy, tableName, tableNameT, translations
 
     await database.raw(`
       MERGE INTO directus_fields
-      USING (SELECT ?, ?, ?, ?, ?::json, ?) AS source(collection, field, special, interface, options, display)
+      USING (SELECT ?, ?, ?, ?, ?::json, ?, ?::integer) AS source(collection, field, special, interface, options, display, sort)
       ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
       WHEN NOT MATCHED THEN
-        INSERT (collection, field, special, interface, options, display)
-        VALUES (source.collection, source.field, source.special, source.interface, source.options, source.display)
+        INSERT (collection, field, special, interface, options, display, sort)
+        VALUES (source.collection, source.field, source.special, source.interface, source.options, source.display, source.sort)
       WHEN MATCHED THEN
-        UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options
-    `, [tableName, 'translations', 'translations', 'translations', { "languageField": "name", "defaultLanguage": "en-US", "defaultOpenSplitView": true, "userLanguage": true }, 'translations']);
+        UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options, display = source.display, sort = source.sort
+    `, [tableName, 'translations', 'translations', 'translations', { "languageField": "name", "defaultLanguage": "en-US", "defaultOpenSplitView": true, "userLanguage": true }, 'translations', translations_sort]);
     console.info(`Field ${tableName}.translations configured`);
 
     ['id', 'pois_id', 'languages_code'].concat(Object.keys(fields_t)).forEach(async (field) => {

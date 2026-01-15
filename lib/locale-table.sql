@@ -32,9 +32,15 @@ BEGIN
                 pois
             USING (
                 SELECT
-                    geom, properties, source_id, jsonb_build_object(''original_id'', slug_id) AS slugs, NULL AS website_details
+                    geom,
+                    properties,
+                    source_id,
+                    jsonb_build_object(''original_id'', slug_id) AS slugs,
+                    NULL AS website_details
                 FROM
-                    "' || substring(_table, 1, 63 - 2) || '_v" WHERE id = ' || _id || '
+                    "' || substring(_table, 1, 63 - 2) || '_v"
+                WHERE
+                    id = ' || _id || '
             ) AS local_pois
             ON
                 pois.source_id = local_pois.source_id AND
@@ -225,6 +231,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP FUNCTION IF EXISTS fill_pois_local_join;
+CREATE OR REPLACE FUNCTION fill_pois_local_join(
+    _project_id integer,
+    _source_id integer,
+    _table_name text
+) RETURNS VOID AS $$
+DECLARE
+    source record;
+BEGIN
+    EXECUTE '
+        WITH pois AS (
+        SELECT
+            pois.id
+        FROM
+            sources
+            JOIN sources AS extends_sources ON
+                extends_sources.id = sources.extends_source_id
+            JOIN pois ON
+                pois.source_id = extends_sources.id
+        WHERE
+            sources.project_id = ' || _project_id || ' AND
+            sources.id = ' || _source_id || '
+        )
+        MERGE INTO "' || _table_name || '" AS t
+        USING pois ON t.extends_poi_id = pois.id
+        WHEN NOT MATCHED THEN
+            INSERT (extends_poi_id)
+            VALUES (pois.id)
+    ';
+END;
+$$ LANGUAGE plpgsql PARALLEL SAFE;
+
 DROP FUNCTION IF EXISTS select_pois_local;
 CREATE OR REPLACE FUNCTION select_pois_local(
     _table_name text
@@ -235,7 +273,8 @@ CREATE OR REPLACE FUNCTION select_pois_local(
     table_name_i text,
     table_name_p text,
     table_name_w text,
-    file_fields text[]
+    file_fields text[],
+    extends_poi bool
 ) AS $$
     SELECT
         tables.table_name,
@@ -244,7 +283,11 @@ CREATE OR REPLACE FUNCTION select_pois_local(
         tables_i.table_name AS table_name_i,
         tables_p.table_name AS table_name_p,
         tables_w.table_name AS table_name_w,
-        array_agg(key_column_usage.column_name) AS file_fields
+        coalesce(
+            array_agg(key_column_usage.column_name) FILTER (WHERE key_column_usage.column_name NOT IN ('extends_poi_id')),
+            array[]::text[]
+         ) AS file_fields,
+        bool_or(key_column_usage.column_name IN ('extends_poi_id')) AS extends_poi
     FROM
         information_schema.tables
         -- Translations
@@ -333,12 +376,13 @@ BEGIN
             SELECT
                 ' || _project_id || ' AS project_id,
                 t.id,
-                geom,
+                ' || CASE WHEN source.extends_poi THEN 'coalesce(t.geom, extends_pois.geom) AS geom' ELSE 'geom' END || ',
                 jsonb_strip_nulls(jsonb_build_object(
                     ''id'', t.id,
-                    ''source'', NULL,
-                    ''updated_at'', NULL,
-                    ''natives'', (
+                    ''source'', ' || CASE WHEN source.extends_poi THEN 'extends_pois.properties->''source''' ELSE 'NULL' END || ',
+                    ''updated_at'', ' || CASE WHEN source.extends_poi THEN 'extends_pois.properties->''updated_at''' ELSE 'NULL' END || ',
+                    ''tags'', ' || CASE WHEN source.extends_poi THEN 'coalesce(extends_pois.properties->''tags'', ''{}''::jsonb)' ELSE 'NULL' END || ',
+                    ''natives'', ' || CASE WHEN source.extends_poi THEN 'coalesce(extends_pois.properties->''natives'', ''{}''::jsonb) || ' ELSE '' END || ' (
                         WITH
                         kv AS (
                             SELECT
@@ -350,10 +394,10 @@ BEGIN
                                 value
                             FROM
                                 jsonb_each(jsonb_strip_nulls(
-                                row_to_json(t.*)::jsonb - ''id'' - ''geom'' || ' ||
+                                row_to_json(t.*)::jsonb - ''id'' - ''geom'' - ''extends_poi_id'' || ' ||
                                 CASE WHEN source.table_name_t IS NOT NULL THEN ' coalesce(trans.jsonb, ''{}''::jsonb) || ' ELSE '' END || '
                                 jsonb_build_object(' ||
-                                    (SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)) ||
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)), '') ||
                                 ')
                             ))
                         ),
@@ -405,7 +449,11 @@ BEGIN
                 LEFT JOIN trans ON
                     trans.id = t.id
                 ' END ||
-                (SELECT array_to_string(array_agg('LEFT JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = "' || f || '"'), ' ') FROM unnest(source.file_fields) AS fields(f)) ||
+                coalesce((SELECT array_to_string(array_agg('LEFT JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = "' || f || '"'), ' ') FROM unnest(source.file_fields) AS fields(f)), '') ||
+                CASE WHEN source.extends_poi THEN '
+                LEFT JOIN pois AS extends_pois ON
+                    extends_pois.id = t.extends_poi_id
+                ' ELSE '' END ||
         '';
         name :=  substring(source.table_name, 1, 63 - 2) || '_v';
 

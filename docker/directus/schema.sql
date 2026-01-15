@@ -1574,7 +1574,8 @@ CREATE TABLE public.sources (
     project_id integer NOT NULL,
     slug character varying NOT NULL,
     attribution text,
-    report_issue jsonb
+    report_issue jsonb,
+    extends_source_id integer
 );
 
 
@@ -3225,6 +3226,14 @@ ALTER TABLE ONLY public.projects_translations
 
 ALTER TABLE ONLY public.projects_translations
     ADD CONSTRAINT projects_translations_projects_id_foreign FOREIGN KEY (projects_id) REFERENCES public.projects(id) ON DELETE CASCADE;
+
+
+--
+-- Name: sources sources_extends_source_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sources
+    ADD CONSTRAINT sources_extends_source_id_fkey FOREIGN KEY (extends_source_id) REFERENCES public.sources(id);
 
 
 --
