@@ -593,7 +593,8 @@ components:
           description: Display the field label or not.
           default: false
         field:
-          type: string
+          type: array
+          items: string
         multilingual:
           type: boolean
           description: Is the field multilingual or not.

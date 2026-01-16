@@ -501,7 +501,14 @@ CREATE OR REPLACE FUNCTION fields(
             fields.id,
             fields_fields."index",
             jsonb_strip_nulls(jsonb_build_object(
-                'field', fields.field,
+                'field', CASE
+                    WHEN fields.field IS NULL THEN NULL
+                    WHEN fields.field LIKE 'route:%' AND fields.field != 'route:waypoint:type' THEN string_to_array(fields.field, ':')
+                    WHEN fields.field LIKE 'addr:%' THEN string_to_array(fields.field, ':')
+                    WHEN fields.field = 'start_date' THEN array['start_end_date', 'start_date']
+                    WHEN fields.field = 'end_date' THEN array['start_end_date', 'end_date']
+                    ELSE array[fields.field]
+                END,
                 'label', nullif(
                     CASE field_size
                         WHEN 'small'::field_size_t THEN fields.label_small
