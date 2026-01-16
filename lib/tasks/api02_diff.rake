@@ -110,8 +110,6 @@ def compare_pois_clean_old(poi)
   end
   poi['properties'].delete('route') if poi['properties']['route'] == 'bus'
 
-  poi['properties']['award:epi'] = poi['properties']['award:epi'].to_i if !poi['properties']['award:epi'].nil?
-  poi['properties']['award:cle'] = poi['properties']['award:cle'].to_i if !poi['properties']['award:cle'].nil?
   poi
 end
 
@@ -120,8 +118,6 @@ def compare_pois_clean_new(poi)
   poi['properties'].delete('addr')
   poi['properties'].delete('route')
 
-  poi['properties']['award:epi'] = poi['properties'].delete('award:epi_gite') if !poi['properties']['award:epi_gite'].nil?
-  poi['properties']['award:epi'] = poi['properties'].delete('award:epi_locatif') if !poi['properties']['award:epi_locatif'].nil?
   poi
 end
 
@@ -150,6 +146,8 @@ def compare_pois(url_old, url_new)
 
       I18N.each{ |key|
         if !poi['properties'][key].nil?
+          raise "#{key} should be an Hash" if !poi['properties'][key].is_a?(Hash)
+
           poi['properties'][key].delete_if{ |k, _v| /[a-z]{2}/.match(k) || /[a-z]{2}-[A-Z]{2}/.match(k) }
           poi['properties'][key].delete('en-US')
           poi['properties'][key].delete('etymology:wikidata')
@@ -175,7 +173,8 @@ end
 namespace :api02 do
   desc 'Diff API'
   task :diff, [] => :environment do
-    url_api_old, url_api_new = ARGV[2..4].map{ |url| "#{url}/api/0.1/" }
+    url_api_old =  "#{ARGV[2]}/api/0.1/"
+    url_api_new =  "#{ARGV[3]}/api/0.2/"
     project_slug, theme_slug = ARGV[4..6]
     projects = fetch_json(url_api_old)
     projects.each{ |project_key, projet|
@@ -184,12 +183,16 @@ namespace :api02 do
       projet['themes'].each_key{ |theme_key|
         next if !(theme_slug.nil? || theme_slug == theme_key)
 
-        url_old, url_new = [url_api_old, url_api_new].map{ |url| "#{url}#{project_key}/#{theme_key}" }
-        compare_settings(url_old, url_new)
-        compare_articles(url_old, url_new)
-        compare_menu(url_old, url_new)
-        compare_pois(url_old, url_new)
-        compare_attribute_translations(url_old, url_new)
+        begin
+          url_old, url_new = [url_api_old, url_api_new].map{ |url| "#{url}#{project_key}/#{theme_key}" }
+          compare_settings(url_old, url_new)
+          compare_articles(url_old, url_new)
+          compare_menu(url_old, url_new)
+          compare_pois(url_old, url_new)
+          compare_attribute_translations(url_old, url_new)
+        rescue StandardError => e
+          puts e.message
+        end
       }
     }
 
