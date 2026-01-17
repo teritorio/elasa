@@ -135,11 +135,7 @@ end
 def load_pois(conn, project_slug, source_slug, pois)
   conn.exec("
     DROP TABLE IF EXISTS pois_import;
-    CREATE TEMP TABLE pois_import(
-      slugs json,
-      geometry json,
-      properties json
-    )
+    CREATE TEMP TABLE pois_import(slugs json, geometry json, properties json);
   ")
 
   enco = PG::BinaryEncoder::CopyRow.new
@@ -173,8 +169,7 @@ def load_pois(conn, project_slug, source_slug, pois)
       conn.put_copy_data([slugs&.to_json, feature['geometry'].to_json, feature['properties'].to_json])
     }
   }
-  conn.exec_params(
-    "
+  conn.exec_params("
     WITH pois_import AS (
       SELECT DISTINCT ON (sources.id, pois_import.properties->>'id')
         sources.id AS source_id,
@@ -210,12 +205,9 @@ def load_pois(conn, project_slug, source_slug, pois)
         pois_import.geom,
         pois_import.properties
       )
-    ",
-    [project_slug, source_slug]
-  )
+    ", [project_slug, source_slug])
 
-  conn.exec_params(
-    "
+  conn.exec_params("
     DELETE FROM
       pois
     USING
@@ -231,12 +223,9 @@ def load_pois(conn, project_slug, source_slug, pois)
       pois.id = self.id AND
       pois.source_id = sources.id AND
       pois_import.properties IS NULL
-    ",
-    [project_slug, source_slug]
-  )
+    ", [project_slug, source_slug])
 
-  conn.exec_params(
-    "
+  conn.exec_params("
     SELECT
       api01.fill_pois_local_join(projects.id, sources.id, substring('local-' || projects.slug || '-' || sources.slug, 1, 63))
     FROM
@@ -247,9 +236,7 @@ def load_pois(conn, project_slug, source_slug, pois)
         sources.extends_source_id IS NOT NULL
     WHERE
       projects.slug = $1
-    ",
-    [project_slug, source_slug]
-  )
+    ", [project_slug, source_slug])
 end
 
 def load_from_source(con, datasource_url, project_slug, datasource_project)
