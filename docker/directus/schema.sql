@@ -2469,6 +2469,14 @@ ALTER TABLE ONLY public.sources_translations
 
 
 --
+-- Name: sources sources_uniq_project_id_slug; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.sources
+    ADD CONSTRAINT sources_uniq_project_id_slug UNIQUE (project_id, slug);
+
+
+--
 -- Name: themes_articles themes_articles_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
