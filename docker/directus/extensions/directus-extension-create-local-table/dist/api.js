@@ -1,9 +1,10 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
+    await database.transaction(async (database) => {
     try {
-      [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints] = [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withColors, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
+      [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints] = [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
 
       const sourcesIds = data['$trigger']['body']['keys'].map((key) => Number(key));
       let sources = (await database.raw(`
@@ -35,7 +36,7 @@ export default {
           directus_users.project_id = ?
       `, [projects.id])).rows[0].policy;
 
-      sources.forEach(async (source) => {
+      for (const source of sources) {
         let fields = {};
         if (withAddr) {
           fields = Object.assign(fields, {
@@ -64,12 +65,13 @@ export default {
         let fields_t = {};
         if (withName) { fields_t["name"] = "character varying(255)"; }
         if (withDescription) { fields_t["description"] = "text"; }
+        if (withWebsiteDetails) { fields_t["website___details"] = "character varying(255)"; }
 
-        const tableName = `local-${projects.slug}-${source.slug}`.slice(-63);
-        const tableNameT = tableName.slice(-63 + 2) + '_t';
+        const tableName = `local-${projects.slug}-${source.slug}`.slice(0, 63);
+        const tableNameT = tableName.slice(0, 63 - 2) + '_t';
         const withExtendsSourceId = source.extends_source_id;
-        create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability });
-        create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability });
+        await create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability });
+        await create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability });
 
         if (withExtendsSourceId) {
           console.log('SELECT api01.fill_pois_local_join(?, ?, ?)', [projects.id, source.id, tableName]);
@@ -83,20 +85,21 @@ export default {
           accountability: accountability,
         });
         await itemsService.clearCache({ system: true });
-      });
+      }
     } catch (error) {
       console.error(error);
       throw error;
     }
+  });
   },
 };
 
 async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability }) {
   await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (
     id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY,
-    geom geometry(Geometry,4326)` + (withExtendsSourceId ? '' : 'NOT NULL') + `
+    geom geometry(Geometry,4326)` + (withExtendsSourceId ? '' : ' NOT NULL') + `
   )`);
-  await database.raw(`CREATE INDEX IF NOT EXISTS "${tableName.slice(-63 + 9)}_idx_geom" ON "${tableName}" USING gist(geom)`);
+  await database.raw(`CREATE INDEX IF NOT EXISTS "${tableName.slice(0, 63 - 9)}_idx_geom" ON "${tableName}" USING gist(geom)`);
   Object.entries(fields).forEach(async ([field, type]) => {
     await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS ${field} ${type}`);
   });
@@ -283,7 +286,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
 
 async function create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) {
   if (withImages) {
-    const tableNameI = tableName.slice(-63 + 2) + '_i';
+    const tableNameI = tableName.slice(0, 63 - 2) + '_i';
 
     await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameI}" (id SERIAL PRIMARY KEY, pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, directus_files_id uuid NOT NULL REFERENCES directus_files(id) ON DELETE CASCADE, index INTEGER NOT NULL)`);
     console.info(`Table ${tableNameI} created`);
@@ -357,7 +360,7 @@ async function create_others(projects, policy, tableName, { withImages, withDeps
   }
 
   if (withDeps) {
-    const tableNameP = tableName.slice(-63 + 2) + '_p';
+    const tableNameP = tableName.slice(0, 63 - 2) + '_p';
 
     await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameP}" (id SERIAL PRIMARY KEY, parent_pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, children_pois_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE, index INTEGER NOT NULL DEFAULT 1)`);
     console.info(`Table ${tableNameP} created`);
@@ -431,7 +434,7 @@ async function create_others(projects, policy, tableName, { withImages, withDeps
   }
 
   if (withWaypoints) {
-    const tableNameW = tableName.slice(-63 + 2) + '_w';
+    const tableNameW = tableName.slice(0, 63 - 2) + '_w';
     const table_pdp = `local-${projects.slug}-waypoints`;
 
     await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameW}" (id SERIAL PRIMARY KEY, parent_pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, children_pois_id integer NOT NULL REFERENCES "${table_pdp}"(id) ON DELETE CASCADE, index INTEGER NOT NULL DEFAULT 1)`);
