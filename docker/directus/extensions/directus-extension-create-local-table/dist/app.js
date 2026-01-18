@@ -74,6 +74,17 @@ export default {
       },
     },
     {
+      field: "withWebsiteDetails",
+      name: "Add website:details",
+      type: "boolean",
+      meta: {
+        interface: "toggle",
+      },
+      schema: {
+        default_value: false,
+      },
+    },
+    {
       field: "withColors",
       name: "Add color_fill and color_line",
       type: "boolean",
