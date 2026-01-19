@@ -64,7 +64,7 @@ docker compose run --rm script bundle exec rake api02:diff -- https://tourism-se
 
 Dump
 ```
-docker compose exec -u postgres postgres pg_dump --exclude-schema=topology | gzip > pg_dump-2025-11-17.gz
+docker compose exec -u postgres postgres pg_dump --exclude-schema=topology --exclude-schema=tiger --exclude-schema=tiger_data | gzip > pg_dump-2025-11-17.gz
 ```
 
 Load
@@ -74,7 +74,7 @@ zcat pg_dump-2025-11-17.gz | docker compose exec -T -u postgres postgres psql -v
 
 # Optional, update database to current version
 docker compose run --rm script bundle exec rails db:migrate
-cat lib/locale-table-02.sql lib/api-02.sql lib/api-02-cache.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1 -v project_id=NULL
+cat lib/locale-table.sql lib/api-02.sql lib/api-02-cache.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1 -v project_id=NULL
 
 docker compose up -d
 ```
