@@ -256,10 +256,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 261	filters_translations	name	\N	input	\N	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	14	full	\N	\N	\N	f	\N	\N	\N
-532	pois	website_details	\N	input	{"iconLeft":"link"}	\N	\N	f	f	1	full	\N	\N	\N	f	override	\N	\N
-534	pois	override	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
-536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}"}	\N	\N	f	f	2	full	\N	\N	\N	f	override	\N	\N
+536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}","enableCreate":false,"enableSelect":false}	\N	\N	t	f	6	full	\N	\N	\N	f	\N	\N	\N
 537	pois_files	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N

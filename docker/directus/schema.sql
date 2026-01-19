@@ -99,7 +99,6 @@ CREATE TABLE public.pois (
     properties jsonb,
     source_id integer,
     slugs json,
-    website_details text,
     properties_id text GENERATED ALWAYS AS ((properties ->> 'id'::text)) STORED,
     properties_tags_name text GENERATED ALWAYS AS (((properties -> 'tags'::text) ->> 'name'::text)) STORED
 );

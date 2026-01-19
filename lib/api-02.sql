@@ -147,7 +147,6 @@ SELECT
     pois.geom,
     pois.source_id,
     pois.properties,
-    pois.website_details,
     pois.image,
     pois.slug_id,
     NULL::integer[] AS dep_ids,
@@ -163,7 +162,6 @@ SELECT
     pois.geom,
     pois.source_id,
     pois.properties,
-    pois.website_details,
     pois.image,
     pois.slug_id,
     nullif(
@@ -185,7 +183,6 @@ GROUP BY
     pois.geom,
     pois.source_id,
     pois.properties,
-    pois.website_details,
     pois.image,
     pois.slug_id
 ;
@@ -1497,7 +1494,6 @@ CREATE OR REPLACE FUNCTION pois_(
                         ),
                         'editorial', nullif(jsonb_strip_nulls(jsonb_build_object(
                             'website:details', nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', coalesce(
-                                pois.website_details,
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr-FR',
                                     pois.properties->'natives'->>'website:details'

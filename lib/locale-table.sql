@@ -35,8 +35,7 @@ BEGIN
                     geom,
                     properties,
                     source_id,
-                    jsonb_build_object(''original_id'', slug_id) AS slugs,
-                    NULL AS website_details
+                    jsonb_build_object(''original_id'', slug_id) AS slugs
                 FROM
                     "' || substring(_table, 1, 63 - 2) || '_v"
                 WHERE
@@ -46,15 +45,14 @@ BEGIN
                 pois.source_id = local_pois.source_id AND
                 pois.slugs->>''original_id'' = local_pois.slugs->>''original_id''
             WHEN NOT MATCHED THEN
-                INSERT (geom, properties, source_id, slugs, website_details) VALUES
-                    (local_pois.geom, local_pois.properties, local_pois.source_id, local_pois.slugs, local_pois.website_details)
+                INSERT (geom, properties, source_id, slugs) VALUES
+                    (local_pois.geom, local_pois.properties, local_pois.source_id, local_pois.slugs)
             WHEN MATCHED THEN
                 UPDATE SET
                     geom = local_pois.geom,
                     properties = local_pois.properties,
                     source_id = local_pois.source_id,
-                    slugs = local_pois.slugs,
-                    website_details = local_pois.website_details
+                    slugs = local_pois.slugs
         ';
     END IF;
 END;

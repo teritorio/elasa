@@ -8,6 +8,7 @@ AllCops:
     - 'vendor/**/*'
     - assert_migration.rb
     - lib/tasks/wp_import.rake
+    - db/migrate/*.rb
 
 plugins:
  - rubocop-rake
