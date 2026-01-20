@@ -559,15 +559,14 @@ components:
               $ref: '#/components/schemas/multilingual_string'
         - type: object
           additionalProperties: false
-          required: [type, property_begin, property_end]
+          required: [type, property]
           properties:
             type:
               type: string
               enum: ['date_range']
-            property_begin:
-              type: string
-            property_end:
-              type: string
+            property:
+              type: array
+              item: string
             name:
               $ref: '#/components/schemas/multilingual_string'
         - type: object

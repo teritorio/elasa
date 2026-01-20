@@ -1123,8 +1123,7 @@ CREATE TABLE public.filters (
     multiselection_property integer,
     checkboxes_list_property integer,
     boolean_property integer,
-    property_begin integer,
-    property_end integer,
+    property_date integer,
     number_range_property integer
 );
 
@@ -3048,15 +3047,7 @@ ALTER TABLE ONLY public.filters
 --
 
 ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_property_begin_foreign FOREIGN KEY (property_begin) REFERENCES public.fields(id) ON DELETE SET NULL;
-
-
---
--- Name: filters filters_property_end_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_property_end_foreign FOREIGN KEY (property_end) REFERENCES public.fields(id) ON DELETE SET NULL;
+    ADD CONSTRAINT filters_property_begin_foreign FOREIGN KEY (property_date) REFERENCES public.fields(id) ON DELETE SET NULL;
 
 
 --

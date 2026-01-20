@@ -276,8 +276,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 553	filters	multiselection_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	multiselection	\N	\N
 554	filters	checkboxes_list_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	checkboxes_list	\N	\N
 555	filters	boolean_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	boolean	\N	\N
-556	filters	property_begin	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
-557	filters	property_end	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	2	full	\N	\N	\N	f	date_range	\N	\N
+556	filters	property_date	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
 558	filters	number_range_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N

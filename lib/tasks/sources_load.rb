@@ -456,11 +456,19 @@ def load_schema(con, project_slug, schemas)
 
     schemas['$defs'] ||= {}
     schemas['$defs']['multilingual-route'] = SCHEMA_MULTILINGUAL_ROUTE
+    schemas['$defs']['start_end_date'] = { type: 'object', additionalProperties: false, properties: { start_date: { type: 'string' }, end_date: { type: 'string' } } }
     enco = PG::BinaryEncoder::CopyRow.new
     conn.copy_data('COPY schemas_import FROM STDIN (FORMAT binary)', enco) {
+      if schemas['properties'].key?('start_date') || schemas['properties'].key?('end_date')
+        schemas['properties'].delete('start_date')
+        schemas['properties'].delete('end_date')
+        schemas['properties']['start_end_date'] = true
+      end
+
       schemas['properties'].each{ |key, schema|
         item = schema
         item = { '$ref' => '#/$defs/multilingual-route' } if key == 'route'
+        item = { '$ref' => '#/$defs/start_end_date' } if key == 'start_end_date'
         item = item['items'] if item['type'] == 'array'
         item = schemas.dig(*item['$ref'][2..].split('/')) if !item['$ref'].nil?
         conn.put_copy_data([

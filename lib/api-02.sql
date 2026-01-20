@@ -482,8 +482,6 @@ CREATE OR REPLACE FUNCTION split_field(
     WHEN field IS NULL THEN NULL
     WHEN field LIKE 'route:%' AND field != 'route:waypoint:type' THEN string_to_array(field, ':')
     WHEN field LIKE 'addr:%' THEN string_to_array(field, ':')
-    WHEN field = 'start_date' THEN array['start_end_date', 'start_date']
-    WHEN field = 'end_date' THEN array['start_end_date', 'end_date']
     ELSE array[field]
     END
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
@@ -815,8 +813,7 @@ CREATE OR REPLACE FUNCTION menu(
                     )
                 WHEN 'date_range' THEN
                     jsonb_build_object(
-                        'property_begin', split_field(fields_date_range_begin.field),
-                        'property_end', split_field(fields_date_range_end.field)
+                        'property', split_field(fields_date_range.field)
                     )
                 WHEN 'number_range' THEN
                     jsonb_build_object(
@@ -850,12 +847,9 @@ CREATE OR REPLACE FUNCTION menu(
             LEFT JOIN fields_translations AS fields_boolean_translations ON
                 fields_boolean_translations.fields_id = filters.boolean_property AND
                 fields_boolean_translations.languages_code = 'fr-FR'
-            LEFT JOIN fields AS fields_date_range_begin ON
-                fields_date_range_begin.id = filters.property_begin AND
-                fields_date_range_begin.type = 'field'
-            LEFT JOIN fields AS fields_date_range_end ON
-                fields_date_range_end.id = filters.property_end AND
-                fields_date_range_end.type = 'field'
+            LEFT JOIN fields AS fields_date_range ON
+                fields_date_range.id = filters.property_date AND
+                fields_date_range.type = 'field'
             LEFT JOIN fields AS fields_number_range ON
                 fields_number_range.id = filters.number_range_property AND
                 fields_number_range.type = 'field'
