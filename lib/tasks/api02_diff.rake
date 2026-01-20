@@ -83,6 +83,7 @@ def compare_menu(url_old, url_new)
       if !entry['category'].nil?
         entry['category'].delete('color_line') if entry['category']['color_fill'] == entry['category']['color_line']
         entry['category'].delete('editorial')
+        entry['category'].delete('filterable_property')
       end
       entry.compact_blank_deep
     }
@@ -155,6 +156,8 @@ def compare_pois(url_old, url_new)
       }
 
       poi['properties'].delete('labels')
+      poi['properties'].delete('opening_hours')
+      poi['properties'].delete('source:addr')
 
       poi.compact_blank_deep
     }
