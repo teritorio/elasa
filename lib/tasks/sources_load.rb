@@ -462,22 +462,21 @@ def load_schema(con, project_slug, schemas)
       if schemas['properties'].key?('start_date') || schemas['properties'].key?('end_date')
         schemas['properties'].delete('start_date')
         schemas['properties'].delete('end_date')
-        schemas['properties']['start_end_date'] = true
+        schemas['properties']['start_end_date'] = { '$ref' => '#/$defs/start_end_date' }
       end
 
       schemas['properties'].each{ |key, schema|
         item = schema
         item = { '$ref' => '#/$defs/multilingual-route' } if key == 'route'
-        item = { '$ref' => '#/$defs/start_end_date' } if key == 'start_end_date'
         item = item['items'] if item['type'] == 'array'
-        item = schemas.dig(*item['$ref'][2..].split('/')) if !item['$ref'].nil?
+        json_schema = item['$ref'].nil? ? item : schemas.dig(*item['$ref'][2..].split('/'))
         conn.put_copy_data([
           key,
-          (schema['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
+          (item['$ref']&.start_with?('#/$defs/multilingual') || false).to_s,
           (schema['type'] == 'array').to_s,
           item['contentMediaType'],
           item['xContentRole'],
-          item.to_json
+          json_schema.to_json
         ])
       }
     }
