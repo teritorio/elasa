@@ -530,7 +530,8 @@ components:
               type: string
               enum: ['multiselection', 'checkboxes_list']
             property:
-              type: string
+              type: array
+              items: string
             name:
               $ref: '#/components/schemas/multilingual_string'
             values:
@@ -552,7 +553,8 @@ components:
               type: string
               enum: ['boolean']
             property:
-              type: string
+              type: array
+              items: string
             name:
               $ref: '#/components/schemas/multilingual_string'
         - type: object
@@ -576,7 +578,8 @@ components:
               type: string
               enum: ['number_range']
             property:
-              type: string
+              type: array
+              item: string
             name:
               $ref: '#/components/schemas/multilingual_string'
             min:

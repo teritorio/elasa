@@ -474,6 +474,21 @@ CREATE OR REPLACE FUNCTION pois_property_extract_values(
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS split_field;
+CREATE OR REPLACE FUNCTION split_field(
+    field text
+) RETURNS text[] AS $$
+    SELECT CASE
+    WHEN field IS NULL THEN NULL
+    WHEN field LIKE 'route:%' AND field != 'route:waypoint:type' THEN string_to_array(field, ':')
+    WHEN field LIKE 'addr:%' THEN string_to_array(field, ':')
+    WHEN field = 'start_date' THEN array['start_end_date', 'start_date']
+    WHEN field = 'end_date' THEN array['start_end_date', 'end_date']
+    ELSE array[field]
+    END
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+
 DROP TYPE IF EXISTS field_size_t CASCADE;
 CREATE TYPE field_size_t AS ENUM ('small', 'large');
 
@@ -514,14 +529,7 @@ CREATE OR REPLACE FUNCTION fields(
             fields.id,
             fields_fields."index",
             jsonb_strip_nulls(jsonb_build_object(
-                'field', CASE
-                    WHEN fields.field IS NULL THEN NULL
-                    WHEN fields.field LIKE 'route:%' AND fields.field != 'route:waypoint:type' THEN string_to_array(fields.field, ':')
-                    WHEN fields.field LIKE 'addr:%' THEN string_to_array(fields.field, ':')
-                    WHEN fields.field = 'start_date' THEN array['start_end_date', 'start_date']
-                    WHEN fields.field = 'end_date' THEN array['start_end_date', 'end_date']
-                    ELSE array[fields.field]
-                END,
+                'field', split_field(fields.field),
                 'label', nullif(
                     CASE field_size
                         WHEN 'small'::field_size_t THEN fields.label_small
@@ -793,26 +801,26 @@ CREATE OR REPLACE FUNCTION menu(
                 CASE filters.type
                 WHEN 'multiselection' THEN
                     jsonb_build_object(
-                        'property', fields_multiselection.field,
+                        'property', split_field(fields_multiselection.field),
                         'values', coalesce(filter_multiselection_values_global.property_values, '[]'::jsonb)
                     )
                 WHEN 'checkboxes_list' THEN
                     jsonb_build_object(
-                        'property', fields_checkboxes_list.field,
+                        'property', split_field(fields_checkboxes_list.field),
                         'values', coalesce(filter_checkboxes_list_values_global.property_values, '[]'::jsonb)
                     )
                 WHEN 'boolean' THEN
                     jsonb_build_object(
-                        'property', fields_boolean.field
+                        'property', split_field(fields_boolean.field)
                     )
                 WHEN 'date_range' THEN
                     jsonb_build_object(
-                        'property_begin', fields_date_range_begin.field,
-                        'property_end', fields_date_range_end.field
+                        'property_begin', split_field(fields_date_range_begin.field),
+                        'property_end', split_field(fields_date_range_end.field)
                     )
                 WHEN 'number_range' THEN
                     jsonb_build_object(
-                        'property', fields_number_range.field,
+                        'property', split_field(fields_number_range.field),
                         'min', filters.min,
                         'max', filters.max
                     )
