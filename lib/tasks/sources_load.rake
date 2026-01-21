@@ -40,8 +40,6 @@ namespace :sources do
               natives_schema = nil
             end
             load_schema(conn, project_slug, natives_schema) if natives_schema.present?
-
-            update_cache(conn, project_id)
           rescue StandardError => e
             Sentry.capture_exception(e, extra: { project_slug: project_slug })
             puts e.message
