@@ -84,6 +84,22 @@ def compare_menu(url_old, url_new)
         entry['category'].delete('color_line') if entry['category']['color_fill'] == entry['category']['color_line']
         entry['category'].delete('editorial')
         entry['category'].delete('filterable_property')
+
+        if !entry['category']['filters'].nil?
+          entry['category']['filters'] = entry['category']['filters'].collect{ |filter|
+            if !filter['property_begin'].nil? || !filter['property_end'].nil?
+              filter.delete('property_begin')
+              filter.delete('property_end')
+              filter['property'] = 'start_end_date'
+            end
+
+            if !filter['property'].nil? && !filter['property'].is_a?(Array)
+              filter['property'] = filter['property'].start_with?('route:') || filter['property'].start_with?('addr:') ? filter['property'].split(':') : [filter['property']]
+            end
+
+            filter
+          }
+        end
       end
       entry.compact_blank_deep
     }
@@ -102,7 +118,7 @@ def compare_pois_clean_old(poi)
   I18N.each{ |key|
     poi['properties'][key] = { 'fr-FR' => poi['properties'][key] } if !poi['properties'][key].nil?
   }
-  poi['properties'] = poi['properties'].delete_if{ |k, _v| k.start_with?('addr:') || k.start_with?('route:') }
+  poi['properties'] = poi['properties'].delete_if{ |k, v| k.start_with?('addr:') || (k == 'route:gpx_trace' && v.include?('gtfs')) }
   if !poi['properties']['start_date'].nil? || !poi['properties']['end_date'].nil?
     poi['properties']['start_end_date'] = {
       'start_date' => poi['properties'].delete('start_date'),
@@ -117,7 +133,19 @@ end
 def compare_pois_clean_new(poi)
   poi['properties']['metadata'].delete('report_issue_url')
   poi['properties'].delete('addr')
-  poi['properties'].delete('route')
+  route = poi['properties'].delete('route')
+  if !route.nil?
+    route = route['fr-FR']
+    route.each{ |p, r|
+      if r.is_a?(Hash)
+        r.each{ |k, v|
+          poi['properties']["route:#{p}:#{k}"] = v
+        }
+      else
+        poi['properties']["route:#{p}"] = r
+      end
+    }
+  end
 
   poi
 end
