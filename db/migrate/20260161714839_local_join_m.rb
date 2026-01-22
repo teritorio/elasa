@@ -37,7 +37,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
         )
         SELECT
           sources.*,
-          columns.table_name IS NOT NULL AS is_ext
+          tables.table_name IS NOT NULL AND columns.table_name IS NULL AS source_already_exists_without_extends_poi
         FROM
           sources
           LEFT JOIN information_schema.tables ON
@@ -57,7 +57,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
       }
 
       sources.collect{ |row|
-        next row if row['is_ext'] != 't'
+        next row if row['source_already_exists_without_extends_poi'] == 't'
 
         row['source_extend_id'] = conn.exec_params('
           MERGE INTO sources
@@ -67,9 +67,11 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
             INSERT (project_id, slug, attribution, extends_source_id)
             VALUES (project_id, slug, attribution, extends_source_id)
           WHEN MATCHED THEN
-            UPDATE SET attribution = up.attribution, extends_source_id = up.extends_source_id
+            UPDATE SET
+              attribution = up.attribution,
+              extends_source_id = up.extends_source_id
           RETURNING id', [
-            row['project_id'], row['slug'], row['attribution'], row['id']
+            row['project_id'], "ext-#{row['slug']}", row['attribution'], row['id']
         ]){ |result|
           result.first['id'].to_i
         }
@@ -78,7 +80,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
     }
 
     sources.each_with_index{ |row, index|
-      local_ext = "local-#{row['project_slug']}-#{row['slug']}"[..62]
+      local_ext = "local-#{row['project_slug']}-ext-#{row['slug']}"[..62]
       puts "Create locale join table for #{local_ext} (#{index}/#{sources.size})"
 
       response = HTTP.auth("Bearer #{bearer}").post(
@@ -97,26 +99,28 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
         if row['website_details'] == 't'
           local_ext_t = "#{local_ext[..(62 - 2)]}_t"
           sql = "
-            UPDATE
-              \"#{local_ext_t}\" AS t
-            SET
-              website___details = pois.website_details
-            FROM
-              pois
-              JOIN \"#{local_ext}\" AS l ON
-              " + (row['is_ext'] == 't' ? "
-                l.extends_poi_id = pois.id
-              " : "
-                l.id = (pois.slugs->>'original_id')::integer
-              ") + "
-            WHERE
-            t.pois_id = l.id AND
-            pois.source_id = $1
+            MERGE INTO \"#{local_ext_t}\" AS t
+            USING (
+              SELECT
+                l.id,
+                pois.website_details
+              FROM
+                \"#{local_ext}\" AS l
+                JOIN pois ON
+                  pois.id = l.extends_poi_id
+            ) AS l
+            ON (t.pois_id = l.id AND t.languages_code = 'fr-FR')
+            WHEN NOT MATCHED THEN
+              INSERT (pois_id, languages_code, website___details)
+              VALUES (l.id, 'fr-FR', l.website_details)
+            WHEN MATCHED THEN
+              UPDATE SET
+                website___details = l.website_details
           "
-          conn.exec_params(sql, [row['id']])
+          conn.exec_params(sql)
         end
 
-        if row['files'] == 't' && row['is_ext'] == 't'
+        if row['files'] == 't' && row['source_already_exists_without_extends_poi'] == 'f'
           local_ext_i = "#{local_ext[..(62 - 2)]}_i"
           sql = "
             INSERT INTO \"#{local_ext_i}\"(pois_id, directus_files_id, index)
@@ -130,12 +134,8 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
                 pois.source_id = $1 AND
                 pois.id = pois_files.pois_id
               JOIN \"#{local_ext}\" AS l ON
-              " + (row['is_ext'] == 't' ? '
                 l.extends_poi_id = pois.id
-              ' : "
-                l.id = (pois.slugs->>'original_id')::integer
-              ") + '
-          '
+          "
           conn.exec_params(sql, [row['id']])
         end
 
@@ -147,7 +147,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
           WHERE
             sources_id = $1
         SQL
-        conn.exec_params(sql, [row['source_extend_id'], row['id']])
+        conn.exec_params(sql, [row['id'], row['source_extend_id']])
       }
     }
 
@@ -157,7 +157,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
 
       UPDATE directus_fields
       SET
-        options = '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}","enableCreate":false,"enableSelect":false}',
+        options = '{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}","enableCreate":false,"enableSelect":false}',
         readonly = true,
         sort = 6,
         "group" = NULL

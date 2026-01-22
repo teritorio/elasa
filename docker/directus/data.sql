@@ -120,6 +120,7 @@ t	db7ec639-4f69-4bd2-9ef1-e169ee869423	directus-extension-custom-search	local	\N
 t	49b617db-7261-41a9-a8d7-6a038482a869	intercept-search	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	91e6a795-a123-4426-b113-0288970f61e4	registry	\N
+t	8f77639c-6570-484b-9628-79a3d44c5a4c	directus-extension-key-value-interface	local	\N
 \.
 
 
@@ -257,7 +258,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 469	sources	menu_items	m2m	list-m2m	{"enableLink":true}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 470	projects	fields	o2m	list-o2m	{"template":"{{type}} {{field}}"}	related-values	\N	f	f	14	full	\N	\N	\N	f	\N	\N	\N
 535	directus_files	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	1	full	\N	\N	\N	t	\N	\N	\N
-536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}","enableCreate":false,"enableSelect":false}	\N	\N	t	f	6	full	\N	\N	\N	f	\N	\N	\N
+536	pois	image	files	files	{"template":"{{directus_files_id.$thumbnail}} {{directus_files_id.title}}","enableCreate":false,"enableSelect":false}	\N	\N	t	f	6	full	\N	\N	\N	f	\N	\N	\N
 537	pois_files	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 538	pois_files	pois_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 539	pois_files	directus_files_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -327,7 +328,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 608	articles	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"article_translations":{"title":{"_icontains":"$SEARCH"}}},{"article_translations":{"slug":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
-610	sources	report_issue	\N	input	{"iconLeft":"bug_report"}	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+610	sources	report_issue	\N	key-value	{"iconLeft":"bug_report","schema":[{"key":"url_template","type":"string","interface":"input","note":null,"options":{"iconLeft":"link"}},{"key":"value_extractors","type":"json","interface":"key-value","options":{"allowOther":true,"schema":[{"key":"lon","type":"string","interface":"input"},{"key":"lat","type":"string","interface":"input"}]}}]}	formatted-json-value	{"format":"{{url_template}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 611	themes	report_issue	cast-boolean	boolean	\N	\N	\N	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 612	fields	multilingual	cast-boolean	boolean	\N	\N	\N	f	f	3	full	\N	\N	\N	f	field_block	\N	\N
 613	fields	media_type	\N	select-dropdown	{"choices":[{"text":"text/plain","value":"Plain text"},{"text":"text/html","value":"HTML"},{"text":"text/x-uri","value":"URL"},{"text":"text/vnd.phone-number","value":"Phone number"},{"text":"text/vnd.osm.opening_hours","value":"OSM opening_hours value"},{"text":"text/vnd.osm.html-color","value":"HTML color"},{"text":"text/vnd.osm.stars","value":"OSM stars value"}]}	\N	\N	f	f	5	full	\N	\N	\N	f	field_block	\N	\N

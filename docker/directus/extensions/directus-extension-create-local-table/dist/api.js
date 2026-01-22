@@ -104,7 +104,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
     await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS ${field} ${type}`);
   });
   if (withThumbnail) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS thumbnail uuid REFERENCES directus_files(id) ON DELETE CASCADE`); }
-  if (withExtendsSourceId) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS extends_poi_id integer REFERENCES pois(id) ON DELETE CASCADE`); }
+  if (withExtendsSourceId) { await database.raw(`ALTER TABLE "${tableName}" ADD COLUMN IF NOT EXISTS extends_poi_id integer NOT NULL REFERENCES pois(id) ON DELETE CASCADE`); }
   console.info(`Table ${tableName} done`);
 
   await database.raw(`
