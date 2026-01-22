@@ -80,9 +80,9 @@ def load_source(conn, project_slug, metadatas)
     metadatas.each{ |id, metadata|
       conn.put_copy_data([
         id,
-        metadata['name'].to_json,
+        metadata['name']&.to_json,
         metadata['attribution'],
-        metadata['report_issue'].to_json,
+        metadata['report_issue']&.to_json,
       ])
     }
   }
