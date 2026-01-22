@@ -1485,7 +1485,10 @@ CREATE OR REPLACE FUNCTION pois_(
                         'route', coalesce(
                             nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', nullif(jsonb_strip_nulls((pois.properties->'tags'->'route'->'fr-FR') - 'waypoint:type'), '{}'::jsonb))), '{}'::jsonb),
                             nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', nullif(jsonb_strip_nulls((pois.properties->'natives'->'route'->'fr-FR') ||
-                                coalesce(jsonb_strip_nulls(jsonb_build_object('gpx_trace', _base_url || '/api/0.1/' || _project_slug || '/' || _theme_slug || '/poi/' || pois.slug_id || '/deps.gpx')), '{}'::jsonb)
+                                coalesce(
+                                    CASE ST_Dimension(pois.geom) WHEN 1 THEN jsonb_strip_nulls(jsonb_build_object('gpx_trace', _base_url || '/api/0.2/' || _project_slug || '/' || _theme_slug || '/poi/' || pois.slug_id || '/deps.gpx')) END,
+                                    '{}'::jsonb
+                                )
                             ), '{}'::jsonb))), '{}'::jsonb)
                         ),
                         'route:point:type', coalesce(
