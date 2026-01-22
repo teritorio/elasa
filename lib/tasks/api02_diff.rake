@@ -183,6 +183,8 @@ def compare_pois(url_old, url_new)
         end
       }
 
+      poi['properties']['route:gpx_trace'] = 'gpx' if !poi['properties']['route:gpx_trace'].nil?
+
       poi['properties'].delete('labels')
       poi['properties'].delete('opening_hours')
       poi['properties'].delete('source:addr')
