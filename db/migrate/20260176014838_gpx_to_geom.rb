@@ -67,18 +67,23 @@ class GpxToGeom < ActiveRecord::Migration[8.0]
     SQL
 
     result = ActiveRecord::Base.connection.exec_query(sql)
-    result.collect{ |row| row['table_name'] }.each { |table|
+    table_names = result.collect{ |row| row['table_name'] }.to_a
+
+    file_names = table_names.collect { |table|
       puts table
-      ActiveRecord::Base.connection.exec_query("SELECT local.id, filename_disk FROM \"#{table}\" AS local JOIN directus_files ON directus_files.id = local.route___gpx_trace").each{ |gpx|
+      ActiveRecord::Base.connection.exec_query("SELECT local.id, filename_disk FROM \"#{table}\" AS local JOIN directus_files ON directus_files.id = local.route___gpx_trace").collect{ |gpx|
         file_name = gpx['filename_disk']
         puts "Migrate #{table} #{file_name.inspect}"
         geojson = self.class.gpx2geojson(File.read("/directus/uploads/#{file_name}"))
         ActiveRecord::Base.connection.exec_query("UPDATE \"#{table}\" SET geom = ST_GeomFromGeoJSON($2) WHERE id = $1", 'SQL', [gpx['id'], geojson])
-        ActiveRecord::Base.connection.exec_query('DELETE FROM directus_files WHERE filename_disk = $1', 'SQL', [file_name])
-        File.delete("/directus/uploads/#{file_name}")
+        file_name
       }
-
       ActiveRecord::Base.connection.exec_query("ALTER TABLE \"#{table}\" DROP COLUMN route___gpx_trace CASCADE")
+    }.flatten
+
+    file_names.uniq.each { |file_name|
+      ActiveRecord::Base.connection.exec_query('DELETE FROM directus_files WHERE filename_disk = $1', 'SQL', [file_name])
+      File.delete("/directus/uploads/#{file_name}")
     }
 
     ActiveRecord::Base.connection.exec_query("DELETE FROM directus_fields WHERE collection LIKE 'local-%' AND field = 'route___gpx_trace'")
