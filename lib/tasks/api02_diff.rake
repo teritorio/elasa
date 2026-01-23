@@ -31,7 +31,7 @@ def fetch_json(url)
   JSON.parse(response)
 end
 
-def compare(url_old, url_new, &block)
+def compare(url_old, url_new, prune_diff: nil, &block)
   url_old_base = url_old.split('/')[..2].join('/').gsub('http://', 'https://')
   url_new_base = url_new.split('/')[..2].join('/').gsub('http://', 'https://')
   hashes = [url_old, url_new].collect{ |url|
@@ -57,7 +57,13 @@ def compare(url_old, url_new, &block)
   end
 
   diff = HashDiff::Comparison.new(hashes[0], hashes[1])
-  puts JSON.dump(diff.diff) if !diff.diff.empty?
+  return if diff.diff.empty?
+
+  diff = JSON.parse(diff.diff.to_json)
+  diff = prune_diff.call(diff) if !prune_diff.nil?
+  return if diff.empty?
+
+  puts JSON.dump(diff)
 end
 
 def compare_settings(url_old, url_new)
@@ -98,7 +104,7 @@ def compare_menu(url_old, url_new)
             end
 
             filter
-          }
+          }.sort_by{ |filter| filter['property'] }
         end
       end
       entry.compact_blank_deep
@@ -200,6 +206,17 @@ def compare_attribute_translations(url_old, url_new)
   compare(
     "#{url_old}/attribute_translations/fr.json",
     "#{url_new}/attribute_translations/fr.json",
+    prune_diff: lambda { |diff|
+      diff.transform_values{ |d|
+        if !d['values'].nil? && (d['values'][0] == 'HashDiff::NO_VALUE')
+          d.delete('values')
+        else
+          d['values'].delete_if{ |_k, v| v[0] == 'HashDiff::NO_VALUE' }
+        end
+        d
+      }
+      diff.compact_blank
+    }
   )
 end
 
