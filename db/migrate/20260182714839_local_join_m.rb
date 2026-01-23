@@ -75,6 +75,24 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
         ]){ |result|
           result.first['id'].to_i
         }
+        conn.exec_params('
+          MERGE INTO sources_translations
+          USING (
+            SELECT $2::integer, languages_code, name
+            FROM sources_translations
+            WHERE sources_id = $1::integer
+          ) AS up(sources_id, languages_code, name)
+          ON (up.sources_id = sources_translations.sources_id AND up.languages_code = sources_translations.languages_code)
+          WHEN NOT MATCHED THEN
+            INSERT (sources_id, languages_code, name)
+            VALUES (sources_id, languages_code, name)
+          WHEN MATCHED THEN
+            UPDATE SET
+            name = up.name
+          ', [
+            row['id'], row['source_extend_id']
+        ])
+
         row
       }
     }
@@ -139,15 +157,8 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
           conn.exec_params(sql, [row['id']])
         end
 
-        sql = <<~SQL.squish
-          UPDATE
-            menu_items_sources
-          SET
-            sources_id = $2
-          WHERE
-            sources_id = $1
-        SQL
-        conn.exec_params(sql, [row['id'], row['source_extend_id']])
+        conn.exec_params('UPDATE menu_items_sources SET sources_id = $2 WHERE sources_id = $1', [row['id'], row['source_extend_id']])
+        conn.exec_params('UPDATE api02.pois_property_values SET source_id = $2 WHERE source_id = $1', [row['id'], row['source_extend_id']])
       }
     }
 
