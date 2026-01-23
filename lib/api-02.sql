@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS pois_property_values (
 
 
 DROP FUNCTION IF EXISTS pois_property_values_by_menu_item;
-CREATE OR REPLACE FUNCTION pois_property_values_by_menu_item(
+CREATE FUNCTION pois_property_values_by_menu_item(
     _project_id integer,
     _menu_items_id integer,
     _field_id integer
