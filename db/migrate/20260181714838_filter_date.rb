@@ -13,6 +13,17 @@ class FilterDate < ActiveRecord::Migration[8.0]
       WHERE
         field = 'start_date'
       ;
+      UPDATE
+        fields_translations
+      SET
+        name = 'date'
+      FROM
+        fields
+      WHERE
+        fields_translations.fields_id = fields.id AND
+        field = 'start_end_date'
+      ;
+
       ALTER TABLE filters RENAME COLUMN property_begin TO property_date;
       UPDATE directus_fields SET field = 'property_date' WHERE collection = 'filters' AND field = 'property_begin';
 
