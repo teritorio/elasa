@@ -104,7 +104,7 @@ def compare_menu(url_old, url_new)
             end
 
             filter
-          }.sort_by{ |filter| filter['property'] }
+          }
         end
       end
       entry.compact_blank_deep
@@ -208,16 +208,27 @@ def compare_attribute_translations(url_old, url_new)
     "#{url_new}/attribute_translations/fr.json",
     prune_diff: lambda { |diff|
       diff.transform_values{ |d|
-        if !d['values'].nil? && (d['values'][0] == 'HashDiff::NO_VALUE')
-          d.delete('values')
-        else
-          d['values'].delete_if{ |_k, v| v[0] == 'HashDiff::NO_VALUE' }
+        if !d['values'].nil?
+          if d['values'][0] == 'HashDiff::NO_VALUE'
+            d.delete('values')
+          else
+            d['values'].delete_if{ |_k, v| v.is_a?(Array) && v[0] == 'HashDiff::NO_VALUE' }.compact_blank
+          end
         end
-        d
+        d.compact_blank
       }
       diff.compact_blank
     }
-  )
+  ) { |tr, _index|
+    if tr.dig('tis_TYPEACTIVSPORT', 'label', 'fr') == 'Type'
+      tr['tis_TYPEACTIVSPORT']['label']['fr'] = 'Type d\'activité'
+    elsif tr.dig('PrestationsServicess', 'label', 'fr') == 'Services'
+      tr['PrestationsServicess']['label']['fr'] = 'Prestations services'
+    elsif tr.dig('PrestationsEquipementss', 'label', 'fr') == 'Équipements'
+      tr['PrestationsEquipementss']['label']['fr'] = 'Prestations équipements'
+    end
+    tr
+  }
 end
 
 namespace :api02 do
