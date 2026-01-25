@@ -116,6 +116,7 @@ GEM
       activesupport (>= 6.1)
     hash_diff (1.1.1)
     highline (3.0.1)
+    http-2 (1.1.1)
     http (5.3.1)
       addressable (~> 2.8)
       http-cookie (~> 1.0)
@@ -124,8 +125,12 @@ GEM
     http-cookie (1.1.0)
       domain_name (~> 0.5)
     http-form_data (2.3.0)
+    httpx (1.7.1)
+      http-2 (>= 1.0.0)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
+    idnx (0.1.1)
+      ffi (~> 1.12)
     image_size (3.4.0)
     io-console (0.8.2)
     irb (1.16.0)
@@ -388,6 +393,8 @@ DEPENDENCIES
   debug
   hash_diff
   http
+  httpx (~> 1.7)
+  idnx
   image_size
   json
   json-schema

@@ -25,6 +25,8 @@ gem 'concurrent-ruby', '< 1.3.5' # ActiveSupport bug workarround
 gem 'connection_pool', '~> 2.5'
 gem 'csv'
 gem 'http'
+gem 'httpx', '~> 1.7'
+gem 'idnx'
 gem 'json'
 gem 'json-schema'
 gem 'mutex_m'

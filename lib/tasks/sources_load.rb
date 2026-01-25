@@ -2,11 +2,19 @@
 # typed: true
 
 require 'json'
-require 'http'
+require 'httpx'
 require 'pg'
 require 'i18n'
 require_relative 'commons'
 
+def fetch_all_json(urls)
+  responses = HTTPX.get(*urls)
+  urls.zip(responses).collect { |url, response|
+    raise "[ERROR] #{url} => #{response.status}" if response.status != 200
+
+    JSON.parse(response)
+  }
+end
 
 # Back port from active_support
 class String
@@ -304,8 +312,9 @@ def load_from_source(con, datasource_url, project_slug, datasource_project)
 
     load_source(conn, project_slug, metadatas)
 
-    metadatas.each_key{ |source_slug|
-      pois = fetch_json("#{datasource_url}/#{datasource_project}/#{source_slug}.geojson")
+    source_slugs = metadatas.keys
+    source_urls = source_slugs.collect{ |source_slug| "#{datasource_url}/#{datasource_project}/#{source_slug}.geojson" }
+    source_slugs.zip(fetch_all_json(source_urls)).each{ |source_slug, pois|
       load_pois(conn, project_slug, source_slug, pois['features'])
       puts "#{project_slug}/#{source_slug}: #{pois['features'].size}"
     }
