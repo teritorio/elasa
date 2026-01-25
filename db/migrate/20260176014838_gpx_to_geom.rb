@@ -2,6 +2,8 @@
 # typed: false
 
 require 'nokogiri'
+require 'json'
+require 'sorbet-runtime'
 
 
 class GpxToGeom < ActiveRecord::Migration[8.0]
@@ -40,7 +42,7 @@ class GpxToGeom < ActiveRecord::Migration[8.0]
     }
 
     if sum.empty?
-      nil
+      raise "Fails buld geometry from GPX"
     elsif sum.length == 1
       { type: 'LineString', coordinates: sum[0] }.to_json
     else
