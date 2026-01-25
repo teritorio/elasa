@@ -1274,8 +1274,8 @@ ALTER TABLE public.menu_items OWNER TO postgres;
 
 CREATE TABLE public.menu_items_filters (
     id integer NOT NULL,
-    menu_items_id integer,
-    filters_id integer,
+    menu_items_id integer NOT NULL,
+    filters_id integer NOT NULL,
     index integer DEFAULT 1 NOT NULL
 );
 
@@ -2320,6 +2320,14 @@ ALTER TABLE ONLY public.languages
 
 ALTER TABLE ONLY public.menu_items_filters
     ADD CONSTRAINT menu_items_filters_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: menu_items_filters menu_items_filters_uniq_menu_items_id_index; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.menu_items_filters
+    ADD CONSTRAINT menu_items_filters_uniq_menu_items_id_index UNIQUE (menu_items_id, index);
 
 
 --
