@@ -324,7 +324,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 603	projects	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"project_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	18	full	\N	\N	\N	f	\N	\N	\N
 604	themes	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"theme_translations":{"name":{"_icontains":"$SEARCH"}}},{"theme_translations":{"site_url":{"_icontains":"$SEARCH"}}},{"theme_translations":{"main_url":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
 605	menu_items	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"menu_items_translations":{"name":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"name_singular":{"_icontains":"$SEARCH"}}},{"menu_items_translations":{"slug":{"_icontains":"$SEARCH"}}},{"sources":{"sources_id":{"slug":{"_icontains":"$SEARCH"}}}},{"href":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
-606	filters	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"filters_translations":{"name":{"_icontains":"$SEARCH"}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_begin":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_end":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"number_range_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+606	filters	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"filters_translations":{"name":{"_icontains":"$SEARCH"}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"checkboxes_list_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"property_date":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}},{"number_range_property":{"fields_translations":{"name":{"_icontains":"$SEARCH"}}}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 607	fields	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"fields_translations":{"name":{"_icontains":"$SEARCH"}}},{"field":{"_icontains":"$SEARCH"}},{"group":{"_icontains":"$SEARCH"}}]}]}}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
 608	articles	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"article_translations":{"title":{"_icontains":"$SEARCH"}}},{"article_translations":{"slug":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	4	full	\N	\N	\N	f	\N	\N	\N
 609	sources	_search_config	alias,no-data	search-configuration	{"search_config":{"_and":[{"_or":[{"slug":{"_icontains":"$SEARCH"}},{"sources_translations":{"name":{"_icontains":"$SEARCH"}}}]}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
@@ -623,8 +623,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 65	filters	multiselection_property	fields	\N	\N	\N	\N	\N	nullify
 66	filters	checkboxes_list_property	fields	\N	\N	\N	\N	\N	nullify
 67	filters	boolean_property	fields	\N	\N	\N	\N	\N	nullify
-68	filters	property_begin	fields	\N	\N	\N	\N	\N	nullify
-69	filters	property_end	fields	\N	\N	\N	\N	\N	nullify
+68	filters	property_date	fields	\N	\N	\N	\N	\N	nullify
 70	filters	number_range_property	fields	\N	\N	\N	\N	\N	nullify
 71	articles_translations	languages_code	languages	\N	\N	\N	articles_id	\N	nullify
 72	articles_translations	articles_id	articles	article_translations	\N	\N	languages_code	\N	delete

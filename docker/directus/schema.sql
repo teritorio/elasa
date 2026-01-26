@@ -3059,11 +3059,11 @@ ALTER TABLE ONLY public.filters
 
 
 --
--- Name: filters filters_property_begin_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: filters filters_property_date_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_property_begin_foreign FOREIGN KEY (property_date) REFERENCES public.fields(id) ON DELETE SET NULL;
+    ADD CONSTRAINT filters_property_date_foreign FOREIGN KEY (property_date) REFERENCES public.fields(id) ON DELETE SET NULL;
 
 
 --
