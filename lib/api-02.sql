@@ -261,7 +261,7 @@ CREATE OR REPLACE FUNCTION projects(
                             key,
                             jsonb_build_object(
                                 'type', 'geojson',
-                                'data', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/poi/' || (value::text) || '.geojson' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1)
+                                'data', (SELECT _base_url || '/api/0.2/' || projects.slug || '/' || themes.slug || '/poi/' || (value::text) || '.geojson' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1)
                             )
                         )
                     FROM
@@ -305,7 +305,7 @@ CREATE OR REPLACE FUNCTION projects(
                                 'articles', (
                                     SELECT
                                         jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
-                                            'url', (SELECT _base_url || '/api/0.1/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
+                                            'url', (SELECT _base_url || '/api/0.2/' || projects.slug || '/' || themes.slug || '/article/' || (articles.slug->>'fr') || '.html' FROM themes_join AS themes WHERE themes.project_id = projects.id LIMIT 1),
                                             'title', articles.title->'fr'
                                         )) ORDER BY themes_articles.index)
                                     FROM
