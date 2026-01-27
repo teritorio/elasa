@@ -71,7 +71,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
               attribution = up.attribution,
               extends_source_id = up.extends_source_id
           RETURNING id', [
-            row['project_id'], "ext-#{row['slug']}", row['attribution'], row['id']
+            row['project_id'], "ext_#{row['slug']}", row['attribution'], row['id']
         ]){ |result|
           result.first['id'].to_i
         }
@@ -98,7 +98,7 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
     }
 
     sources.each_with_index{ |row, index|
-      local_ext = "local-#{row['project_slug']}-ext-#{row['slug']}"[..62]
+      local_ext = "local-#{row['project_slug']}-ext_#{row['slug']}"[..62]
       puts "Create locale join table for #{local_ext} (#{index}/#{sources.size})"
 
       response = HTTP.auth("Bearer #{bearer}").post(
