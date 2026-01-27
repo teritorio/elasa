@@ -8,7 +8,11 @@ require 'i18n'
 require_relative 'commons'
 
 def fetch_all_json(urls)
-  responses = HTTPX.get(*urls)
+  responses = HTTPX.get(*urls.collect{ |url|
+    up = url.split('/')
+    up[-1] = URI::DEFAULT_PARSER.escape(up[-1])
+    up.join('/')
+  })
   urls.zip(responses).collect { |url, response|
     raise "[ERROR] #{url} => #{response.status}" if response.status != 200
 
