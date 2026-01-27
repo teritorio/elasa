@@ -1,6 +1,24 @@
 CREATE SCHEMA IF NOT EXISTS api01;
 SET search_path TO api01,public;
 
+
+DROP FUNCTION IF EXISTS extract_project_slugs;
+CREATE FUNCTION extract_project_slugs(input_string text)
+RETURNS text AS $$
+    SELECT split_part(input_string, '-', 2);
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+DROP FUNCTION IF EXISTS extract_source_slugs;
+CREATE FUNCTION extract_source_slugs(input_string text)
+RETURNS text AS $$
+    SELECT substr(
+        input_string,
+        length(split_part(input_string, '-', 1)) +
+        length(split_part(input_string, '-', 2)) + 3
+    );
+$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+
+
 -- trigger to replicate change of local-* table into pois_local
 CREATE OR REPLACE FUNCTION pois_local_trigger(
     _op text,
@@ -22,8 +40,8 @@ BEGIN
                         JOIN sources ON
                             sources.project_id = projects.id
                     WHERE
-                        projects.slug = split_part(''' || _table || ''', ''-'', 2) AND
-                        sources.slug = split_part(''' || _table || ''', ''-'', 3)
+                        projects.slug = extract_project_slugs(_table)
+                        sources.slug = extract_source_slugs(_table)
                 )
         ';
     ELSE
@@ -55,6 +73,13 @@ BEGIN
                     slugs = local_pois.slugs
         ';
     END IF;
+
+    EXECUTE '
+        SELECT api02.pois_property_values_update(
+            api01.extract_project_slugs(''' || _table || '''),
+            api01.extract_source_slugs(''' || _table || ''')
+        )
+    ';
 END;
 $$ LANGUAGE plpgsql;
 
@@ -157,7 +182,7 @@ BEGIN
     IF _op = 'DELETE' THEN
         EXECUTE '
             DELETE FROM
-                "local-' || split_part(_table, '-', 2) || '-waypoints"
+                "local-' || extract_project(_table) || '-waypoints"
             WHERE
                 id = ' || _children_pois_id || '
         ';
