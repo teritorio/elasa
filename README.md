@@ -7,7 +7,7 @@ Build
 cp .env.template .env
 docker compose --profile "*" build
 docker compose up -d postgres
-cat docker/directus/schema.sql docker/directus/data.sql docker/directus/seq.sql lib/locale-table.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat docker/directus/schema.sql docker/directus/data.sql docker/directus/seq.sql lib/pois_property_values.sql lib/locale-table.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 ```
 
 If required entrer to Postgres shell with
@@ -74,7 +74,7 @@ zcat pg_dump-2025-11-17.gz | docker compose exec -T -u postgres postgres psql -v
 
 # Optional, update database to current version
 docker compose run --rm script bundle exec rails db:migrate
-cat lib/locale-table.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
+cat lib/pois_property_values.sql lib/locale-table.sql lib/api-02.sql | docker compose exec -T -u postgres postgres psql -v ON_ERROR_STOP=1
 
 docker compose up -d
 ```

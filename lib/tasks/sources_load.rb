@@ -31,45 +31,7 @@ class String
 end
 
 def update_filter_cache(conn, project_slug, source_slug)
-  conn.exec_params('SET search_path TO api02,public;')
-  conn.exec_params("
-    DELETE FROM
-      pois_property_values
-    USING
-        projects
-        JOIN sources ON
-            sources.project_id = projects.id
-    WHERE
-        ($1::text IS NULL OR projects.slug = $1) AND
-        ($2::text IS NULL OR sources.slug = $2) AND
-        pois_property_values.project_id = projects.id AND
-        pois_property_values.source_id = sources.id
-  ", [project_slug, source_slug])
-  conn.exec_params("
-    INSERT INTO pois_property_values
-    SELECT DISTINCT ON (t.project_id, t.source_id, fields.id)
-        t.project_id,
-        t.source_id,
-        fields.id,
-        t.property_values
-    FROM
-        projects
-        JOIN sources ON
-            sources.project_id = projects.id
-        JOIN filters ON
-            filters.project_id = projects.id
-        JOIN fields ON
-            fields.id = coalesce(multiselection_property, checkboxes_list_property, boolean_property)
-        JOIN LATERAL pois_property_extract_values(projects.id, sources.id, fields.field) AS t ON true
-    WHERE
-        ($1::text IS NULL OR projects.slug = $1) AND
-        ($2::text IS NULL OR sources.slug = $2)
-    ORDER BY
-        t.project_id,
-        t.source_id,
-        fields.id
-  ", [project_slug, source_slug])
-  conn.exec_params('SET search_path TO public;')
+  conn.exec_params('SELECT api02.pois_property_values_update($1, $2)', [project_slug, source_slug])
 end
 
 def load_source(conn, project_slug, metadatas)
