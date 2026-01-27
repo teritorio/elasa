@@ -70,14 +70,30 @@ def compare_settings(url_old, url_new)
   compare(
     "#{url_old}/settings.json",
     "#{url_new}/settings.json",
-  )
+  ) { |settings, index|
+    if index == 0 && !settings['polygons_extra'].nil?
+      settings['polygons_extra'].transform_values{ |pe|
+        pe['data'] = pe['data'].gsub('/api/0.1/', '/api/0.2/')
+        pe
+      }
+    end
+    settings
+  }
 end
 
 def compare_articles(url_old, url_new)
   compare(
     "#{url_old}/articles.json",
     "#{url_new}/articles.json",
-  )
+  ) { |articles, index|
+    if index == 0
+      articles = articles.collect{ |article|
+        article['url'] = article['url'].gsub('/api/0.1/', '/api/0.2/')
+        article
+      }
+    end
+    articles
+  }
 end
 
 def compare_menu(url_old, url_new)
@@ -195,6 +211,19 @@ def compare_pois(url_old, url_new)
       poi['properties'].delete('opening_hours')
       poi['properties'].delete('source:addr')
 
+      poi['properties'].delete('artwork_type')
+      [
+        ['material', 'concrete;bronze'],
+        ['street_vendor', 'food_truck'],
+        ['amenity', 'toilets'],
+        ['shop', 'vacant'],
+        ['shop', 'street_vendor'],
+        ['amenity', 'marketplace'],
+        ['amenity', 'doctors'],
+      ].each{ |k, v|
+        poi['properties'].delete(k) if poi['properties'][k] == v
+      }
+
       poi.compact_blank_deep
     }
 
@@ -208,6 +237,9 @@ def compare_attribute_translations(url_old, url_new)
     "#{url_new}/attribute_translations/fr.json",
     prune_diff: lambda { |diff|
       diff.transform_values{ |d|
+        if !d['label'].nil? && d['label'][0] == 'HashDiff::NO_VALUE'
+          d.delete('label')
+        end
         if !d['values'].nil?
           if d['values'][0] == 'HashDiff::NO_VALUE'
             d.delete('values')
@@ -216,16 +248,20 @@ def compare_attribute_translations(url_old, url_new)
           end
         end
         d.compact_blank
-      }
-      diff.compact_blank
+      }.compact_blank
     }
   ) { |tr, _index|
     if tr.dig('tis_TYPEACTIVSPORT', 'label', 'fr') == 'Type'
       tr['tis_TYPEACTIVSPORT']['label']['fr'] = 'Type d\'activité'
-    elsif tr.dig('PrestationsServicess', 'label', 'fr') == 'Services'
+    end
+    if tr.dig('PrestationsServicess', 'label', 'fr') == 'Services'
       tr['PrestationsServicess']['label']['fr'] = 'Prestations services'
-    elsif tr.dig('PrestationsEquipementss', 'label', 'fr') == 'Équipements'
+    end
+    if tr.dig('PrestationsEquipementss', 'label', 'fr') == 'Équipements'
       tr['PrestationsEquipementss']['label']['fr'] = 'Prestations équipements'
+    end
+    if tr.dig('tis_LABELS', 'label', 'fr') == 'Accueil vélo'
+      tr['tis_LABELS']['label']['fr'] = 'Labels'
     end
     tr
   }
