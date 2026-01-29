@@ -1391,7 +1391,7 @@ CREATE OR REPLACE FUNCTION pois_(
                             'website:details', nullif(jsonb_strip_nulls(jsonb_build_object('fr-FR', coalesce(
                                 CASE WHEN menu.use_external_details_link THEN coalesce(
                                     pois.properties->'tags'->'website:details'->>'fr-FR',
-                                    pois.properties->'natives'->>'website:details'
+                                    pois.properties->'natives'->'website:details'->>'fr-FR'
                                 ) END,
                                 CASE WHEN menu.use_internal_details_link THEN _base_url || '/poi/' || pois.slug_id || '/details' END
                             ))), '{}'::jsonb)
