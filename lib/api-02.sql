@@ -345,12 +345,33 @@ CREATE TYPE field_size_t AS ENUM ('small', 'large');
 
 DROP FUNCTION IF EXISTS fields;
 CREATE OR REPLACE FUNCTION fields(
+    _project_slug text,
     _root_field_id integer,
     field_size field_size_t
 ) RETURNS jsonb AS $$
     WITH
     -- Recursive down
     RECURSIVE a AS (
+        WITH
+            -- Ignore groups without fields
+            fields AS (
+                SELECT
+                    fields.*
+                FROM
+                    projects
+                    JOIN fields ON
+                        fields.project_id = projects.id
+                    LEFT JOIN fields_fields ON
+                        fields_fields.fields_id = fields.id
+                WHERE
+                    projects.slug = _project_slug AND
+                    (
+                        fields.group IS NULL OR
+                        fields_fields.id IS NOT NULL
+                    )
+                GROUP BY
+                    fields.id
+            )
         SELECT
             -1 AS parent_id,
             fields.id,
@@ -631,9 +652,9 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.href,
             menu_items.style_class,
             menu_items.type,
-            fields(menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
-            fields(menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
-            fields(menu_items.list_fields_id, NULL)->'fields' AS list_fields,
+            fields(_project_slug, menu_items.popup_fields_id, 'small'::field_size_t)->'fields' AS popup_fields,
+            fields(_project_slug, menu_items.details_fields_id, 'large'::field_size_t)->'fields' AS details_fields,
+            fields(_project_slug, menu_items.list_fields_id, NULL)->'fields' AS list_fields,
             menu_items.use_internal_details_link,
             menu_items.use_external_details_link,
             menu_items.name,
