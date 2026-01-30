@@ -114,12 +114,12 @@ COPY public.directus_dashboards (id, name, icon, note, date_created, user_create
 COPY public.directus_extensions (enabled, id, folder, source, bundle) FROM stdin;
 t	5006d916-20a3-4706-8f31-583e8cfe74cb	directus-extension-hook	local	\N
 t	a4b66d1b-c7fe-4bc2-bd22-6c3d3ab0e83f	directus-extension-create-local-table	local	\N
-t	d3a350fb-49a9-4f3a-9f1e-a4ba21e4b635	baf4208a-aab1-496b-af15-05fa841a62a8	registry	\N
-t	bfa185ec-f15c-4d3e-8e0e-06925ba6cdfe	3b80b125-4f65-4a6f-96c6-4ede2ed9f506	registry	\N
+t	d3a350fb-49a9-4f3a-9f1e-a4ba21e4b635	directus-extension-computed-interface	local	\N
+t	bfa185ec-f15c-4d3e-8e0e-06925ba6cdfe	simple-list-interface	local	\N
 t	db7ec639-4f69-4bd2-9ef1-e169ee869423	directus-extension-custom-search	local	\N
 t	49b617db-7261-41a9-a8d7-6a038482a869	intercept-search	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
-t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	91e6a795-a123-4426-b113-0288970f61e4	registry	\N
+t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	directus-extension-m2o-presentation-interface	local	\N
 t	8f77639c-6570-484b-9628-79a3d44c5a4c	directus-extension-key-value-interface	local	\N
 \.
 
