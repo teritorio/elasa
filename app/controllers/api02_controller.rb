@@ -362,13 +362,16 @@ class Api02Controller < ApplicationController
   sig { params(pois: T::Array[String]).returns(T.nilable([T.nilable(String), String])) }
   def poi_deps_as_gpx(pois)
     pois = pois.collect{ |poi| JSON.parse(poi) }
-    geojson = T.must(pois.first)
+
+    geojson, deps = pois.partition{ |poi| !poi.dig('properties', 'metadata', 'dep_ids').nil? }
+    geojson = pois if geojson.empty?
+    geojson = geojson.first
     geometry = geojson['geometry']
     if geometry.nil? || !%w[LineString MultiLineString].include?(geometry['type'])
       return
     end
 
-    waypoints, deps = (pois[1..] || []).partition{ |poi|
+    waypoints, deps = deps.partition{ |poi|
       poi.dig('properties', 'route', 'fr-FR', 'waypoint:type').nil?
     }
     deps_index = deps.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
