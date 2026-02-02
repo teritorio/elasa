@@ -1262,7 +1262,8 @@ CREATE TABLE public.menu_items (
     details_fields_id integer,
     list_fields_id integer,
     use_internal_details_link boolean DEFAULT true,
-    use_external_details_link boolean DEFAULT true
+    use_external_details_link boolean DEFAULT true,
+    icon_show character varying DEFAULT 'always'::character varying NOT NULL
 );
 
 

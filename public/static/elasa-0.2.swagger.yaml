@@ -145,6 +145,11 @@ paths:
                         icon:
                           type: string
                           description: CSS icon.
+                        icon_show:
+                          type: string
+                          enum: [always, never]
+                          default: always
+                          description: How Icons or Markers should be displayed for non-point features.
                         color_fill:
                           type: string
                           description: CSS color.

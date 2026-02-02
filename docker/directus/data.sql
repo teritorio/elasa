@@ -336,6 +336,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 615	fields	array	\N	boolean	\N	\N	\N	f	f	4	full	\N	\N	\N	f	field_block	\N	\N
 616	fields	json_schema	cast-json	input-code	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 617	sources	extends_source_id	\N	select-dropdown-m2o	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]},"template":"{{slug}}","enableCreate":false}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+618	menu_items	icon_show	\N	select-dropdown	{"choices":[{"text":"always","value":"always","icon":"check_box"},{"text":"never","value":"never","icon":"check_box_outline_blank"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	category	\N	\N
 \.
 
 
@@ -667,6 +668,8 @@ e86a9a44-5f25-492d-814b-bf2644b0f573	fr-FR	services	Services de proximité
 00ab2799-acb0-4749-8165-ddb8c725f27f	fr-FR	services_shopping	Commerces de services
 d2e1c9fb-c16b-4a2c-8584-0de6f7ee0847	fr-FR	shopping	Commerces
 d7f14cbf-66db-4171-833a-60c8a9e20910	fr-FR	social_services	Services sociaux
+e86114de-abca-404b-a94d-d275329d4220	fr-FR	oui	Oui
+b9d53abf-f0b7-49e5-b8f4-ec6df9fb634a	fr-FR	non	Non
 1ec8f3b6-787e-4408-a592-e4863cdc81d2	fr-FR	nature	Nature
 6a4527e0-d74f-4d4f-ae85-5f4d03e97872	fr-FR	leisure	Loisirs
 7d1f256c-f74e-4242-b944-bc329d2d657a	fr-FR	culture_shopping	Commerces Culturel
@@ -706,7 +709,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 618, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 619, true);
 
 
 --
