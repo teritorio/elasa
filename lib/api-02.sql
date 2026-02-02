@@ -1285,8 +1285,9 @@ CREATE OR REPLACE FUNCTION pois_(
                 'geometry', ST_AsGeoJSON(
                     CASE _geometry_as
                     WHEN 'point' THEN
-                        CASE ST_Dimension(pois.geom)
-                        WHEN 0 THEN pois.geom
+                        CASE
+                        WHEN ST_Dimension(pois.geom) = 0 THEN pois.geom
+                        WHEN ST_Dimension(pois.geom) = 1 AND (jsonb_path_exists(pois.properties, '$.tags.route') OR jsonb_path_exists(pois.properties, '$.natives.route')) THEN ST_StartPoint(pois.geom)
                         ELSE ST_PointOnSurface(pois.geom)
                         END
                     WHEN 'bbox' THEN -- ST_Envelope(pois.geom)
