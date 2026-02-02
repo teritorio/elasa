@@ -427,8 +427,9 @@ CREATE OR REPLACE FUNCTION fields(
                 'multilingual', CASE WHEN fields."group" IS NULL THEN
                     nullif(fields.multilingual, false)
                 END,
-                'array', CASE WHEN fields."group" IS NULL THEN
-                    nullif(fields.array, false)
+                'array', CASE
+                    WHEN fields.field = 'download' THEN true
+                    WHEN fields."group" IS NULL THEN nullif(fields.array, false)
                 END,
                 'render', CASE WHEN fields."group" IS NULL THEN coalesce(
                     CASE fields.role
