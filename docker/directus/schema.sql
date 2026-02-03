@@ -2588,6 +2588,20 @@ CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_arra
 
 
 --
+-- Name: filters filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE OF multiselection_property, checkboxes_list_property, boolean_property, property_date, number_range_property ON public.filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger();
+
+
+--
+-- Name: menu_items_filters menu_items_filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER menu_items_filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE ON public.menu_items_filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger();
+
+
+--
 -- Name: articles articles_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 

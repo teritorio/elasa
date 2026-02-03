@@ -35,7 +35,7 @@ class String
 end
 
 def update_filter_cache(conn, project_slug, source_slug)
-  conn.exec_params('SELECT api02.pois_property_values_update($1, $2)', [project_slug, source_slug])
+  conn.exec_params('SELECT api02.pois_property_values_update($1, $2, NULL, NULL)', [project_slug, source_slug])
 end
 
 def load_source(conn, project_slug, metadatas)
