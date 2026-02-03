@@ -77,7 +77,9 @@ BEGIN
     EXECUTE '
         SELECT api02.pois_property_values_update(
             api01.extract_project_slugs(''' || _table || '''),
-            api01.extract_source_slugs(''' || _table || ''')
+            api01.extract_source_slugs(''' || _table || '''),
+            NULL,
+            NULL
         )
     ';
 END;
