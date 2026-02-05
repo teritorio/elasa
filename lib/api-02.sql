@@ -1354,11 +1354,6 @@ CREATE OR REPLACE FUNCTION pois_(
                                 NULL
                             )
                             END,
-                        'short_description',
-                            CASE _short_description = 'false' OR _short_description IS NULL
-                            WHEN true THEN
-                                pois.properties->'natives'->'short_description'
-                            END,
                         'download',
                             CASE jsonb_typeof(pois.properties->'natives'->'download')
                                 WHEN 'string' THEN jsonb_build_array(pois.properties->'natives'->'download')
