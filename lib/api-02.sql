@@ -840,15 +840,25 @@ CREATE OR REPLACE FUNCTION json_flat_object(
             jsonb_each(_json)
     UNION
         SELECT
-            concat(f.key, ':', j.key), j.value
+            CASE
+                WHEN j.key = '' THEN f.key
+                ELSE concat(f.key, ':', j.key)
+            END AS key,
+            j.value
         FROM
-            flat f,
-            jsonb_each(f.value) j
+            flat AS f,
+            jsonb_each(f.value) AS j
         WHERE
             jsonb_typeof(f.value) = 'object'
     )
     SELECT
-        jsonb_object_agg(_prefix || ':' || key, value) AS data
+        jsonb_object_agg(
+            CASE
+                WHEN key = '' THEN _prefix
+                ELSE _prefix || ':' || key
+            END,
+            value
+        ) AS data
     FROM
         flat
     WHERE
