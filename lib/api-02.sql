@@ -424,11 +424,14 @@ CREATE OR REPLACE FUNCTION fields(
                     END
                 ),
                 -- 'fields', null
-                'multilingual', CASE WHEN fields."group" IS NULL THEN
-                    nullif(fields.multilingual, false)
+                'multilingual', CASE
+                    -- Fields spec should rather be produced from locale tables schema
+                    WHEN fields.field IN ('name', 'description', 'website:details') THEN true
+                    WHEN fields."group" IS NULL THEN nullif(fields.multilingual, false)
                 END,
                 'array', CASE
-                    WHEN fields.field = 'download' THEN true
+                    -- Fields spec should rather be produced from locale tables schema
+                    WHEN fields.field IN ('download', 'phone', 'email', 'website') THEN true
                     WHEN fields."group" IS NULL THEN nullif(fields.array, false)
                 END,
                 'render', CASE WHEN fields."group" IS NULL THEN coalesce(
