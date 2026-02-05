@@ -107,7 +107,7 @@ CREATE OR REPLACE FUNCTION pois_property_extract_values(
         SELECT
             project_id,
             source_id,
-            jsonb_array_elements_text(
+            jsonb_array_elements(
                 CASE jsonb_typeof(property)
                 wHEN 'array' THEN property
                 ELSE jsonb_build_array(property)
@@ -140,7 +140,7 @@ CREATE OR REPLACE FUNCTION pois_property_extract_values(
                 jsonb_build_object(
                     'value', value,
                     'name', nullif(jsonb_strip_nulls(jsonb_build_object(
-                        'fr', api02.capitalize(fields.values_translations->value->'@default:full'->>'fr-FR')
+                        'fr', api02.capitalize(fields.values_translations->(value->>0)->'@default:full'->>'fr-FR')
                     )), '{}'::jsonb)
                 )
                 ORDER BY value
