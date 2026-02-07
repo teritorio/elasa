@@ -148,6 +148,22 @@ def compare_pois_clean_old(poi)
     }.compact_blank
   end
   poi['properties'].delete('route') if poi['properties']['route'] == 'bus'
+  if poi['properties'].key?('source:')
+    poi['properties']['source'] = poi['properties'].delete('source:')
+  end
+  if poi['properties'].key?('ref:')
+    poi['properties']['ref'] = poi['properties'].delete('ref:')
+  end
+
+  editorial = poi['properties'].delete('editorial')
+  website_details = editorial&.dig('website:details')
+  unavoidable = editorial&.dig('unavoidable')
+  if !website_details.nil? || !unavoidable.nil?
+    poi['properties']['editorial'] = {
+      'website:details' => ({ 'fr-FR' => website_details } if !website_details.nil?),
+      'unavoidable' => unavoidable,
+    }.compact
+  end
 
   poi
 end
@@ -183,7 +199,6 @@ def compare_pois(url_old, url_new)
       poi.delete('bbox')
       poi['properties']['metadata'].delete('updated_at')
       poi['properties'].delete('display')
-      poi['properties'].delete('editorial')
 
       poi = index == 0 ? compare_pois_clean_old(poi) : compare_pois_clean_new(poi)
 
