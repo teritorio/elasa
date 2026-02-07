@@ -1105,7 +1105,7 @@ CREATE OR REPLACE FUNCTION pois_json_schema(
                 fields.project_id = projects.id AND
                 fields.type = 'field' AND
                 fields.json_schema IS NOT NULL AND
-                fields.field NOT IN ('ref', 'coordinates')
+                fields.field NOT IN ('ref', 'source', 'coordinates')
         WHERE
             projects.slug = _project_slug
         ORDER BY

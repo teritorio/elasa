@@ -547,7 +547,9 @@ components:
                 required: [value]
                 properties:
                   value:
-                    type: string
+                    oneOf:
+                      - type: string
+                      - type: integer
                   name:
                     $ref: '#/components/schemas/multilingual_string'
         - type: object
@@ -1035,7 +1037,7 @@ components:
                 type: boolean
                 description: Enable or not the isochrone feature on request.
                 default: false
-              report_issue_url:
+              report_issue:
                 type: boolean
                 description: Enable or not the report issue for POIs.
                 default: false
