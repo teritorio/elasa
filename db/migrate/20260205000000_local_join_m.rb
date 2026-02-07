@@ -177,6 +177,41 @@ class LocalJoinM < ActiveRecord::Migration[8.0]
       UPDATE directus_flows
       SET options = '{"collections":["sources"],"requireConfirmation":true,"fields":[{"field":"withImages","type":"boolean","name":"With Images","meta":{"interface":"boolean","width":"half"}},{"field":"withThumbnail","type":"boolean","name":"With Thumbnail","meta":{"interface":"boolean","options":{"iconOn":"image_search"},"width":"half"}},{"field":"withName","type":"boolean","name":"With Name","meta":{"interface":"boolean","width":"half"}},{"field":"withDescription","type":"boolean","name":"With Description","meta":{"interface":"boolean","width":"half"}},{"field":"withAddr","type":"boolean","name":"Add addr:* fields","meta":{"interface":"boolean","width":"half"}},{"field":"withContact","type":"boolean","name":"Add contact:* fields","meta":{"interface":"boolean","width":"half"}},{"field":"withWebsiteDetails","type":"boolean","name":"With website:details","meta":{"interface":"boolean"}},{"field":"withColors","type":"boolean","name":"withColors","meta":{"interface":"boolean"}},{"field":"withDeps","type":"boolean","name":"Add link to other objects","meta":{"interface":"boolean","width":"half"}},{"field":"withWaypoints","type":"boolean","name":"Add waypoints","meta":{"interface":"boolean","width":"half"}}]}'
       where id = '96ccf7a5-8702-4760-8c9e-b53267f234b2';
+
+      DO $$
+      DECLARE
+        wd RECORD;
+      BEGIN
+        FOR wd IN
+          SELECT
+            tables.table_name,
+            columns.column_name,
+            t.table_name AS t_table_name
+          FROM
+            projects
+            JOIN sources ON
+              sources.project_id = projects.id
+            JOIN information_schema.tables ON
+              tables.table_name = substring('local-' || projects.slug || '-' || sources.slug, 1, 63)
+            JOIN information_schema.columns ON
+              columns.table_schema = tables.table_schema AND
+              columns.table_name = tables.table_name AND
+              columns.column_name = 'website___details'
+            LEFT JOIN information_schema.tables AS t ON
+              t.table_name = substring('local-' || projects.slug || '-' || sources.slug, 1, 63 - 2) || '_t'
+        LOOP
+          RAISE NOTICE 'Migrating website___details from % to %', wd.table_name, wd.t_table_name;
+          EXECUTE 'UPDATE directus_fields SET collection = ''' || wd.t_table_name || ''' WHERE collection = ''' || wd.table_name || ''' AND field = ''website___details''';
+          EXECUTE 'ALTER TABLE "' || wd.t_table_name || '" ADD COLUMN website___details varchar';
+          EXECUTE '
+            UPDATE "' || wd.t_table_name || '"
+            SET website___details = t.website___details
+            FROM "' || wd.table_name || '" AS t
+            WHERE t.id = "' || wd.t_table_name || '".pois_id
+          ';
+          EXECUTE 'ALTER TABLE "' || wd.table_name || '" DROP COLUMN website___details';
+        END LOOP;
+      END; $$;
     SQL
   end
 end
