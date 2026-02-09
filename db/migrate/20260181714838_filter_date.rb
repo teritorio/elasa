@@ -4,15 +4,14 @@
 class FilterDate < ActiveRecord::Migration[8.0]
   def change
     execute <<~SQL.squish
-      DELETE FROM fields where field = 'start_end_date';
       UPDATE
         fields
       SET
-        field = 'start_end_date',
         json_schema = '{"type":"object","additionalProperties":false,"properties":{"start_date":{"type":"string"},"end_date":{"type":"string"}}}'::jsonb
       WHERE
-        field = 'start_date'
+        field = 'start_end_date'
       ;
+
       UPDATE
         fields_translations
       SET
@@ -24,6 +23,18 @@ class FilterDate < ActiveRecord::Migration[8.0]
         field = 'start_end_date'
       ;
 
+      UPDATE
+        filters
+      SET
+        property_begin = fields.id
+      FROM
+        projects
+        JOIN fields ON
+          fields.project_id = projects.id AND
+          fields.field = 'start_end_date'
+      WHERE
+        filters.property_begin IS NOT NULL
+      ;
       ALTER TABLE filters RENAME COLUMN property_begin TO property_date;
       ALTER TABLE filters RENAME CONSTRAINT filters_property_begin_foreign TO filters_property_date_foreign;
       UPDATE directus_fields SET field = 'property_date' WHERE collection = 'filters' AND field = 'property_begin';
