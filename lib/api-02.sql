@@ -1023,7 +1023,11 @@ BEGIN
                 'string(.)',
                 xmlparse(document '<root>' || _description || '</root>')
             ))[1]::text),
-            '((?:.{' || _min_length || '}[^\s]*)).*', '\1'
+            CASE WHEN _min_length IS NULL
+                THEN '(.*)'
+                ELSE '((?:.{' || _min_length || '}[^\s]*)).*'
+            END,
+            '\1'
         ))
     INTO
         ret
