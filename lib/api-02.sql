@@ -11,6 +11,19 @@ CREATE FUNCTION capitalize(str text) RETURNS text AS $$
 $$ LANGUAGE sql STRICT IMMUTABLE PARALLEL SAFE;
 
 
+DROP FUNCTION IF EXISTS split_field CASCADE;
+CREATE OR REPLACE FUNCTION split_field(
+    field text
+) RETURNS text[] AS $$
+    SELECT CASE
+    WHEN field IS NULL THEN NULL
+    WHEN field LIKE 'route:%' AND field != 'route:waypoint:type' THEN string_to_array(field, ':')
+    WHEN field LIKE 'addr:%' THEN string_to_array(field, ':')
+    ELSE array[field]
+    END
+$$ LANGUAGE sql STABLE PARALLEL SAFE;
+
+
 CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
 (
     sfunc = jsonb_concat,
@@ -159,7 +172,7 @@ SELECT
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name_singular) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name_singular,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.slug) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS slug,
-    nullif(jsonb_agg(fields.field), '[null]'::jsonb) AS filterable_property
+    jsonb_agg(split_field(fields.field)) FILTER (WHERE fields.field IS NOT NULL) AS filterable_property
 FROM
     menu_items
     JOIN menu_items_translations AS trans ON
@@ -324,19 +337,6 @@ CREATE OR REPLACE FUNCTION article(
         projects.slug = _project_slug
     LIMIT 1
     ;
-$$ LANGUAGE sql STABLE PARALLEL SAFE;
-
-
-DROP FUNCTION IF EXISTS split_field;
-CREATE OR REPLACE FUNCTION split_field(
-    field text
-) RETURNS text[] AS $$
-    SELECT CASE
-    WHEN field IS NULL THEN NULL
-    WHEN field LIKE 'route:%' AND field != 'route:waypoint:type' THEN string_to_array(field, ':')
-    WHEN field LIKE 'addr:%' THEN string_to_array(field, ':')
-    ELSE array[field]
-    END
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
 
 

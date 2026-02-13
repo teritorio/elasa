@@ -198,7 +198,8 @@ paths:
                               description: Details POI name type.
                         filterable_property:
                           type: array
-                          items: string
+                          items:
+                            $ref: '#/components/schemas/property_path'
                           description: List of properties used in filters.
                         filters:
                           type: array
@@ -525,6 +526,12 @@ components:
         en: Cat
         fr: Chat
 
+    property_path:
+      type: array
+      items: string
+      minItems: 1
+      description: Nested path to the property.
+
     filter:
       oneOf:
         - type: object
@@ -535,8 +542,7 @@ components:
               type: string
               enum: ['multiselection', 'checkboxes_list']
             property:
-              type: array
-              items: string
+              $ref: '#/components/schemas/property_path'
             name:
               $ref: '#/components/schemas/multilingual_string'
             values:
@@ -592,6 +598,7 @@ components:
               type: number
             max:
               type: number
+
     fields_list_item:
       type: object
       required: [field]
