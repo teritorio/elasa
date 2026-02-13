@@ -52,7 +52,7 @@ INSERT INTO public.fields_fields (id, fields_id, related_fields_id, index) VALUE
 -- Data for Name: filters; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public.filters (id, type, property, min, max, project_id, multiselection_property, checkboxes_list_property, boolean_property, number_range_property) VALUES (1, 'checkboxes_list', NULL, NULL, NULL, 1, 'stars', 'stars', 'stars', 'stars');
+INSERT INTO public.filters (id, type, property, min, max, project_id, property) VALUES (1, 'checkboxes_list', NULL, NULL, NULL, 1, 'stars');
 INSERT INTO public.filters_translations (id, filters_id, languages_code, name) VALUES (1, 1, 'fr-FR', 'Nombre d''étoiles');
 
 --

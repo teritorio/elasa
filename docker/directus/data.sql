@@ -174,7 +174,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 81	menu_items	href	\N	input	\N	\N	\N	f	f	1	full	\N	\N	\N	f	link	\N	\N
 82	filters	id	\N	input	\N	\N	\N	t	t	1	full	\N	\N	\N	f	\N	\N	\N
 83	filters	type	\N	select-dropdown	{"choices":[{"text":"multiselection","value":"multiselection"},{"text":"checkboxes_list","value":"checkboxes_list"},{"text":"boolean","value":"boolean"},{"text":"date_range","value":"date_range"},{"text":"number_range","value":"number_range"}]}	\N	\N	f	f	4	full	\N	\N	\N	t	\N	\N	\N
-88	filters	date_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"date_range"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 89	filters	number_range	alias,no-data,group	group-detail	\N	\N	\N	f	f	9	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"number_range"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 90	filters	min	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	number_range	\N	\N
 91	filters	max	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	number_range	\N	\N
@@ -184,9 +183,6 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 109	menu_items_filters	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 110	menu_items_filters	filters_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 112	menu_items	menu_group	alias,no-data,group	group-detail	\N	\N	\N	f	f	9	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"menu_group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-114	filters	multiselection	alias,no-data,group	group-detail	\N	\N	\N	f	f	5	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"multiselection"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-115	filters	checkboxes_list	alias,no-data,group	group-detail	\N	\N	\N	f	f	6	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"checkboxes_list"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-116	filters	boolean	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"boolean"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
 121	pois	id	\N	\N	\N	\N	\N	t	f	1	full	\N	\N	\N	f	\N	\N	\N
 123	pois	geom	geometry	\N	\N	\N	\N	t	f	5	full	\N	\N	\N	f	\N	\N	\N
 124	pois	properties	cast-json	input-code	{"size":"small","lineNumber":false}	\N	\N	t	f	4	full	\N	\N	\N	f	\N	\N	\N
@@ -274,11 +270,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 550	fields	field_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"},"hidden":true}]	f	\N	\N	\N
 551	fields	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	field_block	\N	\N
 552	menu_items	translations	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"translate"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-553	filters	multiselection_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	multiselection	\N	\N
-554	filters	checkboxes_list_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	checkboxes_list	\N	\N
-555	filters	boolean_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]},"template":null}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	boolean	\N	\N
-556	filters	property_date	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	date_range	\N	\N
-558	filters	number_range_property	m2o	select-dropdown-m2o	{"filter":{"_and":[{"type":{"_eq":"field"}}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	number_range	\N	\N
+553	filters	property	m2o	select-dropdown-m2o	{"template":"{{field}}","filter":{"_and":[{"_and":[{"type":{"_eq":"field"}},{"project_id":{"_eq":"{{project_id}}"}}]}]}}	related-values	{"template":"{{field}}"}	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
 561	menu_items_filters	index	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
@@ -621,11 +613,7 @@ COPY public.directus_relations (id, many_collection, many_field, one_collection,
 62	directus_folders	project_id	projects	\N	\N	\N	\N	\N	nullify
 63	fields_translations	languages_code	languages	\N	\N	\N	fields_id	\N	nullify
 64	fields_translations	fields_id	fields	fields_translations	\N	\N	languages_code	\N	nullify
-65	filters	multiselection_property	fields	\N	\N	\N	\N	\N	nullify
-66	filters	checkboxes_list_property	fields	\N	\N	\N	\N	\N	nullify
-67	filters	boolean_property	fields	\N	\N	\N	\N	\N	nullify
-68	filters	property_date	fields	\N	\N	\N	\N	\N	nullify
-70	filters	number_range_property	fields	\N	\N	\N	\N	\N	nullify
+65	filters	property	fields	\N	\N	\N	\N	\N	delete
 71	articles_translations	languages_code	languages	\N	\N	\N	articles_id	\N	nullify
 72	articles_translations	articles_id	articles	article_translations	\N	\N	languages_code	\N	delete
 73	articles	themes_id	themes	\N	\N	\N	\N	\N	nullify
@@ -710,7 +698,6 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 --
 
 SELECT pg_catalog.setval('public.directus_fields_id_seq', 619, true);
-
 
 --
 -- Name: directus_notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres

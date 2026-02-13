@@ -618,19 +618,19 @@ def new_filter(con, project_id, schema, i18ns)
       filter_id = (
         if [%w[yes no], %w[no yes]].include?(enum)
           conn.exec(
-            'INSERT INTO filters(project_id, type, boolean_property) VALUES ($1, $2, $3) RETURNING id',
+            'INSERT INTO filters(project_id, type, property) VALUES ($1, $2, $3) RETURNING id',
             [project_id, 'boolean', field_id]
           ) { |result| result.first['id'].to_i }
         elsif enum.size <= 1
           next
         elsif enum.size <= 5
           conn.exec(
-            'INSERT INTO filters(project_id, type, checkboxes_list_property) VALUES ($1, $2, $3) RETURNING id',
+            'INSERT INTO filters(project_id, type, property) VALUES ($1, $2, $3) RETURNING id',
             [project_id, 'checkboxes_list', field_id]
           ) { |result| result.first['id'].to_i }
         else
           conn.exec(
-            'INSERT INTO filters(project_id, type, multiselection_property) VALUES ($1, $2, $3) RETURNING id',
+            'INSERT INTO filters(project_id, type, property) VALUES ($1, $2, $3) RETURNING id',
             [project_id, 'multiselection', field_id]
           ) { |result| result.first['id'].to_i }
         end

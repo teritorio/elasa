@@ -1120,11 +1120,7 @@ CREATE TABLE public.filters (
     min integer,
     max integer,
     project_id integer NOT NULL,
-    multiselection_property integer,
-    checkboxes_list_property integer,
-    boolean_property integer,
-    property_date integer,
-    number_range_property integer
+    property integer NOT NULL
 );
 
 
@@ -2591,14 +2587,14 @@ CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_arra
 -- Name: filters filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE OF multiselection_property, checkboxes_list_property, boolean_property, property_date, number_range_property ON public.filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger();
+CREATE TRIGGER filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE OF property ON public.filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_filters();
 
 
 --
 -- Name: menu_items_filters menu_items_filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER menu_items_filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE ON public.menu_items_filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger();
+CREATE TRIGGER menu_items_filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE ON public.menu_items_filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_menu_items_filters();
 
 
 --
@@ -3034,38 +3030,6 @@ ALTER TABLE ONLY public.fields_translations
 
 
 --
--- Name: filters filters_boolean_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_boolean_property_foreign FOREIGN KEY (boolean_property) REFERENCES public.fields(id) ON DELETE SET NULL;
-
-
---
--- Name: filters filters_checkboxes_list_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_checkboxes_list_property_foreign FOREIGN KEY (checkboxes_list_property) REFERENCES public.fields(id) ON DELETE SET NULL;
-
-
---
--- Name: filters filters_multiselection_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_multiselection_property_foreign FOREIGN KEY (multiselection_property) REFERENCES public.fields(id) ON DELETE SET NULL;
-
-
---
--- Name: filters filters_number_range_property_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
---
-
-ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_number_range_property_foreign FOREIGN KEY (number_range_property) REFERENCES public.fields(id) ON DELETE SET NULL;
-
-
---
 -- Name: filters filters_project_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -3074,11 +3038,11 @@ ALTER TABLE ONLY public.filters
 
 
 --
--- Name: filters filters_property_date_foreign; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: filters filters_property_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
 ALTER TABLE ONLY public.filters
-    ADD CONSTRAINT filters_property_date_foreign FOREIGN KEY (property_date) REFERENCES public.fields(id) ON DELETE SET NULL;
+    ADD CONSTRAINT filters_property_fkey FOREIGN KEY (property) REFERENCES public.fields(id) ON DELETE CASCADE;
 
 
 --

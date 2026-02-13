@@ -179,7 +179,7 @@ BEGIN
                 (_field_id_old IS NULL AND _field_id_new IS NULL) OR
                 fields.id IN (_field_id_old, _field_id_new)
             ) AND
-            fields.id = coalesce(multiselection_property, checkboxes_list_property, boolean_property)
+            fields.id = property
     WHERE
         (_project_slug IS NULL OR projects.slug = _project_slug) AND
         (_source_slug IS NULL OR sources.slug = _source_slug) AND
@@ -204,7 +204,7 @@ BEGIN
                 (_field_id_old IS NULL AND _field_id_new IS NULL) OR
                 fields.id = _field_id_new
             ) AND
-            fields.id = coalesce(multiselection_property, checkboxes_list_property, boolean_property)
+            fields.id = property
         JOIN LATERAL api02.pois_property_extract_values(projects.id, sources.id, fields.field) AS t ON true
     WHERE
         (_project_slug IS NULL OR projects.slug = _project_slug) AND
@@ -248,8 +248,8 @@ DECLARE
     field_id_old integer;
     field_id_new integer;
 BEGIN
-    field_id_old := coalesce(OLD.multiselection_property, OLD.checkboxes_list_property, OLD.boolean_property, OLD.property_date, OLD.number_range_property);
-    field_id_new := coalesce(NEW.multiselection_property, NEW.checkboxes_list_property, NEW.boolean_property, NEW.property_date, NEW.number_range_property);
+    field_id_old := OLD.property;
+    field_id_new := NEW.property;
     PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
     RETURN NEW;
 END;
@@ -261,8 +261,8 @@ DECLARE
     field_id_old integer;
     field_id_new integer;
 BEGIN
-    field_id_old := (SELECT coalesce(multiselection_property, checkboxes_list_property, boolean_property, property_date, number_range_property) FROM filters WHERE filters.id = OLD.filters_id);
-    field_id_new := (SELECT coalesce(multiselection_property, checkboxes_list_property, boolean_property, property_date, number_range_property) FROM filters WHERE filters.id = NEW.filters_id);
+    field_id_old := (SELECT property FROM filters WHERE filters.id = OLD.filters_id);
+    field_id_new := (SELECT property FROM filters WHERE filters.id = NEW.filters_id);
     PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
     RETURN NEW;
 END;
@@ -278,7 +278,7 @@ EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_menu_items_filt
 
 DROP TRIGGER IF EXISTS filters_pois_property_values_trigger ON filters;
 CREATE TRIGGER filters_pois_property_values_trigger
-AFTER INSERT OR UPDATE OF multiselection_property, checkboxes_list_property, boolean_property, property_date, number_range_property OR DELETE
+AFTER INSERT OR UPDATE OF property OR DELETE
 ON filters
 FOR EACH ROW
 EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_filters();

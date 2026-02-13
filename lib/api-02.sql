@@ -667,74 +667,39 @@ CREATE OR REPLACE FUNCTION menu(
             menu_items.slug,
             menu_items.parent_slug_id,
             menu_items.filterable_property,
-            nullif(jsonb_agg(
-                jsonb_strip_nulls(jsonb_build_object(
+            nullif(jsonb_agg(nullif(jsonb_strip_nulls(
+                jsonb_build_object(
                     'type', filters.type,
                     'name', nullif(CASE filters.type
                         WHEN 'boolean' THEN jsonb_strip_nulls(jsonb_build_object('fr', capitalize(coalesce(fields_boolean_translations.name_large, fields_boolean_translations.name, filters.name->>'fr-FR'))))
                         ELSE filters.name
-                    END, '{}'::jsonb)
-                )) ||
-                CASE filters.type
-                WHEN 'multiselection' THEN
-                    jsonb_build_object(
-                        'property', split_field(fields_multiselection.field),
-                        'values', coalesce(filter_multiselection_values_global.property_values, '[]'::jsonb)
-                    )
-                WHEN 'checkboxes_list' THEN
-                    jsonb_build_object(
-                        'property', split_field(fields_checkboxes_list.field),
-                        'values', coalesce(filter_checkboxes_list_values_global.property_values, '[]'::jsonb)
-                    )
-                WHEN 'boolean' THEN
-                    jsonb_build_object(
-                        'property', split_field(fields_boolean.field)
-                    )
-                WHEN 'date_range' THEN
-                    jsonb_build_object(
-                        'property', split_field(fields_date_range.field)
-                    )
-                WHEN 'number_range' THEN
-                    jsonb_build_object(
-                        'property', split_field(fields_number_range.field),
-                        'min', filters.min,
-                        'max', filters.max
-                    )
-                END
-            ORDER BY menu_items_filters.index), '[null]'::jsonb) AS filters
+                    END, '{}'::jsonb),
+                    'property', split_field(fields.field),
+                    'values', CASE WHEN filters.type IN ('multiselection', 'checkboxes_list') THEN coalesce(filter_multi_values_global.property_values, '[]'::jsonb) END,
+                    'min', CASE filters.type WHEN 'number_range' THEN filters.min END,
+                    'max', CASE filters.type WHEN 'number_range' THEN filters.max END
+                )
+            ), '{}'::jsonb) ORDER BY menu_items_filters.index), '[null]'::jsonb) AS filters
         FROM
             theme_menu_items AS menu_items
             LEFT JOIN menu_items_filters ON
                 menu_items_filters.menu_items_id = menu_items.id
             LEFT JOIN filters_join AS filters ON
                 filters.id = menu_items_filters.filters_id
-            LEFT JOIN fields AS fields_multiselection ON
-                fields_multiselection.id = filters.multiselection_property
+            LEFT JOIN fields ON
+                fields.id = filters.property
             LEFT JOIN pois_property_values_by_menu_item(
                     menu_items.project_id,
                     CASE WHEN menu_items.type = 'category' THEN menu_items.id END,
-                    fields_multiselection.id
-                )  AS filter_multiselection_values_global ON
-                filter_multiselection_values_global.project_id = filters.project_id AND
-                filter_multiselection_values_global.field_id = filters.multiselection_property
-            LEFT JOIN fields AS fields_checkboxes_list ON
-                fields_checkboxes_list.id = filters.checkboxes_list_property
-            LEFT JOIN pois_property_values_by_menu_item(
-                    menu_items.project_id,
-                    CASE WHEN menu_items.type = 'category' THEN menu_items.id END,
-                    fields_checkboxes_list.id
-                ) AS filter_checkboxes_list_values_global ON
-                filter_checkboxes_list_values_global.project_id = filters.project_id AND
-                filter_checkboxes_list_values_global.field_id = filters.checkboxes_list_property
-            LEFT JOIN fields AS fields_boolean ON
-                fields_boolean.id = filters.boolean_property
+                    fields.id
+                )  AS filter_multi_values_global ON
+                filters.type IN ('multiselection', 'checkboxes_list') AND
+                filter_multi_values_global.project_id = filters.project_id AND
+                filter_multi_values_global.field_id = filters.property
             LEFT JOIN fields_translations AS fields_boolean_translations ON
-                fields_boolean_translations.fields_id = filters.boolean_property AND
+                filters.type IN ('boolean') AND
+                fields_boolean_translations.fields_id = filters.property AND
                 fields_boolean_translations.languages_code = 'fr-FR'
-            LEFT JOIN fields AS fields_date_range ON
-                fields_date_range.id = filters.property_date
-            LEFT JOIN fields AS fields_number_range ON
-                fields_number_range.id = filters.number_range_property
         GROUP BY
             menu_items.id,
             menu_items.index_order,
