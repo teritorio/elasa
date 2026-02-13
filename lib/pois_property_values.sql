@@ -43,7 +43,7 @@ CREATE FUNCTION pois_property_values_by_menu_item(
             pois_property_values.field_id = _field_id
         JOIN LATERAL jsonb_array_elements(property_values) AS t(property_value) ON true
     WHERE
-        menu_items_sources.menu_items_id = _menu_items_id
+        (_menu_items_id IS NULL OR menu_items_sources.menu_items_id = _menu_items_id)
     ORDER BY
         project_id,
         field_id,
@@ -177,7 +177,7 @@ BEGIN
         JOIN fields ON
             (
                 (_field_id_old IS NULL AND _field_id_new IS NULL) OR
-                fields.id = _field_id_old
+                fields.id IN (_field_id_old, _field_id_new)
             ) AND
             fields.id = coalesce(multiselection_property, checkboxes_list_property, boolean_property)
     WHERE

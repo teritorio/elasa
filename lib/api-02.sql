@@ -709,29 +709,32 @@ CREATE OR REPLACE FUNCTION menu(
             LEFT JOIN filters_join AS filters ON
                 filters.id = menu_items_filters.filters_id
             LEFT JOIN fields AS fields_multiselection ON
-                fields_multiselection.id = filters.multiselection_property AND
-                fields_multiselection.type = 'field'
-            LEFT JOIN pois_property_values_by_menu_item(menu_items.project_id, menu_items.id, fields_multiselection.id)  AS filter_multiselection_values_global ON
+                fields_multiselection.id = filters.multiselection_property
+            LEFT JOIN pois_property_values_by_menu_item(
+                    menu_items.project_id,
+                    CASE WHEN menu_items.type = 'category' THEN menu_items.id END,
+                    fields_multiselection.id
+                )  AS filter_multiselection_values_global ON
                 filter_multiselection_values_global.project_id = filters.project_id AND
                 filter_multiselection_values_global.field_id = filters.multiselection_property
             LEFT JOIN fields AS fields_checkboxes_list ON
-                fields_checkboxes_list.id = filters.checkboxes_list_property AND
-                fields_checkboxes_list.type = 'field'
-            LEFT JOIN pois_property_values_by_menu_item(menu_items.project_id, menu_items.id, fields_checkboxes_list.id) AS filter_checkboxes_list_values_global ON
+                fields_checkboxes_list.id = filters.checkboxes_list_property
+            LEFT JOIN pois_property_values_by_menu_item(
+                    menu_items.project_id,
+                    CASE WHEN menu_items.type = 'category' THEN menu_items.id END,
+                    fields_checkboxes_list.id
+                ) AS filter_checkboxes_list_values_global ON
                 filter_checkboxes_list_values_global.project_id = filters.project_id AND
                 filter_checkboxes_list_values_global.field_id = filters.checkboxes_list_property
             LEFT JOIN fields AS fields_boolean ON
-                fields_boolean.id = filters.boolean_property AND
-                fields_boolean.type = 'field'
+                fields_boolean.id = filters.boolean_property
             LEFT JOIN fields_translations AS fields_boolean_translations ON
                 fields_boolean_translations.fields_id = filters.boolean_property AND
                 fields_boolean_translations.languages_code = 'fr-FR'
             LEFT JOIN fields AS fields_date_range ON
-                fields_date_range.id = filters.property_date AND
-                fields_date_range.type = 'field'
+                fields_date_range.id = filters.property_date
             LEFT JOIN fields AS fields_number_range ON
-                fields_number_range.id = filters.number_range_property AND
-                fields_number_range.type = 'field'
+                fields_number_range.id = filters.number_range_property
         GROUP BY
             menu_items.id,
             menu_items.index_order,
