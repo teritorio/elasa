@@ -2734,7 +2734,7 @@ ALTER TABLE ONLY public.directus_files
 --
 
 ALTER TABLE ONLY public.directus_files
-    ADD CONSTRAINT directus_files_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id);
+    ADD CONSTRAINT directus_files_project_id_foreign FOREIGN KEY (project_id) REFERENCES public.projects(id) ON DELETE CASCADE;
 
 
 --
