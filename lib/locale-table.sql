@@ -40,8 +40,8 @@ BEGIN
                         JOIN sources ON
                             sources.project_id = projects.id
                     WHERE
-                        projects.slug = extract_project_slugs(_table)
-                        sources.slug = extract_source_slugs(_table)
+                        projects.slug = api01.extract_project_slugs(''' || _table || ''') AND
+                        sources.slug = api01.extract_source_slugs(''' || _table || ''')
                 )
         ';
     ELSE
