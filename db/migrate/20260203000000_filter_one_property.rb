@@ -3,7 +3,7 @@
 
 class FilterOneProperty < ActiveRecord::Migration[8.0]
   def change
-    execute <<~SQL.squish
+    execute <<~SQL
       DELETE FROM filters WHERE
         multiselection_property IS NULL AND
         checkboxes_list_property IS NULL AND
