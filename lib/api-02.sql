@@ -427,6 +427,8 @@ CREATE OR REPLACE FUNCTION fields(
                 'multilingual', CASE
                     -- Fields spec should rather be produced from locale tables schema
                     WHEN fields.field IN ('name', 'description', 'website:details') THEN true
+                    WHEN fields.field LIKE 'route:%' THEN true
+                    WHEN fields.field LIKE 'addr:%' THEN true
                     WHEN fields."group" IS NULL THEN nullif(fields.multilingual, false)
                 END,
                 'array', CASE
