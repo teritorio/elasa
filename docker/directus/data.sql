@@ -121,6 +121,7 @@ t	49b617db-7261-41a9-a8d7-6a038482a869	intercept-search	local	db7ec639-4f69-4bd2
 t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-4bd2-9ef1-e169ee869423
 t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	directus-extension-m2o-presentation-interface	local	\N
 t	8f77639c-6570-484b-9628-79a3d44c5a4c	directus-extension-key-value-interface	local	\N
+t	87c3416a-0027-4123-89e2-3a17c283a36d	directus-extension-map-gpx	local	\N
 \.
 
 
