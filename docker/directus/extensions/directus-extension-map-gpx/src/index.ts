@@ -2,7 +2,7 @@ import { defineInterface } from '@directus/extensions-sdk';
 import InterfaceComponent from './interface.vue';
 
 export default defineInterface({
-	id: 'gpx-map',
+	id: 'map-gpx',
 	name: 'Map (GPX)',
 	icon: 'map',
 	description: 'Map interface with GPX file import for geometry fields',

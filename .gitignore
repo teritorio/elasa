@@ -2,3 +2,5 @@ log*
 tmp/
 .env
 uploads/
+node_modules/
+docker/directus/extensions/**/pnpm-lock.yaml
