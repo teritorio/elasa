@@ -25,24 +25,10 @@ export function gpx2geojson(gpx: string): GeoJSONGeometry {
 		throw new Error('Invalid XML: ' + parseError.textContent);
 	}
 
-	// Extract coordinates from <rte>/<rtept> and <trk>/<trkseg>/<trkpt>
+	// Extract coordinates: prefer <trk> (GPS traces), fall back to <rte> (waypoints)
 	const coordinates: Coord[][] = [];
 
-	// Routes
-	const routes = doc.querySelectorAll('rte');
-	routes.forEach((rte) => {
-		const points: Coord[] = [];
-		rte.querySelectorAll('rtept').forEach((pt) => {
-			const lon = parseFloat(pt.getAttribute('lon') || '0');
-			const lat = parseFloat(pt.getAttribute('lat') || '0');
-			points.push([lon, lat]);
-		});
-		if (points.length > 0) {
-			coordinates.push(points);
-		}
-	});
-
-	// Tracks
+	// Tracks (dense GPS points — the actual geometry)
 	const tracks = doc.querySelectorAll('trk');
 	tracks.forEach((trk) => {
 		trk.querySelectorAll('trkseg').forEach((seg) => {
@@ -57,6 +43,22 @@ export function gpx2geojson(gpx: string): GeoJSONGeometry {
 			}
 		});
 	});
+
+	// Routes (only if no tracks found)
+	if (coordinates.length === 0) {
+		const routes = doc.querySelectorAll('rte');
+		routes.forEach((rte) => {
+			const points: Coord[] = [];
+			rte.querySelectorAll('rtept').forEach((pt) => {
+				const lon = parseFloat(pt.getAttribute('lon') || '0');
+				const lat = parseFloat(pt.getAttribute('lat') || '0');
+				points.push([lon, lat]);
+			});
+			if (points.length > 0) {
+				coordinates.push(points);
+			}
+		});
+	}
 
 	// Remove consecutive duplicate points and merge contiguous linestrings
 	const merged: Coord[][] = [];

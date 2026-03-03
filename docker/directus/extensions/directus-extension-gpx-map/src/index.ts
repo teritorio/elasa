@@ -7,9 +7,19 @@ export default defineInterface({
 	icon: 'map',
 	description: 'Map interface with GPX file import for geometry fields',
 	component: InterfaceComponent,
-	types: ['geometry', 'json', 'text'],
-	localTypes: ['geometry'],
+	types: [
+		'geometry.Point',
+		'geometry.LineString',
+		'geometry.Polygon',
+		'geometry.MultiPoint',
+		'geometry.MultiLineString',
+		'geometry.MultiPolygon',
+		'geometry',
+		'json',
+		'text',
+	],
 	group: 'selection',
+	recommendedDisplays: [],
 	options: [
 		{
 			field: 'defaultView',

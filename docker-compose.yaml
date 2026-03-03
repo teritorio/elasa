@@ -92,6 +92,7 @@ services:
       # (see https://docs.directus.io/reference/environment-variables/#general)
       PUBLIC_URL: $DIRECTUS_PUBLIC_URL
       EXTENSIONS_AUTO_RELOAD: ${DIRECTUS_EXTENSIONS_AUTO_RELOAD}
+      CONTENT_SECURITY_POLICY_DIRECTIVES__IMG_SRC: ${DIRECTUS_CSP_IMG_SRC:-}
     restart: unless-stopped
 
   script:
