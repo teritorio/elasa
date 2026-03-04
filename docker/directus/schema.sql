@@ -127,6 +127,22 @@ CREATE FUNCTION public.jsonb_to_text_array(j jsonb) RETURNS text[]
 
 ALTER FUNCTION public.jsonb_to_text_array(j jsonb) OWNER TO postgres;
 
+--
+-- Name: pois_geom_multi(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.pois_geom_multi() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+      BEGIN
+        NEW.geom := ST_CollectionHomogenize(NEW.geom);
+        RETURN NEW;
+      END;
+      $$;
+
+
+ALTER FUNCTION public.pois_geom_multi() OWNER TO postgres;
+
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
@@ -2632,6 +2648,13 @@ CREATE INDEX pois_idx_source_id ON public.pois USING btree (source_id);
 --
 
 CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_array(properties));
+
+
+--
+-- Name: pois pois_geom_multi_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER pois_geom_multi_trigger BEFORE INSERT OR UPDATE OF geom ON public.pois FOR EACH ROW EXECUTE FUNCTION public.pois_geom_multi();
 
 
 --
