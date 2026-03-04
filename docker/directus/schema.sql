@@ -58,48 +58,6 @@ CREATE TYPE public.menu_item_display_mode_type AS ENUM (
 ALTER TYPE public.menu_item_display_mode_type OWNER TO postgres;
 
 --
--- Name: filters_pois_property_values_trigger_from_filters(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.filters_pois_property_values_trigger_from_filters() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    field_id_old integer;
-    field_id_new integer;
-BEGIN
-    field_id_old := OLD.field_id;
-    field_id_new := NEW.field_id;
-    PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
-    RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.filters_pois_property_values_trigger_from_filters() OWNER TO postgres;
-
---
--- Name: filters_pois_property_values_trigger_from_menu_items_filters(); Type: FUNCTION; Schema: public; Owner: postgres
---
-
-CREATE FUNCTION public.filters_pois_property_values_trigger_from_menu_items_filters() RETURNS trigger
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    field_id_old integer;
-    field_id_new integer;
-BEGIN
-    field_id_old := (SELECT field_id FROM filters WHERE filters.id = OLD.filters_id);
-    field_id_new := (SELECT field_id FROM filters WHERE filters.id = NEW.filters_id);
-    PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
-    RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION public.filters_pois_property_values_trigger_from_menu_items_filters() OWNER TO postgres;
-
---
 -- Name: jsonb_pois_keys_array(jsonb); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -2648,6 +2606,20 @@ CREATE INDEX pois_idx_source_id ON public.pois USING btree (source_id);
 --
 
 CREATE INDEX pois_keys_idx ON public.pois USING gin (public.jsonb_pois_keys_array(properties));
+
+
+--
+-- Name: filters filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE OF field_id ON public.filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_filters();
+
+
+--
+-- Name: menu_items_filters menu_items_filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER menu_items_filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE ON public.menu_items_filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_menu_items_filters();
 
 
 --
