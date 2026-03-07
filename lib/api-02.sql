@@ -100,24 +100,6 @@ GROUP BY
     themes.id
 ;
 
-DROP VIEW IF EXISTS pois_join CASCADE;
-CREATE VIEW pois_join AS
-SELECT
-    pois.*,
-    nullif(jsonb_agg(to_jsonb(
-        '__base_url__' || '/assets/' || pois_files.directus_files_id::text || '/' || directus_files.filename_download
-    ) ORDER BY pois_files.index), '[null]') AS image,
-    id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
-FROM
-    pois
-    LEFT JOIN pois_files ON
-        pois_files.pois_id = pois.id
-    LEFT JOIN directus_files ON
-        directus_files.id = pois_files.directus_files_id
-GROUP BY
-    pois.id
-;
-
 DROP VIEW IF EXISTS pois_join_without_deps;
 CREATE VIEW pois_join_without_deps AS
 SELECT
@@ -125,12 +107,11 @@ SELECT
     pois.geom,
     pois.source_id,
     pois.properties,
-    pois.image,
-    pois.slug_id,
+    pois.slugs,
     NULL::integer[] AS dep_ids,
     NULL::integer[] AS dep_original_ids
 FROM
-    pois_join AS pois
+    pois
 ;
 
 DROP VIEW IF EXISTS pois_join_with_deps;
@@ -140,8 +121,7 @@ SELECT
     pois.geom,
     pois.source_id,
     pois.properties,
-    pois.image,
-    pois.slug_id,
+    pois.slugs,
     nullif(
         array_agg(pois_pois.children_pois_id ORDER BY index),
         ARRAY[NULL::integer]
@@ -151,18 +131,13 @@ SELECT
         ARRAY[NULL::integer]
     ) AS dep_original_ids
 FROM
-    pois_join AS pois
+    pois
     LEFT JOIN pois_pois ON
         pois_pois.parent_pois_id = pois.id
     LEFT JOIN pois AS dep_pois ON
         dep_pois.id = pois_pois.children_pois_id
 GROUP BY
-    pois.id,
-    pois.geom,
-    pois.source_id,
-    pois.properties,
-    pois.image,
-    pois.slug_id
+    pois.id
 ;
 
 DROP VIEW IF EXISTS menu_items_join;
@@ -1210,7 +1185,7 @@ CREATE OR REPLACE FUNCTION pois_(
     pois_selected AS (
         SELECT
             menu_id,
-            pois_join.*
+            pois.*
         FROM
             menu
             JOIN pois ON
@@ -1218,10 +1193,7 @@ CREATE OR REPLACE FUNCTION pois_(
                 (
                     _cliping_polygon IS NULL OR
                     ST_Intersects(pois.geom, _cliping_polygon)
-                )
-            JOIN pois_join_with_deps AS pois_join ON
-                pois_join.source_id = menu.source_id AND
-                pois_join.id = pois.id AND
+                ) AND
                 (
                     (
                         nullif(_poi_ids, '{}'::bigint[]) IS NULL AND
@@ -1229,22 +1201,43 @@ CREATE OR REPLACE FUNCTION pois_(
                     ) OR
                     (
                         nullif(_poi_ids, '{}'::bigint[]) IS NOT NULL AND
-                        pois_join.slug_id = ANY(_poi_ids)
+                        id_from_slugs(slugs, pois.id) = ANY(_poi_ids)
                     ) OR
                     (
                         nullif(_poi_refs, ARRAY[]::ref_kv[]) IS NOT NULL AND (
-                            pois_join.properties->'tags' ? 'ref' AND
-                            pois_join.properties->'tags'->'ref' ?| (SELECT array_agg(DISTINCT key) FROM unnest(_poi_refs)) AND
-                            jsonb_to_text_array(pois_join.properties->'tags'->'ref') && (SELECT array_agg(key || '=' || value) FROM unnest(_poi_refs))
+                            pois.properties->'tags' ? 'ref' AND
+                            pois.properties->'tags'->'ref' ?| (SELECT array_agg(DISTINCT key) FROM unnest(_poi_refs)) AND
+                            jsonb_to_text_array(pois.properties->'tags'->'ref') && (SELECT array_agg(key || '=' || value) FROM unnest(_poi_refs))
                         )
                     )
                 )
     ),
     pois_with_deps AS (
+        (
         SELECT
-            *
+            pois.menu_id,
+            pois_join.*
         FROM
-            pois_selected
+            pois_selected AS pois
+            JOIN pois_join_without_deps AS pois_join ON
+                pois_join.id = pois.id
+        WHERE
+            _with_deps IS NULL OR _with_deps = 'false'
+
+        ) UNION ALL (
+
+        WITH a AS (
+        SELECT
+            pois.menu_id,
+            pois_join.*
+        FROM
+            pois_selected AS pois
+            JOIN pois_join_with_deps AS pois_join ON
+                pois_join.id = pois.id
+        WHERE
+            _with_deps = 'true'
+        )
+        SELECT * FROM a
 
         UNION
 
@@ -1252,7 +1245,7 @@ CREATE OR REPLACE FUNCTION pois_(
             menu_items.id AS menu_id,
             pois_join.*
         FROM
-            pois_selected AS pois
+            a AS pois
             JOIN pois_join_without_deps AS pois_join ON
                 pois_join.id = ANY(pois.dep_ids)
             JOIN sources ON
@@ -1263,6 +1256,28 @@ CREATE OR REPLACE FUNCTION pois_(
                 menu_items.id = menu_items_sources.menu_items_id
         WHERE
             _with_deps = 'true'
+        )
+    ),
+    pois_join_with_deps AS (
+        SELECT
+            pois.*,
+            nullif(jsonb_agg(to_jsonb(
+                '__base_url__' || '/assets/' || pois_files.directus_files_id::text
+            ) ORDER BY pois_files.index), '[null]') AS image,
+            id_from_slugs(slugs, pois.id) AS slug_id -- use slug as original POI id
+        FROM
+            pois_with_deps AS pois
+            LEFT JOIN pois_files ON
+                pois_files.pois_id = pois.id
+        GROUP BY
+            pois.menu_id,
+            pois.id,
+            pois.geom,
+            pois.source_id,
+            pois.properties,
+            pois.slugs,
+            pois.dep_ids,
+            pois.dep_original_ids
     ),
     json_pois AS (
         SELECT
@@ -1391,7 +1406,7 @@ CREATE OR REPLACE FUNCTION pois_(
                     )
             )) AS feature
         FROM
-            pois_with_deps AS pois
+            pois_join_with_deps AS pois
             LEFT JOIN menu ON
                 menu.menu_id = pois.menu_id AND
                 menu.source_id = pois.source_id
