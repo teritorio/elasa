@@ -33,7 +33,7 @@ CREATE OR REPLACE AGGREGATE jsonb_merge_agg(jsonb)
 
 
 DROP FUNCTION IF EXISTS id_from_slugs CASCADE;
-CREATE FUNCTION id_from_slugs(slugs json, id integer) RETURNS bigint AS $$
+CREATE FUNCTION id_from_slugs(slugs jsonb, id integer) RETURNS bigint AS $$
     SELECT
         coalesce(
             (slugs->>'original_id')::bigint,

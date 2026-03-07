@@ -114,7 +114,7 @@ CREATE TABLE public.pois (
     geom public.geometry(Geometry,4326),
     properties jsonb,
     source_id integer,
-    slugs json,
+    slugs jsons,
     properties_id text GENERATED ALWAYS AS ((properties ->> 'id'::text)) STORED,
     properties_tags_name text GENERATED ALWAYS AS (((properties -> 'tags'::text) ->> 'name'::text)) STORED,
     CONSTRAINT pois_geom_not_collection CHECK ((public.geometrytype(geom) = ANY (ARRAY['POINT'::text, 'MULTIPOINT'::text, 'LINESTRING'::text, 'MULTILINESTRING'::text, 'POLYGON'::text, 'MULTIPOLYGON'::text])))
