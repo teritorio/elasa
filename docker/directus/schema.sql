@@ -2616,13 +2616,6 @@ CREATE TRIGGER filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UP
 
 
 --
--- Name: menu_items_filters menu_items_filters_pois_property_values_trigger; Type: TRIGGER; Schema: public; Owner: postgres
---
-
-CREATE TRIGGER menu_items_filters_pois_property_values_trigger AFTER INSERT OR DELETE OR UPDATE ON public.menu_items_filters FOR EACH ROW EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_menu_items_filters();
-
-
---
 -- Name: pois pois_geom_multi_trigger; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
