@@ -218,63 +218,27 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- triggers to add new filters
-DROP FUNCTION IF EXISTS filters_pois_property_values;
-CREATE OR REPLACE FUNCTION filters_pois_property_values(
-    field_id_old integer,
-    field_id_new integer
-) RETURNS VOID AS $$
-DECLARE
-    _project_slug text;
-BEGIN
-    _project_slug := (SELECT projects.slug FROM projects JOIN fields ON fields.project_id = projects.id WHERE fields.id = coalesce(field_id_old, field_id_new));
-
-    IF field_id_old = field_id_new THEN
-        PERFORM api02.pois_property_values_update(_project_slug, NULL, field_id_old, field_id_new);
-    ELSE
-        IF field_id_old IS NOT NULL THEN
-            PERFORM api02.pois_property_values_update(_project_slug, NULL, field_id_old, field_id_new);
-        END IF;
-        IF field_id_new IS NOT NULL THEN
-            PERFORM api02.pois_property_values_update(_project_slug, NULL, field_id_old, field_id_new);
-        END IF;
-    END IF;
-END;
-$$ LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION filters_pois_property_values_trigger_from_filters()
 RETURNS TRIGGER AS $$
 DECLARE
     field_id_old integer;
     field_id_new integer;
+    _project_slug text;
 BEGIN
     field_id_old := OLD.field_id;
     field_id_new := NEW.field_id;
-    PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
+    _project_slug := (SELECT projects.slug FROM projects JOIN fields ON fields.project_id = projects.id WHERE fields.id = coalesce(field_id_old, field_id_new));
+
+    IF field_id_old IS NOT NULL THEN
+        PERFORM api02.pois_property_values_update(_project_slug, NULL, field_id_old, field_id_new);
+    END IF;
+    IF field_id_new IS NOT NULL THEN
+        PERFORM api02.pois_property_values_update(_project_slug, NULL, field_id_old, field_id_new);
+    END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION filters_pois_property_values_trigger_from_menu_items_filters()
-RETURNS TRIGGER AS $$
-DECLARE
-    field_id_old integer;
-    field_id_new integer;
-BEGIN
-    field_id_old := (SELECT field_id FROM filters WHERE filters.id = OLD.filters_id);
-    field_id_new := (SELECT field_id FROM filters WHERE filters.id = NEW.filters_id);
-    PERFORM api02.filters_pois_property_values(field_id_old, field_id_new);
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-
-DROP TRIGGER IF EXISTS menu_items_filters_pois_property_values_trigger ON menu_items_filters;
-CREATE TRIGGER menu_items_filters_pois_property_values_trigger
-AFTER INSERT OR UPDATE OR DELETE
-ON menu_items_filters
-FOR EACH ROW
-EXECUTE FUNCTION api02.filters_pois_property_values_trigger_from_menu_items_filters();
 
 DROP TRIGGER IF EXISTS filters_pois_property_values_trigger ON filters;
 CREATE TRIGGER filters_pois_property_values_trigger
