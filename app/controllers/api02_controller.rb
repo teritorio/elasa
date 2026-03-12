@@ -372,7 +372,7 @@ class Api02Controller < ApplicationController
     end
 
     waypoints, deps = deps.partition{ |poi|
-      poi.dig('properties', 'route', 'fr-FR', 'waypoint:type').nil?
+      !poi.dig('properties', 'route:point:type').nil?
     }
     deps_index = deps.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
     waypoints_index = waypoints.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
