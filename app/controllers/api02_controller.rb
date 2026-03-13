@@ -371,13 +371,6 @@ class Api02Controller < ApplicationController
       return
     end
 
-    waypoints, deps = deps.partition{ |poi|
-      !poi.dig('properties', 'route:point:type').nil?
-    }
-    deps_index = deps.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
-    waypoints_index = waypoints.index_by{ |poi| poi.dig('properties', 'metadata', 'id') }.compact
-    dep_ids = geojson.dig('properties', 'metadata', 'dep_ids')
-
     name = T.let(nil, T.nilable(String))
     xml = T.let(Builder::XmlMarkup.new, T.untyped) # Avoid typing error on builder
     xml.instruct!(:xml, version: '1.0')
@@ -386,25 +379,12 @@ class Api02Controller < ApplicationController
         name, = poi_meta(geojson, xml)
         # <author><name>Author name</name></author>
       }
-      dep_ids.each { |dep_id|
-        dep = deps_index[dep_id]
-        next if dep.nil? || dep.dig('geometry', 'type') != 'Point'
+      deps.each { |dep|
+        next if dep.dig('geometry', 'type') != 'Point'
 
         point = dep['geometry']['coordinates']
         xml.wpt(lon: point[0], lat: point[1]) { poi_meta(dep, xml) }
       }
-      if !waypoints_index.empty?
-        xml.rte {
-          # <type>
-          dep_ids.each { |waypoint_id|
-            waypoint = waypoints_index[waypoint_id]
-            next if waypoint.nil? || waypoint.dig('geometry', 'type') != 'Point'
-
-            point = waypoint['geometry']['coordinates']
-            xml.rtept(lon: point[0], lat: point[1]) { poi_meta(waypoint, xml) }
-          }
-        }
-      end
       xml.trk {
         coordinates = geometry['type'] == 'MultiLineString' ? geometry['coordinates'] : [geometry['coordinates']]
         coordinates.each{ |segement|
