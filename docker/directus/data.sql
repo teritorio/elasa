@@ -271,7 +271,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 550	fields	field_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	7	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"field"}}]},"options":{"start":"open"},"hidden":true}]	f	\N	\N	\N
 551	fields	values_translations	cast-json	input-code	{"lineNumber":false}	\N	\N	f	f	2	full	\N	\N	\N	f	field_block	\N	\N
 552	menu_items	translations	alias,no-data,group	group-detail	{"start":"closed","headerIcon":"translate"}	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
-553	filters	field_id	m2o	select-dropdown-m2o	{"template":"{{field}}","filter":{"_and":[{"_and":[{"type":{"_eq":"field"}},{"project_id":{"_eq":"{{project_id}}"}}]}]}}	related-values	{"template":"{{field}}"}	f	f	5	full	\N	\N	\N	f	\N	\N	\N
+553	filters	field_id	\N	select-dropdown-m2o	{"template":"{{field}}","filter":{"_and":[{"_and":[{"type":{"_eq":"field"}},{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}]}}	related-values	{"template":"{{field}}"}	f	f	1	full	\N	\N	\N	f	\N	\N	\N
 559	projects	datasources_slug	\N	\N	\N	\N	\N	f	f	4	half	\N	\N	\N	f	\N	\N	\N
 560	projects	api_key	\N	\N	\N	\N	\N	t	f	15	full	\N	\N	\N	f	\N	\N	\N
 561	menu_items_filters	index	\N	\N	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
