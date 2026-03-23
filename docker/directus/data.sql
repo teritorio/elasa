@@ -152,7 +152,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 41	menu_items	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 46	menu_items	items	o2m	list-o2m-tree-view	{"displayTemplate":null}	\N	{"template":"{{id}}"}	f	f	1	full	\N	\N	\N	f	menu_group	\N	\N
 47	menu_items	parent_id	\N	select-dropdown-m2o	\N	\N	\N	f	t	4	full	\N	\N	\N	f	\N	\N	\N
-49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":null}	f	f	7	full	\N	\N	\N	f	\N	\N	\N
+49	themes	root_menu_item_id	m2o	select-dropdown-m2o	{"template":null,"filter":{"_and":[{"type":{"_eq":"menu_group"}},{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	related-values	{"template":null}	f	f	7	full	\N	\N	\N	f	\N	\N	\N
 53	menu_items	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 54	menu_items	index_order	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 55	menu_items	hidden	\N	\N	\N	\N	\N	f	f	1	half	\N	\N	\N	f	behavior	\N	\N
@@ -165,7 +165,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 69	menu_items	search_indexed	cast-boolean	boolean	\N	\N	\N	f	f	2	half	\N	\N	\N	f	category	\N	\N
 71	menu_items	style_merge	cast-boolean	boolean	\N	\N	\N	f	f	3	half	\N	\N	\N	f	category	\N	\N
 73	menu_items	zoom	\N	slider	{"minValue":12,"maxValue":18}	\N	\N	f	f	4	half	\N	\N	\N	f	category	\N	\N
-74	menu_items	sources	m2m	list-m2m	{"template":"{{sources_id.slug}}","enableLink":true,"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	1	full	\N	\N	\N	f	category	\N	\N
+74	menu_items	sources	m2m	list-m2m	{"template":"{{sources_id.slug}}","enableLink":true,"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	\N	f	f	1	full	\N	\N	\N	f	category	\N	\N
 75	menu_items_sources	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 76	menu_items_sources	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 77	menu_items_sources	sources_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -179,7 +179,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 90	filters	min	\N	input	\N	\N	\N	f	f	2	full	\N	\N	\N	f	number_range	\N	\N
 91	filters	max	\N	input	\N	\N	\N	f	f	3	full	\N	\N	\N	f	number_range	\N	\N
 98	filters	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
-107	menu_items	filters	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
+107	menu_items	filters	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	\N	f	f	12	full	\N	\N	\N	f	\N	\N	\N
 108	menu_items_filters	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 109	menu_items_filters	menu_items_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 110	menu_items_filters	filters_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -200,14 +200,14 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 139	fields	display_mode	\N	select-dropdown	{"choices":[{"text":"standard","value":"standard"},{"text":"card","value":"card"}]}	\N	\N	f	f	2	full	\N	\N	\N	f	group_block	\N	\N
 140	fields	icon	\N	input	\N	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 141	fields	group_block	alias,no-data,group	group-detail	\N	\N	\N	f	f	8	full	\N	\N	[{"rule":{"_and":[{"type":{"_neq":"group"}}]},"hidden":true,"options":{"start":"open"}}]	f	\N	\N	\N
-144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100,"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	3	full	\N	\N	\N	f	group_block	\N	\N
+144	fields	fields	m2m	list-m2m	{"template":"{{related_fields_id.type}} {{related_fields_id.field}}{{related_fields_id.group}}","enableLink":true,"limit":100,"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	related-values	{"template":"{{related_fields_id.type}}{{related_fields_id.field}}{{related_fields_id.group}}"}	f	f	3	full	\N	\N	\N	f	group_block	\N	\N
 145	fields_fields	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 146	fields_fields	fields_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 147	fields_fields	related_fields_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
 148	fields	project_id	m2o	select-dropdown-m2o	\N	\N	\N	f	t	9	full	\N	\N	\N	f	\N	\N	\N
-149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	6	half	\N	\N	\N	f	category	\N	\N
-150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	7	half	\N	\N	\N	f	category	\N	\N
-151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	8	half	\N	\N	\N	f	category	\N	\N
+149	menu_items	popup_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	6	half	\N	\N	\N	f	category	\N	\N
+150	menu_items	details_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	7	half	\N	\N	\N	f	category	\N	\N
+151	menu_items	list_fields_id	m2o	select-dropdown-m2o	{"template":"{{type}}{{field}}{{group}}","filter":{"_and":[{"type":{"_eq":"group"}},{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	{"template":"{{type}} {{field}} {{group}}"}	f	f	8	half	\N	\N	\N	f	category	\N	\N
 160	themes	favorites_mode	cast-boolean	boolean	\N	\N	\N	f	f	1	half	\N	\N	\N	f	map	\N	\N
 161	themes	explorer_mode	cast-boolean	boolean	\N	\N	\N	f	f	2	half	\N	\N	\N	f	map	\N	\N
 162	projects	default_country	\N	select-dropdown	{"choices":[{"text":"fr","value":"fr"},{"text":"es","value":"es"}]}	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
@@ -284,7 +284,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 570	articles_translations	slug	\N	input	\N	\N	\N	f	f	5	full	\N	\N	\N	f	\N	\N	\N
 571	articles_translations	body	\N	input-rich-text-html	{"toolbar":["undo","redo","bold","italic","underline","h1","h2","h3","numlist","bullist","removeformat","cut","copy","paste","blockquote","customLink","customImage","customMedia","hr","code","fullscreen"],"tinymceOverrides":{"entity_encoding":"raw"}}	\N	\N	f	f	6	full	\N	\N	\N	f	\N	\N	\N
 572	articles	project_id	m2o	select-dropdown-m2o	\N	\N	\N	t	t	2	full	\N	\N	\N	f	\N	\N	\N
-573	themes	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
+573	themes	articles	m2m	list-m2m	{"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]}}	\N	\N	f	f	8	full	\N	\N	\N	f	\N	\N	\N
 574	themes_articles	id	\N	\N	\N	\N	\N	f	t	1	full	\N	\N	\N	f	\N	\N	\N
 575	themes_articles	themes_id	\N	\N	\N	\N	\N	f	t	2	full	\N	\N	\N	f	\N	\N	\N
 576	themes_articles	articles_id	\N	\N	\N	\N	\N	f	t	3	full	\N	\N	\N	f	\N	\N	\N
@@ -328,7 +328,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 614	fields	role	\N	select-dropdown	{"choices":[{"text":"string","value":"string"},{"text":"text","value":"text"},{"text":"integer","value":"integer"},{"text":"boolean","value":"boolean"},{"text":"weblink","value":"weblink"},{"text":"weblink@social-network","value":"weblink@social-network"},{"text":"weblink@download","value":"weblink@download"},{"text":"email","value":"email"},{"text":"phone","value":"phone"},{"text":"date","value":"date"},{"text":"datetime","value":"datetime"},{"text":"duration","value":"duration"},{"text":"start_end_date","value":"start_end_date"},{"text":"osm:opening_hours","value":"osm:opening_hours"},{"text":"osm:collection_times","value":"osm:collection_times"},{"text":"image","value":"image"},{"text":"mapillary","value":"mapillary"},{"text":"panoramax","value":"panoramax"},{"text":"tag","value":"tag"},{"text":"color","value":"color"},{"text":"rating-scale","value":"rating-scale"},{"text":"osm:stars","value":"osm:stars"},{"text":"coordinates","value":"coordinates"},{"text":"addr","value":"addr"},{"text":"route","value":"route"}]}	\N	\N	f	f	6	full	\N	\N	\N	f	field_block	\N	\N
 615	fields	array	\N	boolean	\N	\N	\N	f	f	4	full	\N	\N	\N	f	field_block	\N	\N
 616	fields	json_schema	cast-json	input-code	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
-617	sources	extends_source_id	\N	select-dropdown-m2o	{"filter":{"_and":[{"project_id":{"_eq":"{{project_id}}"}}]},"template":"{{slug}}","enableCreate":false}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
+617	sources	extends_source_id	\N	select-dropdown-m2o	{"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]},"template":"{{slug}}","enableCreate":false}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 618	menu_items	icon_show	\N	select-dropdown	{"choices":[{"text":"always","value":"always","icon":"check_box"},{"text":"never","value":"never","icon":"check_box_outline_blank"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	category	\N	\N
 \.
 
