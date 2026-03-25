@@ -124,7 +124,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
       {field: 'extends_poi', special: 'alias,no-data,group', interface: 'group-detail'},
       {group: 'extends_poi', field: 'extends_poi_id', readonly: true, special: 'm2o', interface: 'select-dropdown-m2o', options: '{"enableCreate":false,"filter":{"_and":[{"source_id":{"_eq":"' + withExtendsSourceId + '"}}]},"template":"{{id}} {{slugs}}"}', display_options: '{"template":"{{id}} {{slugs}}"}'},
       {group: 'extends_poi', field: 'extends_poi_properties', readonly: true, special: 'alias,no-data', interface: 'm2o-presentation', options: '{"m2oField":"extends_poi_id","presentationField":"properties"}'},
-      {group: 'extends_poi', field: '_search_config', readonly: true, special: 'alias,no-data', interface: 'search-configuration', options: '{"search_config":{"_and":[{"extends_poi_id":{"properties_tags_name":{"_icontains":"$SEARCH"}}}]}}'},
+      {group: 'extends_poi', field: '_search_config', readonly: true, special: 'alias,no-data', interface: 'search-configuration', options: '{"search_config":{"_and":[{"_or":[{"extends_poi_id":{"properties_tags_name":{"_icontains":"$SEARCH"}}},{"extends_poi_id":{"properties_id":{"_icontains":"$SEARCH"}}}]}]}}'},
       {field: 'local', special: 'alias,no-data,group', interface: 'group-detail'},
     ])
   }
