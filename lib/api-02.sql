@@ -279,6 +279,9 @@ CREATE OR REPLACE FUNCTION projects(
         ))::text
     FROM
         projects_join AS projects
+        JOIN themes ON
+            themes.project_id = projects.id AND
+            (_theme_slug IS NULL OR themes.slug = _theme_slug)
     WHERE
         _project_slug IS NULL OR projects.slug = _project_slug
     ;
