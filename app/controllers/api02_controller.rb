@@ -43,7 +43,7 @@ class Api02Controller < ApplicationController
 
     projects = JSON.parse(q) || []
     projects.transform_values { |project|
-      project['themes'].transform_values { |theme|
+      project['themes']&.transform_values { |theme|
         theme.except!('articles')
       }
       project
