@@ -1,7 +1,7 @@
 export default {
   id: 'create-locale-table',
 
-  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) => {
+  handler: async ({ withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints, codeTableName }, { services, database, get, env, logger, data, accountability }) => {
     await database.transaction(async (database) => {
     try {
       [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints] = [withImages, withName, withThumbnail, withDescription, withAddr, withContact, withWebsiteDetails, withColors, withDeps, withWaypoints].map((value) => value.toString().trim() === 'true');
@@ -35,6 +35,18 @@ export default {
         WHERE
           directus_users.project_id = ?
       `, [projects.id])).rows[0].policy;
+
+      let codeCollection = null;
+      let codeField = null;
+      if (codeTableName !== 'undefined') {
+        codeTableName = normalizeCodeName(codeTableName);
+        codeCollection = buildCodeTableName(projects.slug, codeTableName);
+        codeField = buildCodeFieldName(codeTableName);
+        const codeTableExists = await database.schema.withSchema('public').hasTable(codeCollection);
+        if (!codeTableExists) {
+          throw new Error(`Code table "${codeCollection}" does not exist`);
+        }
+      }
 
       for (const source of sources) {
         let fields = {};
@@ -70,8 +82,8 @@ export default {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(0, 63);
         const tableNameT = tableName.slice(0, 63 - 2) + '_t';
         const withExtendsSourceId = source.extends_source_id;
-        await create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability });
-        await create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability });
+        await create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, { services, database, get, env, logger, data, accountability });
+        await create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints, codeCollection, codeField }, { services, database, get, env, logger, data, accountability });
 
         if (withExtendsSourceId) {
           console.log('SELECT api01.fill_pois_local_join(?, ?, ?)', [projects.id, source.id, tableName]);
@@ -94,7 +106,7 @@ export default {
   },
 };
 
-async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, { services, database, get, env, logger, data, accountability }) {
+async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, { services, database, get, env, logger, data, accountability }) {
   await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (
     id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY,
     geom geometry(Geometry,4326)` + (withExtendsSourceId ? '' : ' NOT NULL') + `
@@ -284,7 +296,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
   }
 };
 
-async function create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints }, { services, database, get, env, logger, data, accountability }) {
+async function create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints, codeCollection, codeField }, { services, database, get, env, logger, data, accountability }) {
   if (withImages) {
     const tableNameI = tableName.slice(0, 63 - 2) + '_i';
 
@@ -507,4 +519,91 @@ async function create_others(projects, policy, tableName, { withImages, withDeps
       console.info(`Permission ${tableNameW} ${action} configured`);
     });
   }
+
+  if (codeCollection && codeField) {
+    const tableNameC = tableName.slice(0, 63 - 3 - codeField.length) + '_c_' + codeField;
+
+    await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameC}" (id SERIAL PRIMARY KEY, pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, code_id integer NOT NULL REFERENCES "${codeCollection}"(id) ON DELETE CASCADE)`);
+    await database.raw(`CREATE UNIQUE INDEX IF NOT EXISTS "${tableNameC.slice(0, 63 - 16)}_uq_pois_code" ON "${tableNameC}"(pois_id, code_id)`);
+    console.info(`Table ${tableNameC} created`);
+
+    await database.raw(`
+      INSERT INTO directus_collections(collection, icon, "group", hidden)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT (collection)
+      DO UPDATE SET
+        collection = directus_collections.collection,
+        icon = directus_collections.icon,
+        "group" = directus_collections."group",
+        hidden = directus_collections.hidden
+    `, [tableNameC, 'list', tableName, true]);
+    console.info(`Collection ${tableNameC} configured`);
+
+    await database.raw(`
+      MERGE INTO directus_fields
+      USING (SELECT ?, ?, ?, ?, ?::json, ?, ?::json) AS source(collection, field, special, interface, options, display, display_options)
+      ON (directus_fields.collection = source.collection AND directus_fields.field = source.field)
+      WHEN NOT MATCHED THEN
+        INSERT (collection, field, special, interface, options, display, display_options)
+        VALUES (source.collection, source.field, source.special, source.interface, source.options, source.display, source.display_options)
+      WHEN MATCHED THEN
+        UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options, display = source.display, display_options = source.display_options
+    `, [tableName, codeField, 'm2m', 'list-m2m', { "enableCreate": true, "enableLink": true, "limit": 200, "template": "{{code_id.code}}" }, 'related-values', { "template": "{{code_id.code}}" }]);
+    console.info(`Field ${tableName}.${codeField} configured`);
+
+    await database.raw(`
+      MERGE INTO directus_relations
+      USING (SELECT ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field)
+      ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+      WHEN NOT MATCHED THEN
+        INSERT (many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action)
+        VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, 'delete')
+      WHEN MATCHED THEN
+        UPDATE SET junction_field = source.junction_field, one_deselect_action = 'delete'
+    `, [tableNameC, 'code_id', codeCollection, null, 'pois_id']);
+    console.info(`Relation ${tableNameC} code_id ${codeCollection} configured`);
+    await database.raw(`
+      MERGE INTO directus_relations
+      USING (SELECT ?, ?, ?, ?, ?) AS source(many_collection, many_field, one_collection, one_field, junction_field)
+      ON (directus_relations.many_collection = source.many_collection AND directus_relations.many_field = source.many_field AND directus_relations.one_collection = source.one_collection AND directus_relations.one_field = source.one_field)
+      WHEN NOT MATCHED THEN
+        INSERT (many_collection, many_field, one_collection, one_field, junction_field, one_deselect_action)
+        VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field, 'delete')
+      WHEN MATCHED THEN
+        UPDATE SET junction_field = source.junction_field, one_deselect_action = 'delete'
+    `, [tableNameC, 'pois_id', tableName, codeField, 'code_id']);
+    console.info(`Relation ${tableNameC} pois_id ${tableName} ${codeField} code_id configured`);
+
+    ['create', 'read', 'update', 'delete'].forEach(async (action) => {
+      await database.raw(`
+        MERGE INTO directus_permissions
+        USING (SELECT ?::uuid, ?, ?, ?::json, ?) AS source(policy, collection, action, permissions, fields)
+        ON (directus_permissions.policy = source.policy AND directus_permissions.collection = source.collection AND directus_permissions.action = source.action)
+        WHEN NOT MATCHED THEN
+          INSERT (policy, collection, action, permissions, fields)
+          VALUES (source.policy, source.collection, source.action, source.permissions, source.fields)
+        WHEN MATCHED THEN
+          UPDATE SET policy = source.policy, collection = source.collection, action = source.action, permissions = source.permissions, fields = source.fields
+      `, [
+        policy,
+        tableNameC,
+        action,
+        {},
+        '*'
+      ]);
+      console.info(`Permission ${tableNameC} ${action} configured`);
+    });
+  }
 };
+
+function normalizeCodeName(value) {
+  return value.toString().trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '_').replace(/^[_-]+|[_-]+$/g, '').replace(/_{2,}/g, '_');
+}
+
+function buildCodeTableName(projectSlug, tableName) {
+  return `local-${normalizeCodeName(projectSlug)}-codes-${tableName}`.slice(0, 63);
+}
+
+function buildCodeFieldName(tableName) {
+  return normalizeCodeName(tableName).replace(/-/g, '_');
+}

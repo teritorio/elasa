@@ -227,7 +227,7 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION pois_local_t_trigger()
 RETURNS TRIGGER AS $$
 BEGIN
-    PERFORM api01.pois_local_trigger(TG_OP, left(TG_TABLE_NAME, -2), coalesce(NEW.pois_id, OLD.pois_id));
+    PERFORM api01.pois_local_trigger('UPDATE', TG_ARGV[0], coalesce(NEW.pois_id, OLD.pois_id));
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
@@ -253,6 +253,14 @@ RETURNS TRIGGER AS $$
 BEGIN
     PERFORM api01.pois_local_w_trigger(TG_OP, left(TG_TABLE_NAME, -2), coalesce(NEW.parent_pois_id, OLD.parent_pois_id), coalesce(NEW.children_pois_id, OLD.children_pois_id), NEW.index);
     RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION pois_local_code_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM api01.force_update_pois_local(TG_ARGV[0]);
+    RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -295,58 +303,79 @@ CREATE OR REPLACE FUNCTION select_pois_local(
     table_name text,
     local_id text,
     table_name_t text,
-    table_name_i text,
     table_name_p text,
     table_name_w text,
     file_fields text[],
+    files_fields text[],
+    code_fields jsonb,
+    codes_fields jsonb,
     extends_poi bool
 ) AS $$
     SELECT
         tables.table_name,
         regexp_replace(tables.table_name, 'local-[a-z0-9_]+-', '') || '_id' AS local_id,
         tables_t.table_name AS table_name_t,
-        tables_i.table_name AS table_name_i,
         tables_p.table_name AS table_name_p,
         tables_w.table_name AS table_name_w,
-        coalesce(
-            array_agg(key_column_usage.column_name) FILTER (WHERE key_column_usage.column_name NOT IN ('extends_poi_id')),
-            array[]::text[]
-         ) AS file_fields,
+        coalesce(array_agg(DISTINCT key_column_usage.column_name) FILTER (WHERE o2o_target.table_name = 'directus_files'), array[]::text[]) AS file_fields,
+        coalesce(array_agg(DISTINCT substring(m2o_join_origin.table_name, length(tables.table_name) + 4)) FILTER (WHERE m2o_target.table_name = 'directus_files' AND m2o_join_origin.table_name NOT LIKE '%_i'), array[]::text[]) AS files_fields,
+        coalesce(jsonb_object_agg(DISTINCT key_column_usage.column_name, m2o_target.table_name) FILTER (WHERE o2o_target.table_name LIKE 'local-%-codes-%'), '{}'::jsonb) AS code_fields,
+        coalesce(jsonb_object_agg(DISTINCT substring(m2o_join_origin.table_name, length(tables.table_name) + 4), m2o_target.table_name) FILTER (WHERE m2o_target.table_name LIKE 'local-%-codes-%'), '{}'::jsonb) AS codes_fields,
         bool_or(key_column_usage.column_name IN ('extends_poi_id')) AS extends_poi
     FROM
         information_schema.tables
         -- Translations
         LEFT JOIN information_schema.tables AS tables_t ON
             tables_t.table_name = substring(tables.table_name, 1, 63 - 2) || '_t'
-        -- Images
-        LEFT JOIN information_schema.tables AS tables_i ON
-            tables_i.table_name = substring(tables.table_name, 1, 63 - 2) || '_i'
         -- Deps pois
         LEFT JOIN information_schema.tables AS tables_p ON
             tables_p.table_name = substring(tables.table_name, 1, 63 - 2) || '_p'
         -- Deps waypoints
         LEFT JOIN information_schema.tables AS tables_w ON
             tables_w.table_name = substring(tables.table_name, 1, 63 - 2) || '_w'
-        -- Many files fields
-        -- One file fields
+
+        -- One-to-one / direct FK target
         LEFT JOIN information_schema.table_constraints ON
             table_constraints.table_name = tables.table_name AND
             table_constraints.table_schema = 'public' AND
             table_constraints.constraint_type = 'FOREIGN KEY'
+        LEFT JOIN information_schema.referential_constraints AS o2o_ref ON
+            o2o_ref.constraint_name = table_constraints.constraint_name AND
+            o2o_ref.constraint_schema = table_constraints.table_schema
+        LEFT JOIN information_schema.table_constraints AS o2o_target ON
+            o2o_target.constraint_name = o2o_ref.unique_constraint_name AND
+            o2o_target.table_schema = o2o_ref.unique_constraint_schema
         LEFT JOIN information_schema.key_column_usage ON
             key_column_usage.constraint_name = table_constraints.constraint_name AND
-            key_column_usage.table_schema = 'public' AND
+            key_column_usage.constraint_schema = table_constraints.table_schema AND
+            key_column_usage.table_schema = table_constraints.table_schema AND
             key_column_usage.table_name = tables.table_name AND
             key_column_usage.column_name != 'project_id'
+
+        -- One-to-many via join table: local FK -> join table, then join table FK -> target table
+        LEFT JOIN information_schema.constraint_column_usage AS m2o_origin ON
+            m2o_origin.constraint_schema = 'public' AND
+            m2o_origin.table_name = tables.table_name
+         LEFT JOIN information_schema.table_constraints AS m2o_join_origin ON
+            m2o_join_origin.constraint_name = m2o_origin.constraint_name AND
+            m2o_join_origin.table_schema = m2o_origin.constraint_schema AND
+            m2o_join_origin.constraint_type = 'FOREIGN KEY'
+         LEFT JOIN information_schema.table_constraints AS m2o_join_target ON
+            m2o_join_target.table_schema = m2o_join_origin.table_schema AND
+            m2o_join_target.table_name = m2o_join_origin.table_name AND
+            m2o_join_target.constraint_name != m2o_origin.constraint_name AND
+            m2o_join_target.constraint_type = 'FOREIGN KEY'
+        LEFT JOIN information_schema.constraint_column_usage AS m2o_target ON
+            m2o_origin.constraint_schema = m2o_join_target.table_schema AND
+            m2o_target.constraint_name = m2o_join_target.constraint_name
     WHERE
         tables.table_name = substring(_table_name, 1, 63)
     GROUP BY
         tables.table_name,
         tables_t.table_name,
-        tables_i.table_name,
         tables_p.table_name,
         tables_w.table_name
-$$ LANGUAGE sql IMMUTABLE PARALLEL SAFE;
+$$ LANGUAGE sql PARALLEL SAFE;
 
 DROP FUNCTION IF EXISTS create_pois_local_view;
 CREATE OR REPLACE FUNCTION create_pois_local_view(
@@ -358,6 +387,7 @@ CREATE OR REPLACE FUNCTION create_pois_local_view(
 ) AS $$
 DECLARE
     source record;
+    join_field record;
 BEGIN
     FOR source IN SELECT * FROM api01.select_pois_local(_table_name)
     LOOP
@@ -421,9 +451,22 @@ BEGIN
                                 jsonb_each(jsonb_strip_nulls(
                                 row_to_json(t.*)::jsonb - ''id'' - ''geom'' - ''extends_poi_id'' || ' ||
                                 CASE WHEN source.table_name_t IS NOT NULL THEN ' coalesce(trans.jsonb, ''{}''::jsonb) || ' ELSE '' END || '
+                                -- file_fields
                                 jsonb_build_object(' ||
-                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_files_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)), '') ||
-                                ')
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', ''__base_url__/assets/'' || "directus_file_' || f || '".id::text || ''/'' || "directus_file_' || f || '".filename_download'), ', ') FROM unnest(source.file_fields) AS fields(f)), '') || '
+                                ) ||
+                                -- files_fields
+                                jsonb_build_object(' ||
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', array_agg(''__base_url__/assets/'' || "f_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.files_fields) AS fields(f)), '') || '
+                                ) ||
+                                -- code_fields
+                                jsonb_build_object(' ||
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', "c_' || f || '".code'), ', ') FROM jsonb_each_text(source.code_fields) AS fields(f, alias)), '') || '
+                                ) ||
+                                -- codes_fields
+                                jsonb_build_object(' ||
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', "c_' || f || '".codes'), ', ') FROM jsonb_each_text(source.codes_fields) AS fields(f, alias)), '') || '
+                                )
                             ))
                         ),
                         m AS (
@@ -474,13 +517,63 @@ BEGIN
                 LEFT JOIN trans ON
                     trans.id = t.id
                 ' END ||
-                coalesce((SELECT array_to_string(array_agg('LEFT JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = "' || f || '"'), ' ') FROM unnest(source.file_fields) AS fields(f)), '') ||
+                -- o2o file
+                coalesce((
+                    SELECT array_to_string(array_agg('
+                LEFT JOIN directus_files AS "directus_file_' || f || '" ON "directus_file_' || f || '".id = "' || f || '"'), ' ')
+                    FROM unnest(source.file_fields) AS fields(f)),
+                    '') ||
+                -- m2o files via join table
+                coalesce((
+                    SELECT array_to_string(array_agg('
+                JOIN LATERAL (
+                    SELECT array_agg(directus_files_id)
+                    FROM "' || substring(source.table_name, 1, 63 - 2) || '_i" AS pois_files
+                    JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = pois_files.directus_files_id
+                    WHERE pois_files.pois_id = t.id
+                ) AS "f_' || f || '"'), ' ')
+                    FROM unnest(source.files_fields) AS fields(f)),
+                    '') ||
+                -- o2o codes tables
+                coalesce((
+                    SELECT array_to_string(array_agg('
+                LEFT JOIN "' || table_name || '" AS "c_' || f || '" ON "c_' || f || '".id = t."' || f || '"'), ' ')
+                    FROM jsonb_each_text(source.code_fields) AS fields(f, table_name)),
+                    '') ||
+                -- m2o codes tables via join table
+                coalesce((
+                    SELECT array_to_string(array_agg('
+                LEFT JOIN LATERAL (
+                    SELECT array_agg("c_' || f || '".code) AS codes
+                    FROM "' || substring(source.table_name, 1, 63 - 3 - length(f)) || '_c_' || f  || '" AS "cj_' || f || '"
+                    JOIN "' || fields.table_target_name || '" AS "c_' || f || '" ON "c_' || f || '".id = "cj_' || f || '".code_id
+                    WHERE "cj_' || f || '".pois_id = t.id
+                ) AS "c_' || f || '" ON true'), ' ')
+                    FROM jsonb_each_text(source.codes_fields) AS fields(f, table_target_name)),
+                    '') ||
                 CASE WHEN source.extends_poi THEN '
                 LEFT JOIN pois AS extends_pois ON
                     extends_pois.id = t.extends_poi_id
                 ' ELSE '' END ||
         '';
         name :=  substring(source.table_name, 1, 63 - 2) || '_v';
+
+        -- Drop all existing triggers
+        FOR join_field IN (
+            SELECT DISTINCT event_object_table, trigger_name
+            FROM information_schema.triggers
+            WHERE
+                trigger_schema = 'public' AND
+                (
+                    event_object_table IN (source.table_name, source.table_name_t, source.table_name_p, source.table_name_w) OR
+                    event_object_table = ANY(source.file_fields) OR
+                    event_object_table = ANY(source.files_fields) OR
+                    source.code_fields ? event_object_table OR
+                    source.codes_fields ? event_object_table
+                )
+        ) LOOP
+            EXECUTE 'DROP TRIGGER "' || join_field.trigger_name || '" ON "' || join_field.event_object_table || '";';
+        END LOOP;
 
         EXECUTE '
             DROP TRIGGER IF EXISTS "' || substring(source.table_name, 1, 63 - 2) || '_t" ON "' || source.table_name || '";
@@ -498,18 +591,7 @@ BEGIN
                 AFTER INSERT OR UPDATE OR DELETE
                 ON "' || source.table_name_t || '"
                 FOR EACH ROW
-                EXECUTE FUNCTION api01.pois_local_t_trigger();
-            ';
-        END IF;
-
-        IF source.table_name_i IS NOT NULL THEN
-            EXECUTE '
-                DROP TRIGGER IF EXISTS "' || substring(source.table_name_i, 1, 63 - 2) || '_t" ON "' || source.table_name_i || '";
-                CREATE TRIGGER "' || substring(source.table_name_i, 1, 63 - 2) || '_t"
-                AFTER INSERT OR UPDATE OR DELETE
-                ON "' || source.table_name_i || '"
-                FOR EACH ROW
-                EXECUTE FUNCTION api01.pois_local_i_trigger();
+                EXECUTE FUNCTION api01.pois_local_t_trigger("' || source.table_name || '");
             ';
         END IF;
 
@@ -535,6 +617,68 @@ BEGIN
             ';
         END IF;
 
+        -- add trigger for o2o file tables
+        IF source.file_fields != array[]::text[] THEN
+            FOR join_field IN (SELECT * FROM unnest(source.file_fields) AS fields(f))
+            LOOP
+                -- Same name as previous, create only one trigger to the same function
+                EXECUTE '
+                    DROP TRIGGER IF EXISTS "' || substring(source.table_name, 1, 63 - 2) || '_t" ON "' || source.table_name || '";
+                    CREATE TRIGGER "' || substring(source.table_name, 1, 63 - 2) || '_t"
+                    AFTER INSERT OR UPDATE OR DELETE
+                    ON "' || source.table_name || '"
+                    FOR EACH ROW
+                    EXECUTE FUNCTION api01.pois_local_trigger();
+                ';
+            END LOOP;
+        END IF;
+
+        -- add trigger for m2o file tables
+        IF source.files_fields != array[]::text[] THEN
+            FOR join_field IN (SELECT * FROM unnest(source.files_fields) AS fields(f))
+            LOOP
+                EXECUTE '
+                    DROP TRIGGER IF EXISTS "' || substring(source.table_name, 1, 63 - 2 - 2) || '_i_t" ON "' || substring(source.table_name, 1, 63 - 2) || '_i";
+                    CREATE TRIGGER "' || substring(source.table_name, 1, 63 - 2 - 2) || '_i_t"
+                    AFTER INSERT OR UPDATE OR DELETE
+                    ON "' || substring(source.table_name, 1, 63 - 2) || '_i"
+                    FOR EACH ROW
+                    EXECUTE FUNCTION api01.pois_local_i_trigger();
+                ';
+            END LOOP;
+        END IF;
+
+        -- add trigger for o2o code tables
+        IF source.code_fields != '{}'::jsonb THEN
+            FOR join_field IN SELECT * FROM jsonb_each_text(source.code_fields) AS fields(f, table_name)
+            LOOP
+                -- Same name as previous, create only one trigger to the same function
+                EXECUTE '
+                    DROP TRIGGER IF EXISTS "' || substring(source.table_name, 1, 63 - 2) || '_t" ON "' || source.table_name || '";
+                    CREATE TRIGGER "' || substring(source.table_name, 1, 63 - 2) || '_t"
+                    AFTER INSERT OR UPDATE OR DELETE
+                    ON "' || source.table_name || '"
+                    FOR EACH ROW
+                    EXECUTE FUNCTION api01.pois_local_trigger();
+                ';
+            END LOOP;
+        END IF;
+
+        -- add trigger for m2o code tables
+        IF source.codes_fields != '{}'::jsonb THEN
+            FOR join_field IN SELECT * FROM jsonb_each_text(source.codes_fields) AS fields(f, table_name)
+            LOOP
+                EXECUTE '
+                    DROP TRIGGER IF EXISTS "' || substring(source.table_name, 1, 63 - 3 - length(join_field.f) - 2) || '_c_' || join_field.f || '_t" ON "' || substring(source.table_name, 1, 63 - 3 - length(join_field.f)) || '_c_' || join_field.f || '";
+                    CREATE TRIGGER "' || substring(source.table_name, 1, 63 - 3 - length(join_field.f) - 2) || '_c_' || join_field.f || '_t"
+                    AFTER INSERT OR UPDATE OR DELETE
+                    ON "' || substring(source.table_name, 1, 63 - 3 - length(join_field.f)) || '_c_' || join_field.f || '"
+                    FOR EACH ROW
+                    EXECUTE FUNCTION api01.pois_local_t_trigger("' || source.table_name || '");
+                ';
+            END LOOP;
+        END IF;
+
         RETURN NEXT;
     END LOOP;
 END;
@@ -548,15 +692,12 @@ CREATE OR REPLACE FUNCTION force_update_pois_local(
 ) AS $$
 DECLARE
     source record;
+    join_field record;
 BEGIN
     FOR source IN SELECT * FROM api01.select_pois_local(_table_name)
     LOOP
         -- Touch all data to force update of pois
         EXECUTE 'UPDATE "' || source.table_name ||'" SET id = id';
-
-        IF source.table_name_i IS NOT NULL THEN
-            EXECUTE 'UPDATE "' || source.table_name_i ||'" SET id = id';
-        END IF;
 
         IF source.table_name_p IS NOT NULL THEN
             EXECUTE 'UPDATE "' || source.table_name_p ||'" SET id = id';
@@ -564,6 +705,20 @@ BEGIN
 
         IF source.table_name_w IS NOT NULL THEN
             EXECUTE 'UPDATE "' || source.table_name_w ||'" SET id = id';
+        END IF;
+
+        IF source.files_fields != array[]::text[] THEN
+            FOR join_field IN (SELECT * FROM unnest(source.files_fields) AS fields(f))
+            LOOP
+                EXECUTE 'UPDATE "' || substring(source.table_name, 1, 63 - 2) || '_i" SET id = id';
+            END LOOP;
+        END IF;
+
+        IF source.code_fields != '{}'::jsonb THEN
+            FOR join_field IN SELECT * FROM jsonb_each_text(source.code_fields) AS fields(f, table_name)
+            LOOP
+                EXECUTE 'UPDATE "' || substring(source.table_name, 1, 63 - 3 - length(join_field.f)) || '_c_' || join_field.f || '" SET id = id';
+            END LOOP;
         END IF;
 
         RETURN NEXT;
