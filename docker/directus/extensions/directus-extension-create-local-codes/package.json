@@ -1,0 +1,27 @@
+{
+  "name": "create-local-codes",
+  "description": "Create local code tables in Directus",
+  "icon": "extension",
+  "version": "1.0.0",
+  "keywords": [
+    "directus",
+    "directus-extension",
+    "directus-extension-operations"
+  ],
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "directus:extension": {
+    "type": "operation",
+    "path": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "source": {
+      "app": "dist/app.js",
+      "api": "dist/api.js"
+    },
+    "host": "^11.0.0"
+  }
+}

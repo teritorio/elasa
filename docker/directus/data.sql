@@ -87,6 +87,7 @@ sources_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	source
 themes	map	\N	{{slug}}	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	3	projects	open	\N	f
 themes_translations	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	1	themes	open	\N	f
 themes_articles	import_export	\N	\N	t	f	\N	\N	t	\N	\N	\N	all	\N	\N	2	projects	open	\N	f
+local_codes	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	5	sources	open	\N	f
 local_extension_sources	folder_open	\N	\N	f	f	\N	\N	t	\N	\N	\N	all	\N	\N	4	sources	open	\N	f
 \.
 
@@ -122,6 +123,7 @@ t	63c95148-cb66-40ae-93ca-27c95e22f327	search-configuration	local	db7ec639-4f69-
 t	2dc2e66e-5625-4c84-bf4d-0e76174739f9	directus-extension-m2o-presentation-interface	local	\N
 t	8f77639c-6570-484b-9628-79a3d44c5a4c	directus-extension-key-value-interface	local	\N
 t	87c3416a-0027-4123-89e2-3a17c283a36d	directus-extension-map-gpx	local	\N
+t	4d2b308c-9f9a-4ec1-9b5e-6fcce1973b4a	directus-extension-create-local-codes	local	\N
 \.
 
 
@@ -339,6 +341,7 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 
 COPY public.directus_flows (id, name, icon, color, description, status, trigger, accountability, options, operation, date_created, user_created) FROM stdin;
 8b576a89-30a0-4f3e-b20b-bc944914a1df	Update POIs from Datasources	download	\N	\N	active	manual	all	{"collections":["sources"]}	ada3d2b2-2666-4be9-ac80-c57a91576a06	2024-11-15 12:07:07.149+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
+8f4cfb92-fd35-4f3f-af2c-2de3f46f2356	Create Local Codes Table	bolt	\N	\N	active	manual	all	{"collections":["projects"],"requireConfirmation":true,"fields":[{"field":"tableName","type":"string","name":"Table Name","meta":{"interface":"input","width":"full"}}]}	eb00c4f6-3a64-4526-8d18-877ec68d57c4	2026-03-30 10:00:00+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 96ccf7a5-8702-4760-8c9e-b53267f234b2	Create local POIs table	bolt	\N	\N	active	manual	all	{"collections":["sources"],"requireConfirmation":true,"fields":[{"field":"withImages","type":"boolean","name":"With Images","meta":{"interface":"boolean","width":"half"}},{"field":"withThumbnail","type":"boolean","name":"With Thumbnail","meta":{"interface":"boolean","options":{"iconOn":"image_search"},"width":"half"}},{"field":"withName","type":"boolean","name":"With Name","meta":{"interface":"boolean","width":"half"}},{"field":"withDescription","type":"boolean","name":"With Description","meta":{"interface":"boolean","width":"half"}},{"field":"withAddr","type":"boolean","name":"Add addr:* fields","meta":{"interface":"boolean","width":"half"}},{"field":"withContact","type":"boolean","name":"Add contact:* fields","meta":{"interface":"boolean","width":"half"}},{"field":"withWebsiteDetails","type":"boolean","name":"With website:details","meta":{"interface":"boolean"}},{"field":"withColors","type":"boolean","name":"withColors","meta":{"interface":"boolean"}},{"field":"withDeps","type":"boolean","name":"Add link to other objects","meta":{"interface":"boolean","width":"half"}},{"field":"withWaypoints","type":"boolean","name":"Add waypoints","meta":{"interface":"boolean","width":"half"}}]}	bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	2024-11-11 17:16:24.222+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
 
@@ -453,6 +456,7 @@ COPY public.directus_notifications (id, "timestamp", status, recipient, sender, 
 COPY public.directus_operations (id, name, key, type, position_x, position_y, options, resolve, reject, flow, date_created, user_created) FROM stdin;
 d334ba61-f792-40a2-9e9a-3bd6cf40f61a	Read Projects	projects	item-read	37	1	{"collection":"projects","key":"{{sources.project_id}}"}	8f15f766-7319-4c8e-a3c4-19a8ba54224b	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 12:14:18.725+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 ada3d2b2-2666-4be9-ac80-c57a91576a06	Read Sources	sources	item-read	19	1	{"collection":"sources","key":"{{$trigger.body.keys}}"}	d334ba61-f792-40a2-9e9a-3bd6cf40f61a	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 12:14:18.829+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
+eb00c4f6-3a64-4526-8d18-877ec68d57c4	Create Local Codes	create_local_codes	create-local-codes	19	1	{"tableName":"{{$trigger.body.tableName}}"}	\N	\N	8f4cfb92-fd35-4f3f-af2c-2de3f46f2356	2026-03-30 10:00:00+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 bbcfb368-cce2-4dc0-b5b1-9ba49a893da8	Create Local Table	create_locale_table_elkil	create-locale-table	19	1	{"withImages":"{{$trigger.body.withImages}}","withThumbnail":"{{$trigger.body.withThumbnail}}","withName":"{{$trigger.body.withName}}","withDescription":"{{$trigger.body.withDescription}}","withAddr":"{{$trigger.body.withAddr}}","withContact":"{{$trigger.body.withContact}}","withWebsiteDetails":"{{$trigger.body.withWebsiteDetails}}","withColors":"{{$trigger.body.withColors}}","withDeps":"{{$trigger.body.withDeps}}","withWaypoints":"{{$trigger.body.withWaypoints}}","withTranslations":"{{$trigger.body.withTranslations}}"}	\N	\N	96ccf7a5-8702-4760-8c9e-b53267f234b2	2024-11-11 17:16:33.864+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 8f15f766-7319-4c8e-a3c4-19a8ba54224b	Webhook / Request URL	request_vcvmd	request	55	1	{"url":"http://api:12000/api/0.2/project/{{projects.slug}}/admin/sources/load?api_key={{projects.api_key}}"}	\N	\N	8b576a89-30a0-4f3e-b20b-bc944914a1df	2024-11-15 16:24:47.807+00	7ee01efc-e308-47e8-bf57-3dacd8ba56c5
 \.
