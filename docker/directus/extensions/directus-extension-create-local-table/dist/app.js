@@ -117,5 +117,16 @@ export default {
         default_value: false,
       },
     },
+    {
+      field: "codeTableName",
+      name: "Code table name",
+      type: "string",
+      meta: {
+        interface: "input",
+      },
+      schema: {
+        default_value: null,
+      },
+    },
   ],
 }
