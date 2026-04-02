@@ -184,7 +184,7 @@ BEGIN
     IF _op = 'DELETE' THEN
         EXECUTE '
             DELETE FROM
-                "local-' || extract_project(_table) || '-waypoints"
+                "local-' || api01.extract_project_slugs(_table) || '-waypoints"
             WHERE
                 id = ' || _children_pois_id || '
         ';
