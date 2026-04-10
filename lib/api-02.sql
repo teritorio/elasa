@@ -142,6 +142,8 @@ GROUP BY
 
 DROP VIEW IF EXISTS menu_items_join;
 CREATE VIEW menu_items_join AS
+WITH RECURSIVE
+_menu_items_join AS (
 SELECT
     menu_items.*,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.name) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS name,
@@ -160,6 +162,32 @@ FROM
         fields.id = pois_property_values.field_id
 GROUP BY
     menu_items.id
+),
+theme_menu_items AS (
+    SELECT
+        themes.id AS theme_id,
+        menu_items.*,
+        NULL::bigint AS parent_slug_id
+    FROM
+        themes
+        JOIN _menu_items_join AS menu_items ON
+            menu_items.id = themes.root_menu_item_id
+
+    UNION ALL
+
+    SELECT
+        theme_id,
+        menu_items.*,
+        CASE
+            WHEN theme_menu_items.parent_slug_id IS NULL THEN 0
+            ELSE id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id)
+        END AS parent_slug_id
+    FROM
+        theme_menu_items
+        JOIN _menu_items_join AS menu_items ON
+            menu_items.parent_id = theme_menu_items.id
+)
+SELECT * FROM theme_menu_items
 ;
 
 DROP VIEW IF EXISTS filters_join;
@@ -591,33 +619,6 @@ CREATE OR REPLACE FUNCTION menu(
     d text
 ) AS $$
     WITH
-    RECURSIVE theme_menu_items AS (
-        SELECT
-            menu_items.*,
-            NULL::bigint AS parent_slug_id
-        FROM
-            projects
-            JOIN themes ON
-                themes.project_id = projects.id AND
-                themes.slug = _theme_slug
-            JOIN menu_items_join AS menu_items ON
-                menu_items.id = themes.root_menu_item_id
-        WHERE
-            projects.slug = _project_slug
-
-        UNION ALL
-
-        SELECT
-            menu_items.*,
-            CASE
-                WHEN theme_menu_items.parent_slug_id IS NULL THEN 0
-                ELSE id_from_slugs_menu_item(theme_menu_items.slug, theme_menu_items.id)
-            END AS parent_slug_id
-        FROM
-            theme_menu_items
-            JOIN menu_items_join AS menu_items ON
-                menu_items.parent_id = theme_menu_items.id
-    ),
     theme_menu_items_filters AS (
         SELECT
             menu_items.id,
@@ -661,7 +662,13 @@ CREATE OR REPLACE FUNCTION menu(
                 )
             ), '{}'::jsonb) ORDER BY menu_items_filters.index), '[null]'::jsonb) AS filters
         FROM
-            theme_menu_items AS menu_items
+            projects
+            JOIN themes ON
+                themes.project_id = projects.id AND
+                themes.slug = _theme_slug
+            JOIN menu_items_join AS menu_items ON
+                menu_items.project_id = projects.id AND
+                menu_items.theme_id = themes.id
             LEFT JOIN menu_items_filters ON
                 menu_items_filters.menu_items_id = menu_items.id
             LEFT JOIN filters_join AS filters ON
@@ -680,6 +687,8 @@ CREATE OR REPLACE FUNCTION menu(
                 filters.type IN ('boolean') AND
                 fields_boolean_translations.fields_id = filters.field_id AND
                 fields_boolean_translations.languages_code = 'fr-FR'
+            WHERE
+                projects.slug = _project_slug
         GROUP BY
             menu_items.id,
             menu_items.index_order,
@@ -773,7 +782,6 @@ CREATE OR REPLACE FUNCTION menu(
         parent_id IS NOT NULL
     ;
 $$ LANGUAGE sql STABLE PARALLEL SAFE;
-
 
 -- Function inspired by https://stackoverflow.com/questions/45585462/recursively-flatten-a-nested-jsonb-in-postgres-without-unknown-depth-and-unknown
 DROP FUNCTION IF EXISTS json_flat_object;
@@ -1175,14 +1183,20 @@ CREATE OR REPLACE FUNCTION pois_(
             menu_items.use_external_details_link,
             sources.report_issue
         FROM
-            menu_items_join AS menu_items
+            projects
+            JOIN themes ON
+                themes.project_id = projects.id AND
+                themes.slug = _theme_slug
+            JOIN menu_items_join AS menu_items ON
+                menu_items.project_id = projects.id AND
+                menu_items.theme_id = themes.id
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
                 sources.project_id = _project_id AND
                 sources.id = menu_items_sources.sources_id
         WHERE
-            menu_items.project_id = _project_id AND
+            projects.slug = _project_slug AND
             (_category_id IS NULL OR id_from_slugs_menu_item(menu_items.slug, menu_items.id) = _category_id)
     ),
     pois_selected AS (
