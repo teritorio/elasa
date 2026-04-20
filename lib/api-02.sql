@@ -1271,8 +1271,12 @@ CREATE OR REPLACE FUNCTION pois_(
                 menu_items_sources.sources_id = sources.id
             LEFT JOIN menu_items ON
                 menu_items.id = menu_items_sources.menu_items_id
+            LEFT JOIN menu ON
+                menu.menu_id = menu_items.id AND
+                menu.source_id = sources.id
         WHERE
-            _with_deps = 'true'
+            _with_deps = 'true' AND
+            (menu_items_sources.sources_id IS NULL OR menu.menu_id IS NOT NULL)
         )
     ),
     pois_join_with_deps AS (
