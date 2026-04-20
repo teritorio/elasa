@@ -1193,7 +1193,7 @@ CREATE OR REPLACE FUNCTION pois_(
             JOIN menu_items_sources ON
                 menu_items_sources.menu_items_id = menu_items.id
             JOIN sources ON
-                sources.project_id = _project_id AND
+                sources.project_id = projects.id AND
                 sources.id = menu_items_sources.sources_id
         WHERE
             projects.slug = _project_slug AND
