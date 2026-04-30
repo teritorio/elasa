@@ -670,7 +670,7 @@ namespace :project do
         metadatas = load_from_source(conn, "#{datasource_url}/data", slug, datasources_slug)
         i18ns = fetch_json("#{datasource_url}/data/#{datasources_slug}/i18n.json")
         load_i18n(conn, slug, i18ns)
-        schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/schema.json")
+        schema = fetch_json("#{datasource_url}/data/#{datasources_slug}/tags_schema.json").merge(fetch_json("#{datasource_url}/data/#{datasources_slug}/natives_schema.json"))
         filters = new_filter(conn, project_id, schema, i18ns)
       end
       root_menu_id = new_root_menu(conn, project_id)
