@@ -247,7 +247,7 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
   ) { |result| result.first['id'].to_i }
   [
     group_fields_ids['contact']&.first,
-    fields_ids['description'],
+    group_fields_ids['description']&.first,
     group_fields_ids['opening']&.first,
     group_fields_ids['location']&.first,
   ].compact.each_with_index{ |id, index|
@@ -354,6 +354,11 @@ def insert_group_fields(conn, project_id, ontology)
     },
     'coordinates' => {
       'label' => { 'fr-FR' => 'Coordonnées', 'en-US' => 'Coordinates' },
+    },
+  }
+  properties_extra['description'] = {
+    'description' => {
+      'label' => { 'fr-FR' => 'Description', 'en-US' => 'Description' },
     },
   }
   fields_ids = {}
