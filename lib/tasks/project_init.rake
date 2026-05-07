@@ -228,11 +228,7 @@ def insert_fields_group(conn, project_id, slug, fields, _group_fields_ids, field
   fields_id
 end
 
-def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
-  popup_fields_id = insert_fields_group(conn, project_id, 'popup', %w[opening_hours phone website addr], group_fields_ids, fields_ids, filters)
-  list_fields_id = insert_fields_group(conn, project_id, 'list', %w[name opening_hours phone website addr], group_fields_ids, fields_ids, filters)
-
-  # Details
+def insert_details_group(conn, project_id, group_fields_ids, fields_ids, slug)
   details_fields_id = conn.exec(
     '
     INSERT INTO
@@ -243,14 +239,9 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
     DO UPDATE SET
       display_mode = EXCLUDED.display_mode
     RETURNING id
-    ', [project_id, 'group', 'group_details_default', 'standard']
+    ', [project_id, 'group', slug, 'standard']
   ) { |result| result.first['id'].to_i }
-  [
-    group_fields_ids['contact']&.first,
-    group_fields_ids['description']&.first,
-    group_fields_ids['opening']&.first,
-    group_fields_ids['location']&.first,
-  ].compact.each_with_index{ |id, index|
+  fields_ids.map { |f| group_fields_ids[f]&.first }.compact.each_with_index{ |id, index|
     conn.exec(
       '
       INSERT INTO
@@ -263,6 +254,16 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
       ', [details_fields_id, id, index]
     )
   }
+
+  details_fields_id
+end
+
+def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
+  popup_fields_id = insert_fields_group(conn, project_id, 'popup', %w[opening_hours phone website addr], group_fields_ids, fields_ids, filters)
+  list_fields_id = insert_fields_group(conn, project_id, 'list', %w[name opening_hours phone website addr], group_fields_ids, fields_ids, filters)
+
+  # Details
+  details_fields_id = insert_details_group(conn, project_id, group_fields_ids, %w[contact description opening location], 'group_details_default')
 
   [popup_fields_id, details_fields_id, list_fields_id]
 end
