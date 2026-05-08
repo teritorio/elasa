@@ -268,7 +268,10 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
   [popup_fields_id, details_fields_id, list_fields_id]
 end
 
-def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id)
+def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id, group_fields_ids)
+  popup_fields_id = group_fields_ids[classs['popup_attributes']&.first]&.first.presence || popup_fields_id
+  list_fields_id = group_fields_ids[classs['list_attributes']&.first]&.first.presence || list_fields_id
+
   slug = classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] }
   conn.exec("SAVEPOINT \"#{source_slug}\"")
 
@@ -528,7 +531,7 @@ def new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
             class_path = [superclass_id, class_id, subclass_id]
             source_slug = class_path.join('-')
             icons = [superclass['icon'], classs['icon'], subclass['icon']]
-            insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id)
+            insert_menu_category(conn, project_id, class_menu_id, class_path, icons, source_slug, css_parser, subclass, subclass_index, popup_fields_id, details_fields_id, list_fields_id, group_fields_ids)
           }.any?
           if !inserted
             conn.exec('ROLLBACK TO SAVEPOINT class')
@@ -538,7 +541,7 @@ def new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
           class_path = [superclass_id, class_id]
           source_slug = class_path.join('-')
           icons = [superclass['icon'], classs['icon']]
-          insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, popup_fields_id, details_fields_id, list_fields_id)
+          insert_menu_category(conn, project_id, superclass_menu_id, class_path, icons, source_slug, css_parser, classs, class_index, popup_fields_id, details_fields_id, list_fields_id, group_fields_ids)
         end
       }.any?
       if !inserted
@@ -588,7 +591,7 @@ def new_source_menu(con, project_id, root_menu_id, metadatas, css, schema, filte
         'properties_extra' => ['all'],
       }
 
-      insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, popup_fields_id, details_fields_id, list_fields_id)
+      insert_menu_category(conn, project_id, poi_menu_id, nil, nil, slug, css_parser, subclass, index, popup_fields_id, details_fields_id, list_fields_id, group_fields_ids)
     }
   }
 end
