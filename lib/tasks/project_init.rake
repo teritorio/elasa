@@ -268,9 +268,27 @@ def insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters
   [popup_fields_id, details_fields_id, list_fields_id]
 end
 
+@details_groups = {}
+
+def find_or_create_details_group(conn, project_id, classs, group_fields_ids)
+  return if classs['details_attributes'].blank?
+
+  key = classs['details_attributes'].join('-')
+
+  return @details_groups[key] if @details_groups.key?(key)
+
+  details_fields_id = insert_details_group(conn, project_id, group_fields_ids, classs['details_attributes'], "group_details_#{classs['label']['en-US']}")
+
+  @details_groups[key] = details_fields_id if details_fields_id
+
+  details_fields_id
+end
+
 def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_slug, css_parser, classs, index, popup_fields_id, details_fields_id, list_fields_id, group_fields_ids)
   popup_fields_id = group_fields_ids[classs['popup_attributes']&.first]&.first.presence || popup_fields_id
   list_fields_id = group_fields_ids[classs['list_attributes']&.first]&.first.presence || list_fields_id
+
+  details_fields_id = find_or_create_details_group(conn, project_id, classs, group_fields_ids) || details_fields_id
 
   slug = classs['label']&.to_h{ |lang, value| [lang.to_sym, value.slugify] }
   conn.exec("SAVEPOINT \"#{source_slug}\"")
