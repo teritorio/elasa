@@ -361,6 +361,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
   }
   if id.nil?
     conn.exec("ROLLBACK TO SAVEPOINT \"#{source_slug}\"")
+    @details_groups.delete(classs['details_attributes'].join('-')) if classs['details_attributes'].present?
     puts "[WARNING] Source already linked to menu_item or empty: (#{source_slug})"
     nil
   else
