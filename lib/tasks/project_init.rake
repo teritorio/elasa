@@ -369,7 +369,7 @@ def insert_menu_category(conn, project_id, parent_id, class_path, icons, source_
 end
 
 def insert_group_fields(conn, project_id, ontology)
-  properties_extra = ontology['properties_extra'] || {}
+  properties_extra = ontology&.dig('properties_extra') || {}
   properties_extra['location'] = {
     'addr' => {
       'label' => { 'fr-FR' => 'Adresse', 'en-US' => 'Address' },
@@ -528,7 +528,7 @@ def new_ontology_menu(con, project_id, root_menu_id, theme, css, filters)
     group_fields_ids, fields_ids = insert_group_fields(conn, project_id, ontology)
     popup_fields_id, details_fields_id, list_fields_id = insert_fields_groups(conn, project_id, group_fields_ids, fields_ids, filters)
 
-    ontology['group'].each_with_index{ |id_superclass, superclass_index|
+    ontology&.dig('group')&.each_with_index{ |id_superclass, superclass_index|
       conn.exec('SAVEPOINT superclass')
       superclass_id, superclass = id_superclass
       superclass['display_mode'] = 'compact'
