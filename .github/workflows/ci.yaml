@@ -38,13 +38,24 @@ jobs:
           bundler-cache: true
           cache-version: 1
 
+      # - name: Setup Tapioca cache
+      #   id: cache-tapioca
+      #   uses: actions/cache@v5
+      #   with:
+      #     path: sorbet
+      #     key: ${{ runner.os }}-${{ hashFiles('Gemfile.lock') }}
+
+      # - name: Init Tapioca
+      #   if: steps.cache-tapioca.outputs.cache-hit != 'true'
+      #   run: |
+      #     bundle exec tapioca init && \
+      #     bundle exec srb rbi suggest-typed
+
       - name: Run rubocop
         run: bundle exec rubocop --parallel -c .rubocop.yml
 
       # - name: Run typecheck
       #   run: |
-      #     bundle exec tapioca init && \
-      #     bundle exec srb rbi suggest-typed && \
       #     bundle exec srb typecheck -q
       #     # bundle exec rake rails_rbi:routes && \
       #     # bundle exec tapioca dsl && \
