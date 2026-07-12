@@ -241,13 +241,14 @@ def load_pois(conn, project_slug, source_slug, pois)
 
   conn.exec_params("
     SELECT
-      api01.fill_pois_local_join(projects.id, sources.id, substring('local-' || projects.slug || '-' || sources.slug, 1, 63))
+      api01.fill_pois_local_join(projects.id, extends_sources.id, substring('local-' || projects.slug || '-' || extends_sources.slug, 1, 63))
     FROM
       projects
       JOIN sources ON
         sources.project_id = projects.id AND
-        sources.slug = $2 AND
-        sources.extends_source_id IS NOT NULL
+        sources.slug = $2
+      JOIN sources AS extends_sources ON
+        extends_sources.extends_source_id = sources.id
     WHERE
       projects.slug = $1
     ", [project_slug, source_slug])
