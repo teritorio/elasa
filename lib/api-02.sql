@@ -91,7 +91,9 @@ SELECT
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.site_url) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS site_url,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS main_url,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS keywords,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS cookies_consent_message
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS cookies_consent_message,
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.banner_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS banner_message,
+    themes.banner_dismissible
 FROM
     themes
     LEFT JOIN themes_translations AS trans ON
@@ -290,7 +292,9 @@ CREATE OR REPLACE FUNCTION projects(
                                 'google_site_verification', themes.google_site_verification,
                                 'google_tag_manager_id', themes.google_tag_manager_id,
                                 'cookies_consent_message', themes.cookies_consent_message,
-                                'cookies_usage_detail_url', themes.cookies_usage_detail_url
+                                'cookies_usage_detail_url', themes.cookies_usage_detail_url,
+                                'banner_message', themes.banner_message,
+                                'banner_dismissible', themes.banner_dismissible
                             )
                         ))
                     FROM

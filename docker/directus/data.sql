@@ -332,6 +332,8 @@ COPY public.directus_fields (id, collection, field, special, interface, options,
 616	fields	json_schema	cast-json	input-code	\N	\N	\N	f	t	\N	full	\N	\N	\N	f	\N	\N	\N
 617	sources	extends_source_id	\N	select-dropdown-m2o	{"filter":{"_and":[{"project_id":{"_in":["$CURRENT_USER.project_id","{{project_id}}"]}}]},"template":"{{slug}}","enableCreate":false}	related-values	{"template":"{{slug}}"}	f	f	\N	full	\N	\N	\N	f	\N	\N	\N
 618	menu_items	icon_show	\N	select-dropdown	{"choices":[{"text":"always","value":"always","icon":"check_box"},{"text":"never","value":"never","icon":"check_box_outline_blank"}]}	\N	\N	f	f	11	full	\N	\N	\N	f	category	\N	\N
+619	themes_translations	banner_message	\N	input-rich-text-html	\N	\N	\N	f	f	10	full	\N	\N	\N	f	\N	\N	\N
+620	themes	banner_dismissible	cast-boolean	boolean	\N	\N	\N	f	f	13	full	\N	\N	\N	f	\N	\N	\N
 \.
 
 
@@ -702,7 +704,7 @@ SELECT pg_catalog.setval('public.directus_activity_id_seq', 1, true);
 -- Name: directus_fields_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.directus_fields_id_seq', 619, true);
+SELECT pg_catalog.setval('public.directus_fields_id_seq', 620, true);
 
 --
 -- Name: directus_notifications_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
