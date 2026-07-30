@@ -1074,6 +1074,12 @@ components:
               cookies_usage_detail_url:
                 type: string
                 description: URL of the cookies policy page.
+              banner_message:
+                $ref: '#/components/schemas/multilingual_string'
+                description: HTML content for the banner (supports inline styles).
+              banner_dismissible:
+                type: boolean
+                description: Whether the banner can be dismissed by the user.
 
   parameters:
     param_path_project:

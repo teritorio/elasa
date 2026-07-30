@@ -1665,7 +1665,8 @@ CREATE TABLE public.themes (
     google_site_verification character varying(255),
     google_tag_manager_id character varying(255),
     cookies_usage_detail_url character varying(255),
-    report_issue boolean DEFAULT false
+    report_issue boolean DEFAULT false,
+    banner_dismissible boolean DEFAULT true
 );
 
 
@@ -1734,7 +1735,8 @@ CREATE TABLE public.themes_translations (
     site_url character varying(255),
     main_url character varying(255),
     keywords character varying(255),
-    cookies_consent_message text
+    cookies_consent_message text,
+    banner_message text
 );
 
 
