@@ -82,7 +82,7 @@ export default {
         const tableName = `local-${projects.slug}-${source.slug}`.slice(0, 63);
         const tableNameT = tableName.slice(0, 63 - 2) + '_t';
         const withExtendsSourceId = source.extends_source_id;
-        await create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, { services, database, get, env, logger, data, accountability });
+        await create_main(projects, policy, tableName, tableNameT, source.translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, null, { services, database, get, env, logger, data, accountability });
         await create_others(projects, policy, tableName, { withImages, withDeps, withWaypoints, codeCollection, codeField }, { services, database, get, env, logger, data, accountability });
 
         if (withExtendsSourceId) {
@@ -106,7 +106,7 @@ export default {
   },
 };
 
-async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, { services, database, get, env, logger, data, accountability }) {
+async function create_main(projects, policy, tableName, tableNameT, translations, fields, fields_t, withThumbnail, withExtendsSourceId, codeCollection, codeField, extraFields, { services, database, get, env, logger, data, accountability }) {
   await database.raw(`CREATE TABLE IF NOT EXISTS "${tableName}" (
     id integer DEFAULT nextval('"pois_id_seq"'::regclass) PRIMARY KEY,
     geom geometry(Geometry,4326)` + (withExtendsSourceId ? '' : ' NOT NULL') + `
@@ -148,6 +148,9 @@ async function create_main(projects, policy, tableName, tableNameT, translations
     directus_fields = directus_fields.concat([
       {field: 'thumbnail', interface: 'file-image'}
     ]);
+  }
+  if (extraFields && extraFields.length) {
+    directus_fields = directus_fields.concat(extraFields);
   }
   directus_fields = directus_fields.concat([
     {field: 'geom'},
@@ -448,6 +451,62 @@ async function create_others(projects, policy, tableName, { withImages, withDeps
   if (withWaypoints) {
     const tableNameW = tableName.slice(0, 63 - 2) + '_w';
     const table_pdp = `local-${projects.slug}-waypoints`;
+    const table_pdp_t = table_pdp.slice(0, 63 - 2) + '_t';
+
+    const waypointsTableExists = await database.schema.withSchema('public').hasTable(table_pdp);
+
+    let waypointsSource = (await database.raw(`
+      SELECT id FROM sources WHERE project_id = ? AND slug = 'waypoints'
+    `, [projects.id])).rows[0];
+
+    if (!waypointsSource) {
+      waypointsSource = (await database.raw(`
+        INSERT INTO sources(project_id, slug, attribution)
+        VALUES (?, 'waypoints', NULL)
+        RETURNING id
+      `, [projects.id])).rows[0];
+
+      await database.raw(`
+        INSERT INTO sources_translations(sources_id, languages_code, name)
+        VALUES (?, ?, ?)
+      `, [waypointsSource.id, 'fr-FR', 'Points de passage']);
+      await database.raw(`
+        INSERT INTO sources_translations(sources_id, languages_code, name)
+        VALUES (?, ?, ?)
+      `, [waypointsSource.id, 'en-US', 'Waypoints']);
+
+      console.info(`Source waypoints created (id=${waypointsSource.id})`);
+    }
+    const waypointsSourceId = waypointsSource.id;
+
+    if (!waypointsTableExists) {
+      await create_main(
+        projects,
+        policy,
+        table_pdp,
+        table_pdp_t,
+        [
+          { language: 'fr-FR', translation: 'Points de passage' },
+          { language: 'en-US', translation: 'Waypoints' },
+        ],
+        { "route___waypoint___type": "character varying" },
+        { "name": "text", "description": "text" },
+        false, // withThumbnail
+        null,  // withExtendsSourceId
+        null,  // codeCollection
+        null,  // codeField
+        [
+          {
+            field: 'route___waypoint___type',
+            interface: 'select-dropdown',
+            options: '{"choices":[{"text":"parking","value":"parking","icon":"local_parking"},{"text":"start","value":"start","icon":"flag"},{"text":"waypoint","value":"waypoint","icon":"pin_drop"},{"text":"end","value":"end","icon":"emoji_flags"}]}',
+          },
+        ],
+        { services, database, get, env, logger, data, accountability }
+      );
+      await database.raw('SELECT api01.create_pois_local_view(?, ?, ?)', [projects.id, waypointsSourceId, table_pdp]);
+      console.info(`Table ${table_pdp} created`);
+    }
 
     await database.raw(`CREATE TABLE IF NOT EXISTS "${tableNameW}" (id SERIAL PRIMARY KEY, parent_pois_id bigint NOT NULL REFERENCES "${tableName}"(id) ON DELETE CASCADE, children_pois_id integer NOT NULL REFERENCES "${table_pdp}"(id) ON DELETE CASCADE, index INTEGER NOT NULL DEFAULT 1)`);
     console.info(`Table ${tableNameW} created`);
