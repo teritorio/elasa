@@ -318,7 +318,12 @@ CREATE OR REPLACE FUNCTION select_pois_local(
         tables_p.table_name AS table_name_p,
         tables_w.table_name AS table_name_w,
         coalesce(array_agg(DISTINCT key_column_usage.column_name) FILTER (WHERE o2o_target.table_name = 'directus_files'), array[]::text[]) AS file_fields,
-        coalesce(array_agg(DISTINCT substring(m2o_join_origin.table_name, length(tables.table_name) + 4)) FILTER (WHERE m2o_target.table_name = 'directus_files' AND m2o_join_origin.table_name NOT LIKE '%_i'), array[]::text[]) AS files_fields,
+        coalesce(array_agg(DISTINCT
+            CASE
+            WHEN m2o_join_origin.table_name LIKE '%_i' THEN 'image'
+            ELSE substring(m2o_join_origin.table_name, length(tables.table_name) + 4)
+            END
+        ) FILTER (WHERE m2o_target.table_name = 'directus_files'), array[]::text[]) AS files_fields,
         coalesce(jsonb_object_agg(DISTINCT key_column_usage.column_name, m2o_target.table_name) FILTER (WHERE o2o_target.table_name LIKE 'local-%-codes-%'), '{}'::jsonb) AS code_fields,
         coalesce(jsonb_object_agg(DISTINCT substring(m2o_join_origin.table_name, length(tables.table_name) + 4), m2o_target.table_name) FILTER (WHERE m2o_target.table_name LIKE 'local-%-codes-%'), '{}'::jsonb) AS codes_fields,
         bool_or(key_column_usage.column_name IN ('extends_poi_id')) AS extends_poi
@@ -457,7 +462,7 @@ BEGIN
                                 ) ||
                                 -- files_fields
                                 jsonb_build_object(' ||
-                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', array_agg(''__base_url__/assets/'' || "f_' || f || '".id::text || ''/'' || "directus_files_' || f || '".filename_download'), ', ') FROM unnest(source.files_fields) AS fields(f)), '') || '
+                                    coalesce((SELECT array_to_string(array_agg('''' || f || ''', "f_' || f || '".path'), ', ') FROM unnest(source.files_fields) AS fields(f)), '') || '
                                 ) ||
                                 -- code_fields
                                 jsonb_build_object(' ||
@@ -527,11 +532,11 @@ BEGIN
                 coalesce((
                     SELECT array_to_string(array_agg('
                 JOIN LATERAL (
-                    SELECT array_agg(directus_files_id)
+                    SELECT array_agg(''__base_url__/assets/'' || directus_files_id::text || ''/'' || "directus_files_' || f || '".filename_download) AS path
                     FROM "' || substring(source.table_name, 1, 63 - 2) || '_i" AS pois_files
                     JOIN directus_files AS "directus_files_' || f || '" ON "directus_files_' || f || '".id = pois_files.directus_files_id
                     WHERE pois_files.pois_id = t.id
-                ) AS "f_' || f || '"'), ' ')
+                ) AS "f_' || f || '" ON true'), ' ')
                     FROM unnest(source.files_fields) AS fields(f)),
                     '') ||
                 -- o2o codes tables
