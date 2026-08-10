@@ -92,8 +92,7 @@ SELECT
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.main_url) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS main_url,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.keywords) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS keywords,
     nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.cookies_consent_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS cookies_consent_message,
-    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.banner_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS banner_message,
-    themes.banner_dismissible
+    nullif(jsonb_strip_nulls(jsonb_object_agg(substring(trans.languages_code, 1, 2), trans.banner_message) FILTER (WHERE trans.languages_code IS NOT NULL)), '{}'::jsonb) AS banner_message
 FROM
     themes
     LEFT JOIN themes_translations AS trans ON
