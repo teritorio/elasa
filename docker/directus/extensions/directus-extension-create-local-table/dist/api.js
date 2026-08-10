@@ -228,6 +228,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
     `, { collection: tableNameT, icon: 'translate', group: tableName, hidden: true });
     console.info(`Collection ${tableNameT} configured`);
 
+    const translationsField = tableName.includes('waypoints') ? 'waypoints_translations' : 'translations';
     await database.raw(`
       MERGE INTO directus_fields
       USING (SELECT ?, ?, ?, ?, ?::json, ?, ?::integer) AS source(collection, field, special, interface, options, display, sort)
@@ -237,7 +238,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
         VALUES (source.collection, source.field, source.special, source.interface, source.options, source.display, source.sort)
       WHEN MATCHED THEN
         UPDATE SET collection = source.collection, field = source.field, special = source.special, interface = source.interface, options = source.options, display = source.display, sort = source.sort
-    `, [tableName, 'translations', 'translations', 'translations', { "languageField": "name", "defaultLanguage": "en-US", "defaultOpenSplitView": true, "userLanguage": true }, 'translations', translations_sort]);
+    `, [tableName, translationsField, 'translations', 'translations', { "languageField": "name", "defaultLanguage": "en-US", "defaultOpenSplitView": true, "userLanguage": true }, 'translations', translations_sort]);
     console.info(`Field ${tableName}.translations configured`);
 
     ['id', 'pois_id', 'languages_code'].concat(Object.keys(fields_t)).forEach(async (field) => {
@@ -274,7 +275,7 @@ async function create_main(projects, policy, tableName, tableNameT, translations
         VALUES (source.many_collection, source.many_field, source.one_collection, source.one_field, source.junction_field)
       WHEN MATCHED THEN
         UPDATE SET junction_field = source.junction_field
-    `, [tableNameT, 'pois_id', tableName, 'translations', 'languages_code']);
+    `, [tableNameT, 'pois_id', tableName, translationsField, 'languages_code']);
     console.info(`Relation ${tableNameT} pois_id ${tableName} translations languages_code configured`);
 
     ['create', 'read', 'update', 'delete'].forEach(async (action) => {
