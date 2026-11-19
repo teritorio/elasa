@@ -1,4 +1,4 @@
-FROM ruby:3.4-alpine
+FROM ruby:3.4.13-alpine
 
 RUN apk add --no-cache --virtual \
         build-dependencies \
